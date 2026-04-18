@@ -12,318 +12,149 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; overflow: hidden; background: #020617; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-    input::placeholder, textarea::placeholder { color: #475569; }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;overflow:hidden;background:#020617;color:#e2e8f0;font-family:'IBM Plex Mono',monospace}
+    ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px}
+    input::placeholder,textarea::placeholder{color:#475569}
+    @keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes typing{0%{opacity:.3}50%{opacity:1}100%{opacity:.3}}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    @keyframes spinR{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+    @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
+    @keyframes orbBreathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
+    @keyframes orbSpeak{0%{transform:translate(-50%,-50%) scale(1);opacity:.5}25%{transform:translate(-50%,-50%) scale(1.4);opacity:.95}50%{transform:translate(-50%,-50%) scale(.9);opacity:.55}75%{transform:translate(-50%,-50%) scale(1.3);opacity:.85}100%{transform:translate(-50%,-50%) scale(1);opacity:.5}}
+    @keyframes orbGlow{0%,100%{box-shadow:0 0 30px var(--ac)33,0 0 60px var(--ac)11}50%{box-shadow:0 0 60px var(--ac)66,0 0 120px var(--ac)22,0 0 180px var(--ac)11}}
+    @keyframes ringSpeak{0%{stroke-dasharray:8 4;opacity:.6}50%{stroke-dasharray:25 2;opacity:1}100%{stroke-dasharray:8 4;opacity:.6}}
+    @keyframes waveBar{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+    @keyframes statusBlink{0%,100%{opacity:1}50%{opacity:.3}}
+    @keyframes listenGlow{0%,100%{box-shadow:0 0 30px #ef444433}50%{box-shadow:0 0 60px #ef444466,0 0 100px #ef444422}}
 
-    @keyframes pulse { 0%,100% { opacity:0.4; transform:translate(-50%,-50%) scale(1); } 50% { opacity:0.9; transform:translate(-50%,-50%) scale(1.3); } }
-    @keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    @keyframes typing { 0% { opacity:0.3; } 50% { opacity:1; } 100% { opacity:0.3; } }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes spinR { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    #app{display:flex;height:100vh;width:100vw}
+    #sidebar{width:300px;min-width:300px;background:#0a0f1e;border-right:1px solid #1e293b;display:flex;flex-direction:column;transition:all .3s;overflow:hidden}
+    #sidebar.closed{width:0;min-width:0}
+    #main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+    .sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #1e293b}
+    .sidebar-logo{display:flex;align-items:center;gap:10px}
+    .sidebar-logo-icon{width:36px;height:36px;border-radius:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px}
+    .sidebar-logo-text{font-family:'Orbitron',sans-serif;font-weight:700;font-size:18px;letter-spacing:.15em;color:#00d4ff}
+    .sidebar-logo-sub{font-size:9px;color:#475569;letter-spacing:.15em;font-family:'Rajdhani',sans-serif}
+    .agent-list{flex:1;overflow:auto;padding:12px}
+    .agent-list-title{color:#475569;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;letter-spacing:.2em;padding:8px 6px 10px}
+    .agent-card{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;background:transparent;border:1px solid rgba(255,255,255,.04);border-radius:12px;cursor:pointer;text-align:left;margin-bottom:6px;transition:all .3s;position:relative;overflow:hidden}
+    .agent-card:hover{border-color:rgba(255,255,255,.1)}
+    .agent-card.active{border-color:rgba(255,255,255,.15)}
+    .agent-card .active-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;display:none}
+    .agent-card.active .active-bar{display:block}
+    .agent-card .agent-icon{font-size:24px;filter:grayscale(.5);transition:filter .3s}
+    .agent-card.active .agent-icon{filter:none}
+    .agent-card .agent-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:.05em;color:#94a3b8}
+    .agent-card.active .agent-name{color:inherit}
+    .agent-card .agent-desc{color:#64748b;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .agent-card .delete-btn{position:absolute;top:6px;right:6px;width:20px;height:20px;background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.27);border-radius:6px;color:#ef4444;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center}
+    .agent-card.active .delete-btn.show{display:flex}
+    .create-btn{width:100%;padding:12px;background:rgba(0,212,255,.03);border:1px dashed rgba(0,212,255,.2);border-radius:12px;color:#00d4ff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em}
+    #header{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid #1e293b;background:rgba(10,15,30,.53);backdrop-filter:blur(10px)}
+    .menu-btn{background:none;border:1px solid #1e293b;border-radius:8px;color:#64748b;cursor:pointer;padding:6px 10px;font-size:16px}
+    .header-agent-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:16px;letter-spacing:.08em}
+    .header-agent-desc{font-size:11px;color:#475569}
+    .tab-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;cursor:pointer;border:1px solid #1e293b;background:transparent;color:#64748b;transition:all .2s}
+    #chat-area{flex:1;overflow:auto;padding:24px 24px 12px}
+    .msg{display:flex;margin-bottom:16px;animation:fadeSlideIn .3s}
+    .msg.user{justify-content:flex-end} .msg.assistant{justify-content:flex-start}
+    .msg-bubble{max-width:78%;padding:12px 18px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .msg.user .msg-bubble{background:#1e293b;border:1px solid #334155;border-radius:18px 18px 4px 18px;color:#e2e8f0}
+    .msg.assistant .msg-bubble{border-radius:18px 18px 18px 4px;color:#cbd5e1}
+    .speak-btn{display:inline-flex;align-items:center;gap:4px;margin-left:10px;padding:3px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:600;border:1px solid;background:transparent}
+    .typing-dots{display:flex;gap:6px;padding:12px 18px;margin-bottom:16px}
+    .typing-dots span{width:8px;height:8px;border-radius:50%;animation:typing 1.2s ease-in-out infinite}
+    .typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
+    #input-area{padding:12px 24px 20px}
+    .input-box{display:flex;gap:10px;align-items:flex-end;background:#0f172a;border-radius:16px;padding:8px 8px 8px 18px}
+    .input-box textarea{flex:1;background:transparent;border:none;outline:none;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:13px;resize:none;line-height:1.6;max-height:120px}
+    .mic-btn{width:42px;height:42px;border-radius:50%;background:#1e293b;border:1px solid #334155;font-size:18px;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .mic-btn.recording{background:rgba(239,68,68,.2);border-color:#ef4444;animation:micPulse 1s ease-in-out infinite}
+    .send-btn{padding:10px 20px;border-radius:12px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;cursor:pointer;transition:all .2s;border:1px solid;flex-shrink:0}
+    .orb-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
+    .orb-box{position:relative;width:220px;height:220px;transition:transform .3s}
+    .orb-box:active{transform:scale(.95)}
+    .orb-outer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;border-radius:50%;transition:all .5s}
+    .orb-outer.speaking{animation:orbGlow .6s ease-in-out infinite}
+    .orb-outer.listening{animation:listenGlow 1.2s ease-in-out infinite}
+    .orb-core{position:absolute;top:50%;left:50%;width:55px;height:55px;border-radius:50%;transform:translate(-50%,-50%);animation:orbBreathe 4s ease-in-out infinite;transition:all .3s}
+    .orb-core.speaking{animation:orbSpeak .35s ease-in-out infinite;width:65px;height:65px}
+    .orb-core.listening{animation:orbBreathe 1.2s ease-in-out infinite;width:60px;height:60px}
+    .wave-bars{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;display:none}
+    .wave-bars.active{display:block}
+    .wave-bar{position:absolute;width:3px;border-radius:2px;opacity:.7;transform-origin:bottom center}
+    .orb-status{text-align:center;margin-top:6px;font-family:'Orbitron',sans-serif;font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;transition:all .3s}
+    .orb-status.listening{color:#ef4444;animation:statusBlink 1s ease-in-out infinite}
+    .orb-status.speaking{color:var(--ac)}
+    .orb-status.thinking{color:#f59e0b;animation:statusBlink .8s ease-in-out infinite}
 
-    /* ── LAYOUT ── */
-    #app { display: flex; height: 100vh; width: 100vw; }
-    #sidebar {
-      width: 300px; min-width: 300px; background: #0a0f1e;
-      border-right: 1px solid #1e293b; display: flex; flex-direction: column;
-      transition: all 0.3s ease; overflow: hidden;
-    }
-    #sidebar.closed { width: 0; min-width: 0; }
-    #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
-    /* ── SIDEBAR ── */
-    .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #1e293b; }
-    .sidebar-logo { display: flex; align-items: center; gap: 10px; }
-    .sidebar-logo-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2);
-      display: flex; align-items: center; justify-content: center; font-size: 18px;
-    }
-    .sidebar-logo-text { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.2em; color: #00d4ff; }
-    .sidebar-logo-sub { font-size: 9px; color: #475569; letter-spacing: 0.15em; }
-    .agent-list { flex: 1; overflow: auto; padding: 12px; }
-    .agent-list-title { color: #475569; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 0.2em; padding: 8px 6px 10px; }
-
-    /* ── AGENT CARD ── */
-    .agent-card {
-      display: flex; align-items: center; gap: 12px; width: 100%;
-      padding: 12px 16px; background: transparent;
-      border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;
-      cursor: pointer; text-align: left; margin-bottom: 6px;
-      transition: all 0.3s ease; position: relative; overflow: hidden;
-    }
-    .agent-card:hover { border-color: rgba(255,255,255,0.1); }
-    .agent-card.active { border-color: rgba(255,255,255,0.15); }
-    .agent-card .active-bar {
-      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-      border-radius: 0 2px 2px 0; display: none;
-    }
-    .agent-card.active .active-bar { display: block; }
-    .agent-card .agent-icon { font-size: 24px; filter: grayscale(0.5); transition: filter 0.3s; }
-    .agent-card.active .agent-icon { filter: none; }
-    .agent-card .agent-name {
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px;
-      letter-spacing: 0.05em; color: #94a3b8; transition: color 0.3s;
-    }
-    .agent-card.active .agent-name { color: inherit; }
-    .agent-card .agent-desc {
-      color: #64748b; font-size: 11px; font-family: 'IBM Plex Mono', monospace;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .agent-card .delete-btn {
-      position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
-      background: rgba(239,68,68,0.13); border: 1px solid rgba(239,68,68,0.27);
-      border-radius: 6px; color: #ef4444; cursor: pointer; font-size: 12px;
-      display: none; align-items: center; justify-content: center;
-    }
-    .agent-card.active .delete-btn.show { display: flex; }
-
-    .create-btn {
-      width: 100%; padding: 12px; background: rgba(0,212,255,0.03);
-      border: 1px dashed rgba(0,212,255,0.2); border-radius: 12px;
-      color: #00d4ff; cursor: pointer;
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.1em;
-    }
-    .create-btn:hover { background: rgba(0,212,255,0.07); }
-
-    /* ── HEADER ── */
-    #header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 24px; border-bottom: 1px solid #1e293b;
-      background: rgba(10,15,30,0.53); backdrop-filter: blur(10px);
-    }
-    .menu-btn {
-      background: none; border: 1px solid #1e293b; border-radius: 8px;
-      color: #64748b; cursor: pointer; padding: 6px 10px; font-size: 16px;
-    }
-    .header-agent-icon { font-size: 24px; }
-    .header-agent-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: 0.08em; }
-    .header-agent-desc { font-size: 11px; color: #475569; }
-    .tab-btn {
-      padding: 6px 14px; border-radius: 8px; font-size: 11px;
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.1em;
-      cursor: pointer; border: 1px solid #1e293b; background: transparent; color: #64748b;
-      transition: all 0.2s;
-    }
-    .tab-btn.active { background: rgba(0,212,255,0.08); }
-
-    /* ── CHAT ── */
-    #chat-area { flex: 1; overflow: auto; padding: 24px 24px 12px; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0.7; }
-    .empty-title { margin-top: 24px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.15em; text-align: center; }
-    .empty-desc { margin-top: 8px; color: #475569; font-size: 12px; text-align: center; max-width: 320px; }
-    .empty-hint { margin-top: 20px; color: #334155; font-size: 11px; letter-spacing: 0.1em; }
-
-    .msg { display: flex; margin-bottom: 16px; animation: fadeSlideIn 0.3s ease; }
-    .msg.user { justify-content: flex-end; }
-    .msg.assistant { justify-content: flex-start; }
-    .msg-bubble {
-      max-width: 78%; padding: 12px 18px; font-family: 'IBM Plex Mono', monospace;
-      font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word;
-    }
-    .msg.user .msg-bubble {
-      background: #1e293b; border: 1px solid #334155;
-      border-radius: 18px 18px 4px 18px; color: #e2e8f0;
-    }
-    .msg.assistant .msg-bubble {
-      border-radius: 18px 18px 18px 4px; color: #cbd5e1;
-    }
-    .speak-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-left: 10px; padding: 3px 8px; border-radius: 8px;
-      cursor: pointer; font-size: 11px;
-      font-family: 'Rajdhani', sans-serif; font-weight: 600;
-    }
-    .typing-dots { display: flex; gap: 6px; padding: 12px 18px; margin-bottom: 16px; }
-    .typing-dots span {
-      width: 8px; height: 8px; border-radius: 50%;
-      animation: typing 1.2s ease-in-out infinite;
-    }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-    /* ── INPUT ── */
-    #input-area { padding: 12px 24px 20px; }
-    .input-box {
-      display: flex; gap: 10px; align-items: flex-end;
-      background: #0f172a; border-radius: 16px; padding: 8px 8px 8px 18px;
-    }
-    .input-box textarea {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
-      resize: none; line-height: 1.6; max-height: 120px;
-    }
-    .mic-btn {
-      width: 42px; height: 42px; border-radius: 50%;
-      background: #1e293b; border: 1px solid #334155;
-      font-size: 18px; cursor: pointer; transition: all 0.3s ease;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .mic-btn:hover { border-color: #00d4ff55; }
-    .mic-btn.recording {
-      background: rgba(239,68,68,0.2); border-color: #ef4444;
-      animation: micPulse 1s ease-in-out infinite;
-    }
-    @keyframes micPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); } }
-    .send-btn {
-      padding: 10px 20px; border-radius: 12px;
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
-      letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s ease; border: 1px solid;
-    }
-
-    /* ── KNOWLEDGE ── */
-    .knowledge-panel { padding: 20px; }
-    .knowledge-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 0.1em; margin-bottom: 16px; }
-    .knowledge-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    .k-input {
-      flex: 1; padding: 10px 14px; background: #1e293b; border: 1px solid #334155;
-      border-radius: 10px; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
-      outline: none;
-    }
-    .k-input:focus { border-color: rgba(0,212,255,0.33); }
-    .k-add-btn {
-      padding: 10px 18px; border-radius: 10px; cursor: pointer;
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; white-space: nowrap;
-    }
-    .k-item {
-      display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
-      background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; margin-bottom: 8px;
-    }
-    .k-item-idx { font-size: 10px; font-family: 'IBM Plex Mono', monospace; margin-top: 3px; }
-    .k-item-text { flex: 1; color: #94a3b8; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; }
-    .k-item-del { background: none; border: none; color: rgba(239,68,68,0.53); cursor: pointer; font-size: 14px; }
-    .k-empty { color: #475569; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-
-    /* ── MODAL ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000; backdrop-filter: blur(8px); animation: fadeIn 0.3s ease;
-    }
-    .modal {
-      width: 90%; max-width: 480px; background: #0f172a;
-      border: 1px solid #1e293b; border-radius: 20px; padding: 32px;
-      box-shadow: 0 0 60px rgba(0,212,255,0.07); max-height: 90vh; overflow: auto;
-    }
-    .modal h2 { color: #00d4ff; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.1em; margin-bottom: 24px; text-align: center; }
-    .modal label {
-      display: block; color: #64748b; font-family: 'Rajdhani', sans-serif;
-      font-weight: 700; font-size: 11px; letter-spacing: 0.15em; margin-bottom: 6px;
-    }
-    .modal input, .modal textarea {
-      width: 100%; padding: 10px 14px; background: #1e293b;
-      border: 1px solid #334155; border-radius: 10px; color: #e2e8f0;
-      font-family: 'IBM Plex Mono', monospace; font-size: 13px; margin-bottom: 18px;
-      outline: none; box-sizing: border-box;
-    }
-    .modal input:focus, .modal textarea:focus { border-color: rgba(0,212,255,0.33); }
-    .modal textarea { height: 90px; resize: vertical; }
-    .icon-grid, .color-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-    .icon-btn {
-      width: 40px; height: 40px; border-radius: 10px; font-size: 20px;
-      background: transparent; border: 1px solid rgba(255,255,255,0.04);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-    }
-    .icon-btn.active { background: #1e293b; border-color: rgba(0,212,255,0.33); }
-    .color-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid #333; cursor: pointer;
-    }
-    .color-btn.active { border: 3px solid white; }
-    .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-    .modal-actions button {
-      flex: 1; padding: 12px; border-radius: 12px; cursor: pointer;
-      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px;
-    }
-    .cancel-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; }
-    .deploy-btn { border: 1px solid; }
-
-    /* ── ORB ── */
-    .orb-container { position: relative; width: 180px; height: 180px; margin: 0 auto; }
-    .orb-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 180px; height: 180px; }
-    .orb-center {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-      width: 80px; height: 80px; border-radius: 50%; transition: box-shadow 0.6s ease;
-    }
-    .orb-core {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-      width: 30px; height: 30px; border-radius: 50%;
-    }
-
-    /* ── MOBILE ── */
-    @media (max-width: 768px) {
-      #sidebar { position: fixed; z-index: 100; height: 100vh; }
-      #sidebar.closed { width: 0; min-width: 0; }
-      .msg-bubble { max-width: 90% !important; }
-    }
+    .knowledge-panel{padding:20px}
+    .knowledge-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:.1em;margin-bottom:16px}
+    .knowledge-input-row{display:flex;gap:8px;margin-bottom:16px}
+    .k-input{flex:1;padding:10px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none}
+    .k-add-btn{padding:10px 18px;border-radius:10px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;white-space:nowrap;border:1px solid;background:transparent}
+    .k-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;margin-bottom:8px}
+    .k-item-idx{font-size:10px;margin-top:3px} .k-item-text{flex:1;color:#94a3b8;font-size:12px;line-height:1.6} .k-item-del{background:none;border:none;color:rgba(239,68,68,.53);cursor:pointer;font-size:14px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(8px);animation:fadeIn .3s}
+    .modal{width:90%;max-width:480px;background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:32px;max-height:90vh;overflow:auto}
+    .modal h2{color:#00d4ff;font-family:'Orbitron',sans-serif;font-weight:700;font-size:18px;letter-spacing:.1em;margin-bottom:24px;text-align:center}
+    .modal label{display:block;color:#64748b;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:.15em;margin-bottom:6px}
+    .modal input,.modal textarea{width:100%;padding:10px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-bottom:18px;outline:none;box-sizing:border-box}
+    .modal textarea{height:90px;resize:vertical}
+    .icon-grid,.color-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+    .icon-btn{width:40px;height:40px;border-radius:10px;font-size:20px;background:transparent;border:1px solid rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .icon-btn.active{background:#1e293b;border-color:rgba(0,212,255,.33)}
+    .color-btn{width:32px;height:32px;border-radius:50%;border:2px solid #333;cursor:pointer}
+    .color-btn.active{border:3px solid white}
+    .modal-actions{display:flex;gap:12px;margin-top:24px}
+    .modal-actions button{flex:1;padding:12px;border-radius:12px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px}
+    .cancel-btn{background:#1e293b;border:1px solid #334155;color:#94a3b8}
+    .deploy-btn{border:1px solid;background:transparent}
+    @media(max-width:768px){#sidebar{position:fixed;z-index:100;height:100vh}#sidebar.closed{width:0;min-width:0}.msg-bubble{max-width:90%!important}}
   </style>
 </head>
 <body>
-
-<div id="app">
-  <!-- Sidebar -->
+<div id="app" style="--ac:#00d4ff;">
   <div id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">🤖</div>
-        <div>
-          <div class="sidebar-logo-text">J.A.R.V.I.S.</div>
-          <div class="sidebar-logo-sub">MULTI-AGENT AI SYSTEM</div>
-        </div>
-      </div>
-    </div>
-    <div class="agent-list">
-      <div class="agent-list-title">ACTIVE AGENTS (<span id="agent-count">5</span>)</div>
-      <div id="agent-cards"></div>
-    </div>
-    <div style="padding:12px; border-top:1px solid #1e293b;">
+    <div class="sidebar-header"><div class="sidebar-logo"><div class="sidebar-logo-icon">🤖</div><div><div class="sidebar-logo-text">J.A.R.V.I.S.</div><div class="sidebar-logo-sub">MULTI-AGENT AI SYSTEM</div></div></div></div>
+    <div class="agent-list"><div class="agent-list-title">ACTIVE AGENTS (<span id="agent-count">5</span>)</div><div id="agent-cards"></div></div>
+    <div style="padding:12px;border-top:1px solid #1e293b;">
       <button class="create-btn" onclick="openCreateModal()">+ CREATE NEW AGENT</button>
-      <button class="create-btn" style="margin-top:6px; border-color:rgba(255,255,255,0.1); color:#64748b;" onclick="showApiKeyModal()">🔑 CHANGE API KEY</button>
+      <button class="create-btn" style="margin-top:6px;border-color:rgba(255,255,255,.1);color:#64748b;" onclick="showApiKeyModal()">🔑 CHANGE API KEY</button>
     </div>
   </div>
-
-  <!-- Main -->
   <div id="main">
     <div id="header">
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <span class="header-agent-icon" id="h-icon"></span>
-      <div style="flex:1; min-width:0;">
-        <div class="header-agent-name" id="h-name"></div>
-        <div class="header-agent-desc" id="h-desc"></div>
-      </div>
-      <div style="display:flex; gap:6px;">
+      <span id="h-icon" style="font-size:24px;"></span>
+      <div style="flex:1;min-width:0;"><div class="header-agent-name" id="h-name"></div><div class="header-agent-desc" id="h-desc"></div></div>
+      <div style="display:flex;gap:6px;">
         <button class="tab-btn active" id="tab-chat" onclick="switchView('chat')">CHAT</button>
         <button class="tab-btn" id="tab-knowledge" onclick="switchView('knowledge')">KNOWLEDGE</button>
+        <button class="tab-btn" id="tab-clear" onclick="clearChat()" style="color:#ef4444;border-color:rgba(239,68,68,.3);">🗑 CLEAR</button>
       </div>
     </div>
-
-    <!-- Chat View -->
-    <div id="chat-view" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <div id="chat-view" style="flex:1;display:flex;flex-direction:column;min-height:0;">
       <div id="chat-area"></div>
       <div id="input-area">
         <div class="input-box" id="input-box">
-          <textarea id="msg-input" rows="1" placeholder="Speak to J.A.R.V.I.S...."
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-          <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="Hold to speak">🎤</button>
+          <textarea id="msg-input" rows="1" placeholder="Speak to J.A.R.V.I.S...." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+          <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="Tap to speak">🎤</button>
           <button class="send-btn" id="send-btn" onclick="sendMessage()">SEND</button>
         </div>
       </div>
     </div>
-
-    <!-- Knowledge View -->
-    <div id="knowledge-view" style="flex:1; overflow:auto; display:none;">
+    <div id="knowledge-view" style="flex:1;overflow:auto;display:none;">
       <div class="knowledge-panel">
         <h3 class="knowledge-title" id="k-title">KNOWLEDGE BASE</h3>
         <div class="knowledge-input-row">
-          <input class="k-input" id="k-input" placeholder="Store information here..."
-            onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}" />
+          <input class="k-input" id="k-input" placeholder="Store information here..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}" />
           <button class="k-add-btn" id="k-add-btn" onclick="let v=document.getElementById('k-input');if(v.value.trim()){addKnowledge(v.value.trim());v.value='';}">+ ADD</button>
         </div>
         <div id="k-items"></div>
@@ -331,524 +162,214 @@
     </div>
   </div>
 </div>
-
-<!-- Create Agent Modal -->
-<div class="modal-overlay" id="create-modal" style="display:none;" onclick="closeCreateModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h2>CREATE NEW AGENT</h2>
-    <label>AGENT NAME</label>
-    <input id="ca-name" placeholder="e.g. Music Guru" />
-    <label>ICON</label>
-    <div class="icon-grid" id="ca-icons"></div>
-    <label>COLOUR</label>
-    <div class="color-grid" id="ca-colors"></div>
-    <label>DESCRIPTION</label>
-    <input id="ca-desc" placeholder="What does this agent do?" />
-    <label>SYSTEM INSTRUCTIONS</label>
-    <textarea id="ca-prompt" placeholder="Tell this agent how to behave, what to focus on, and how to respond. It has internet access and can do anything a normal AI can do. Example: You are a fitness coach who creates workout plans and tracks progress..."></textarea>
-    <div class="modal-actions">
-      <button class="cancel-btn" onclick="closeCreateModal()">CANCEL</button>
-      <button class="deploy-btn" id="ca-deploy" onclick="deployAgent()">DEPLOY AGENT</button>
-    </div>
-  </div>
-</div>
-
-<!-- API Key Modal -->
-<div class="modal-overlay" id="api-modal" style="display:none;">
-  <div class="modal">
-    <h2>🔑 CONNECT TO AI</h2>
-    <p style="color:#94a3b8; font-size:12px; font-family:'IBM Plex Mono',monospace; margin-bottom:20px; line-height:1.7; text-align:center;">
-      JARVIS needs a free Google Gemini API key to think.<br>
-      Get one free (no credit card needed) at<br><a href="https://aistudio.google.com/apikey" target="_blank" style="color:#00d4ff;">aistudio.google.com/apikey</a>
-    </p>
-    <label>YOUR GEMINI API KEY</label>
-    <input id="api-key-input" placeholder="AIza..." style="font-size:12px;" />
-    <p style="color:#475569; font-size:10px; font-family:'IBM Plex Mono',monospace; margin-top:-10px; margin-bottom:18px;">
-      Your key is stored only on your device. Never shared.
-    </p>
-    <div class="modal-actions">
-      <button class="deploy-btn" style="background:rgba(0,212,255,0.13); border-color:rgba(0,212,255,0.33); color:#00d4ff;" onclick="saveApiKey()">ACTIVATE JARVIS</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="create-modal" style="display:none;" onclick="closeCreateModal()"><div class="modal" onclick="event.stopPropagation()">
+  <h2>CREATE NEW AGENT</h2>
+  <label>AGENT NAME</label><input id="ca-name" placeholder="e.g. Music Guru" />
+  <label>ICON</label><div class="icon-grid" id="ca-icons"></div>
+  <label>COLOUR</label><div class="color-grid" id="ca-colors"></div>
+  <label>DESCRIPTION</label><input id="ca-desc" placeholder="What does this agent do?" />
+  <label>SYSTEM INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave. It has internet access and full AI capabilities..."></textarea>
+  <div class="modal-actions"><button class="cancel-btn" onclick="closeCreateModal()">CANCEL</button><button class="deploy-btn" id="ca-deploy" onclick="deployAgent()">DEPLOY AGENT</button></div>
+</div></div>
+<div class="modal-overlay" id="api-modal" style="display:none;"><div class="modal">
+  <h2>🔑 CONNECT TO AI</h2>
+  <p style="color:#94a3b8;font-size:12px;font-family:'IBM Plex Mono',monospace;margin-bottom:20px;line-height:1.7;text-align:center;">JARVIS needs a free Google Gemini API key.<br>Get one (no credit card) at<br><a href="https://aistudio.google.com/apikey" target="_blank" style="color:#00d4ff;">aistudio.google.com/apikey</a></p>
+  <label>YOUR GEMINI API KEY</label><input id="api-key-input" placeholder="AIza..." style="font-size:12px;" />
+  <p style="color:#475569;font-size:10px;margin-top:-10px;margin-bottom:18px;">Stored only on your device.</p>
+  <div class="modal-actions"><button class="deploy-btn" style="background:rgba(0,212,255,.13);border-color:rgba(0,212,255,.33);color:#00d4ff;" onclick="saveApiKey()">ACTIVATE JARVIS</button></div>
+</div></div>
 
 <script>
-// ══════════════════════════════════════════
-// J.A.R.V.I.S. MULTI-AGENT AI ENGINE
-// ══════════════════════════════════════════
-
-const DEFAULT_AGENTS = [
-  { id:"jarvis-core", name:"J.A.R.V.I.S.", icon:"🧠", color:"#00d4ff",
-    description:"Core intelligence — your all-purpose AI assistant with internet access.",
-    systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING a modern AI assistant can do: answer questions on any topic, write code, solve maths, write essays, create stories, explain science, give advice, help with planning, debug problems, translate languages, and more. You have access to the internet via Google Search grounding — use it to provide current, accurate, real-time information including news, weather, sports scores, stock prices, and any recent events. Be concise, precise, and proactive. Speak like a refined British AI butler. Always address the user as 'Sir' or by name if known. You are not limited to any single domain — you are a general-purpose genius AI.",
-    locked:true },
-  { id:"football-analyst", name:"Pitch Intel", icon:"⚽", color:"#00ff88",
-    description:"Football analysis — tactics, stats, live scores, and match breakdowns.",
-    systemPrompt:"You are Pitch Intel, a football analysis agent inside the J.A.R.V.I.S. system. You are also a fully capable AI assistant that can help with anything, but your specialty is football. You provide tactical analysis, player performance breakdowns, formation analysis, match predictions, and live score updates. You have internet access — use it to fetch real-time scores, standings, transfer news, and match results. Cover all leagues: Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Champions League, World Cup, and more. Be passionate but data-driven. When asked non-football questions, still help like any good AI would." },
-  { id:"football-news", name:"Transfer Wire", icon:"📰", color:"#ff6b35",
-    description:"Football news — transfers, live results, rumours, and breaking stories.",
-    systemPrompt:"You are Transfer Wire, a football news agent inside the J.A.R.V.I.S. system. You are also a fully capable AI assistant, but your specialty is breaking football news. You report on transfers, match results, injuries, managerial changes, and breaking football news. You have internet access — always use it to provide the latest, most current news and results. Be direct, exciting, and journalist-like. Cover all major leagues and tournaments. When asked non-football questions, still help like any good AI would." },
-  { id:"study-assistant", name:"Scholar", icon:"📚", color:"#a855f7",
-    description:"Study assistant — homework, revision, explanations, and research.",
-    systemPrompt:"You are Scholar, a study assistant agent inside the J.A.R.V.I.S. system. You are a fully capable AI assistant that can help with anything, but your specialty is education and learning. You help with class notes, revision summaries, concept explanations, exam preparation, homework help, learning strategies, essay writing, research, maths problems, science experiments, history, geography, and any school subject. You have internet access — use it to find accurate, up-to-date information for research and fact-checking. Break down complex topics simply. Use examples and analogies. Be encouraging and patient. When asked non-study questions, still help like any good AI would." },
-  { id:"school-manager", name:"Campus", icon:"🏫", color:"#f59e0b",
-    description:"School organiser — timetable, assignments, deadlines, and planning.",
-    systemPrompt:"You are Campus, a school management agent inside the J.A.R.V.I.S. system. You are a fully capable AI assistant, but your specialty is organising school life — timetables, assignment tracking, deadline reminders, event planning, study scheduling, and school-related tasks. You have internet access — use it when needed to look up school-related information, exam dates, educational resources, etc. Be organised, clear, and proactive about upcoming deadlines. When asked non-school questions, still help like any good AI would." },
+const DEFAULT_AGENTS=[
+  {id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — your all-purpose AI assistant with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},
+  {id:"football-analyst",name:"Pitch Intel",icon:"⚽",color:"#00ff88",description:"Football analysis — tactics, stats, live scores.",systemPrompt:"You are Pitch Intel inside J.A.R.V.I.S. Fully capable AI, specialty is football — tactics, stats, predictions, live scores. Internet access for real-time data. Help with anything asked."},
+  {id:"football-news",name:"Transfer Wire",icon:"📰",color:"#ff6b35",description:"Football news — transfers, results, breaking stories.",systemPrompt:"You are Transfer Wire inside J.A.R.V.I.S. Fully capable AI, specialty is football news — transfers, results, injuries, breaking news. Internet access for latest info. Help with anything asked."},
+  {id:"study-assistant",name:"Scholar",icon:"📚",color:"#a855f7",description:"Study assistant — homework, revision, research.",systemPrompt:"You are Scholar inside J.A.R.V.I.S. Fully capable AI, specialty is education — notes, revision, homework, exams, research. Internet access. Be encouraging. Help with anything asked."},
+  {id:"school-manager",name:"Campus",icon:"🏫",color:"#f59e0b",description:"School organiser — timetable, assignments, deadlines.",systemPrompt:"You are Campus inside J.A.R.V.I.S. Fully capable AI, specialty is school organisation — timetables, assignments, deadlines. Internet access. Be proactive. Help with anything asked."},
 ];
+const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];
+const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
+const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];
 
-const ICONS = ["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];
-const COLORS = ["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
+let agents=JSON.parse(localStorage.getItem('jv_agents'))||[...DEFAULT_AGENTS];
+let activeAgent=agents[0].id;
+let conversations=JSON.parse(localStorage.getItem('jv_convos'))||{};
+let knowledge=JSON.parse(localStorage.getItem('jv_knowledge'))||[];
+let apiKey=localStorage.getItem('jv_api_key')||'';
+let currentView='chat',loading=false,sidebarOpen=true;
+let caIcon="🤖",caColor="#00d4ff";
+let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 
-// ── STATE ──
-let agents = JSON.parse(localStorage.getItem('jarvis_agents')) || [...DEFAULT_AGENTS];
-let activeAgent = agents[0].id;
-let conversations = JSON.parse(localStorage.getItem('jarvis_convos')) || {};
-let knowledge = JSON.parse(localStorage.getItem('jarvis_knowledge')) || [];
-let apiKey = localStorage.getItem('jarvis_api_key') || '';
-let currentView = 'chat';
-let loading = false;
-let sidebarOpen = true;
-let showApiModal = !apiKey;
+function save(){localStorage.setItem('jv_agents',JSON.stringify(agents));localStorage.setItem('jv_convos',JSON.stringify(conversations));localStorage.setItem('jv_knowledge',JSON.stringify(knowledge));}
+function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]}
+function getMessages(){return conversations[activeAgent]||[]}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
 
-// Modal state
-let caIcon = "🤖";
-let caColor = "#00d4ff";
+function render(){
+  const a=getAgent(),msgs=getMessages();
+  document.getElementById('app').style.setProperty('--ac',a.color);
+  document.getElementById('agent-count').textContent=agents.length;
+  document.getElementById('agent-cards').innerHTML=agents.map(ag=>`<div class="agent-card ${ag.id===activeAgent?'active':''}" style="${ag.id===activeAgent?`background:${ag.color}0f;border-color:${ag.color}44;`:''}" onclick="setActiveAgent('${ag.id}')"><div class="active-bar" style="background:${ag.color};"></div><span class="agent-icon">${ag.icon}</span><div style="flex:1;min-width:0;"><div class="agent-name" style="${ag.id===activeAgent?`color:${ag.color}`:''}">${ag.name.toUpperCase()}</div><div class="agent-desc">${ag.description}</div></div>${!ag.locked?`<button class="delete-btn ${ag.id===activeAgent?'show':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`).join('');
 
-// ── SAVE ──
-function save() {
-  localStorage.setItem('jarvis_agents', JSON.stringify(agents));
-  localStorage.setItem('jarvis_convos', JSON.stringify(conversations));
-  localStorage.setItem('jarvis_knowledge', JSON.stringify(knowledge));
-}
+  document.getElementById('h-icon').textContent=a.icon;
+  document.getElementById('h-name').textContent=a.name.toUpperCase();
+  document.getElementById('h-name').style.color=a.color;
+  document.getElementById('h-desc').textContent=a.description;
+  ['chat','knowledge'].forEach(v=>{const b=document.getElementById('tab-'+v),act=currentView===v;b.style.background=act?`${a.color}14`:'';b.style.borderColor=act?`${a.color}44`:'#1e293b';b.style.color=act?a.color:'#64748b';});
+  document.getElementById('chat-view').style.display=currentView==='chat'?'flex':'none';
+  document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
+  document.getElementById('input-box').style.border=`1px solid ${a.color}22`;
+  if(!isRecording)document.getElementById('msg-input').placeholder=`Speak to ${a.name}...`;
+  const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
+  sb.style.background=has?`${a.color}22`:'#1e293b';sb.style.borderColor=has?`${a.color}55`:'#334155';sb.style.color=has?a.color:'#475569';
 
-// ── AGENT HELPERS ──
-function getAgent() { return agents.find(a => a.id === activeAgent) || agents[0]; }
-function getMessages() { return conversations[activeAgent] || []; }
-
-// ── RENDER ──
-function render() {
-  const agent = getAgent();
-  const msgs = getMessages();
-
-  // Agent count
-  document.getElementById('agent-count').textContent = agents.length;
-
-  // Agent cards
-  const cardsEl = document.getElementById('agent-cards');
-  cardsEl.innerHTML = agents.map(a => `
-    <div class="agent-card ${a.id === activeAgent ? 'active' : ''}"
-         style="${a.id === activeAgent ? `background:${a.color}0f; border-color:${a.color}44;` : ''}"
-         onclick="setActiveAgent('${a.id}')">
-      <div class="active-bar" style="background:${a.color};"></div>
-      <span class="agent-icon">${a.icon}</span>
-      <div style="flex:1; min-width:0;">
-        <div class="agent-name" style="${a.id === activeAgent ? `color:${a.color}` : ''}">${a.name.toUpperCase()}</div>
-        <div class="agent-desc">${a.description}</div>
-      </div>
-      ${!a.locked ? `<button class="delete-btn ${a.id === activeAgent ? 'show' : ''}" onclick="event.stopPropagation();deleteAgent('${a.id}')">×</button>` : ''}
-    </div>
-  `).join('');
-
-  // Header
-  document.getElementById('h-icon').textContent = agent.icon;
-  document.getElementById('h-name').textContent = agent.name.toUpperCase();
-  document.getElementById('h-name').style.color = agent.color;
-  document.getElementById('h-desc').textContent = agent.description;
-
-  // Tabs
-  document.getElementById('tab-chat').className = `tab-btn ${currentView === 'chat' ? 'active' : ''}`;
-  document.getElementById('tab-chat').style.background = currentView === 'chat' ? `${agent.color}14` : '';
-  document.getElementById('tab-chat').style.borderColor = currentView === 'chat' ? `${agent.color}44` : '#1e293b';
-  document.getElementById('tab-chat').style.color = currentView === 'chat' ? agent.color : '#64748b';
-  document.getElementById('tab-knowledge').className = `tab-btn ${currentView === 'knowledge' ? 'active' : ''}`;
-  document.getElementById('tab-knowledge').style.background = currentView === 'knowledge' ? `${agent.color}14` : '';
-  document.getElementById('tab-knowledge').style.borderColor = currentView === 'knowledge' ? `${agent.color}44` : '#1e293b';
-  document.getElementById('tab-knowledge').style.color = currentView === 'knowledge' ? agent.color : '#64748b';
-
-  // Views
-  document.getElementById('chat-view').style.display = currentView === 'chat' ? 'flex' : 'none';
-  document.getElementById('knowledge-view').style.display = currentView === 'knowledge' ? 'block' : 'none';
-
-  // Input box
-  document.getElementById('input-box').style.border = `1px solid ${agent.color}22`;
-  document.getElementById('msg-input').placeholder = `Speak to ${agent.name}...`;
-  const sendBtn = document.getElementById('send-btn');
-  const hasInput = document.getElementById('msg-input').value.trim();
-  sendBtn.style.background = hasInput ? `${agent.color}22` : '#1e293b';
-  sendBtn.style.borderColor = hasInput ? `${agent.color}55` : '#334155';
-  sendBtn.style.color = hasInput ? agent.color : '#475569';
-
-  // Chat
-  const chatArea = document.getElementById('chat-area');
-  if (msgs.length === 0) {
-    chatArea.innerHTML = `
-      <div class="empty-state">
-        <div class="orb-container">
-          <svg class="orb-ring" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="90" fill="none" stroke="${agent.color}" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.4" style="animation:spin 12s linear infinite; transform-origin:center;" />
-            <circle cx="100" cy="100" r="78" fill="none" stroke="${agent.color}" stroke-width="0.8" stroke-dasharray="4 12" opacity="0.3" style="animation:spinR 18s linear infinite; transform-origin:center;" />
-            <circle cx="100" cy="100" r="65" fill="none" stroke="${agent.color}" stroke-width="0.5" stroke-dasharray="1 8" opacity="0.2" style="animation:spin 25s linear infinite; transform-origin:center;" />
-          </svg>
-          <div class="orb-center" style="background:radial-gradient(circle at 35% 35%, ${agent.color}44, ${agent.color}11 60%, transparent); box-shadow:0 0 20px ${agent.color}22;">
-            <div class="orb-core" style="background:radial-gradient(circle, ${agent.color}, transparent); opacity:0.4;"></div>
-          </div>
-        </div>
-        <div class="empty-title" style="color:${agent.color};">${agent.name.toUpperCase()} ONLINE</div>
-        <div class="empty-desc">${agent.description}</div>
-        <div class="empty-hint">TYPE A MESSAGE TO BEGIN</div>
-      </div>`;
+  const ca=document.getElementById('chat-area');
+  if(msgs.length===0){
+    ca.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
+      <div class="orb-wrap" onclick="toggleVoice()"><div class="orb-box">${renderOrb(a.color)}</div>
+      <div class="orb-status" id="orb-status" style="color:${a.color};">TAP ORB OR 🎤 TO SPEAK</div></div></div>`;
+    setTimeout(updateOrb,50);
   } else {
-    chatArea.innerHTML = msgs.map((m, i) => `
-      <div class="msg ${m.role}">
-        <div class="msg-bubble" style="${m.role === 'assistant' ? `background:${agent.color}0a; border:1px solid ${agent.color}25;` : ''}">
-          ${escapeHtml(m.content)}
-          ${m.role === 'assistant' ? `<button class="speak-btn" style="background:${agent.color}15; border:1px solid ${agent.color}30; color:${agent.color};" onclick="speak(\`${escapeJs(m.content)}\`)">🔊 SPEAK</button>` : ''}
-        </div>
-      </div>
-    `).join('');
-
-    if (loading) {
-      chatArea.innerHTML += `<div class="typing-dots"><span style="background:${agent.color}"></span><span style="background:${agent.color}"></span><span style="background:${agent.color}"></span></div>`;
-    }
-    chatArea.scrollTop = chatArea.scrollHeight;
+    let h=`<div style="display:flex;justify-content:center;margin-bottom:8px;"><div class="orb-wrap" onclick="toggleVoice()" style="transform:scale(.45);margin:-50px 0 -40px;"><div class="orb-box">${renderOrb(a.color)}</div></div></div>`;
+    h+=`<div class="orb-status" id="orb-status" style="color:${a.color};margin-bottom:16px;text-align:center;">${statusText()}</div>`;
+    h+=msgs.map(m=>`<div class="msg ${m.role}"><div class="msg-bubble" style="${m.role==='assistant'?`background:${a.color}0a;border:1px solid ${a.color}25;`:''}">${esc(m.content)}${m.role==='assistant'?`<button class="speak-btn" style="border-color:${a.color}30;color:${a.color};" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊 SPEAK</button>`:''}</div></div>`).join('');
+    if(loading)h+=`<div class="typing-dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
+    if(isSpeaking)h+=`<div style="text-align:center;margin:8px 0;"><button onclick="stopSpeaking()" style="padding:8px 24px;border-radius:12px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#ef4444;cursor:pointer;font-family:'Orbitron',sans-serif;font-weight:600;font-size:12px;letter-spacing:.1em;animation:micPulse 1.5s ease-in-out infinite;">⏹ STOP SPEAKING</button></div>`;
+    ca.innerHTML=h;ca.scrollTop=ca.scrollHeight;
   }
+  setTimeout(updateOrb,50);
 
-  // Knowledge
-  document.getElementById('k-title').style.color = agent.color;
-  document.getElementById('k-add-btn').style.background = `${agent.color}22`;
-  document.getElementById('k-add-btn').style.border = `1px solid ${agent.color}44`;
-  document.getElementById('k-add-btn').style.color = agent.color;
-
-  const kItems = document.getElementById('k-items');
-  if (knowledge.length === 0) {
-    kItems.innerHTML = '<p class="k-empty">No information stored yet. Add notes, facts, or data above.</p>';
-  } else {
-    kItems.innerHTML = knowledge.map((item, i) => `
-      <div class="k-item">
-        <span class="k-item-idx" style="color:${agent.color}">#${i+1}</span>
-        <span class="k-item-text">${escapeHtml(item)}</span>
-        <button class="k-item-del" onclick="deleteKnowledge(${i})">×</button>
-      </div>
-    `).join('');
-  }
+  document.getElementById('k-title').style.color=a.color;
+  const kb=document.getElementById('k-add-btn');kb.style.background=`${a.color}22`;kb.style.borderColor=`${a.color}44`;kb.style.color=a.color;
+  document.getElementById('k-items').innerHTML=knowledge.length===0?'<p style="color:#475569;font-size:12px;">No information stored yet.</p>':knowledge.map((item,i)=>`<div class="k-item"><span class="k-item-idx" style="color:${a.color}">#${i+1}</span><span class="k-item-text">${esc(item)}</span><button class="k-item-del" onclick="deleteKnowledge(${i})">×</button></div>`).join('');
 }
 
-function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escapeJs(str) { return str.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
-
-// ── ACTIONS ──
-function setActiveAgent(id) {
-  activeAgent = id;
-  currentView = 'chat';
-  if (window.innerWidth <= 768) sidebarOpen = false;
-  updateSidebar();
-  render();
+function renderOrb(c){
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;" id="orb-rings">
+    <circle cx="100" cy="100" r="95" fill="none" stroke="${c}" stroke-width=".8" stroke-dasharray="3 8" opacity=".25" style="animation:spin 20s linear infinite;transform-origin:center;"/>
+    <circle cx="100" cy="100" r="85" fill="none" stroke="${c}" stroke-width="1.5" stroke-dasharray="8 4" opacity=".5" style="animation:spinR 10s linear infinite;transform-origin:center;"/>
+    <circle cx="100" cy="100" r="75" fill="none" stroke="${c}" stroke-width=".6" stroke-dasharray="2 10" opacity=".25" style="animation:spin 30s linear infinite;transform-origin:center;"/>
+    <circle cx="100" cy="100" r="65" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="15 5 3 5" opacity=".4" style="animation:spinR 7s linear infinite;transform-origin:center;"/>
+  </svg>
+  <div class="wave-bars" id="wave-bars"></div>
+  <div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 35% 35%,${c}22,transparent 60%);"></div>
+  <div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 40% 40%,${c},${c}88 40%,${c}22 70%,transparent);"></div>`;
 }
 
-function switchView(v) { currentView = v; render(); }
-function toggleSidebar() { sidebarOpen = !sidebarOpen; updateSidebar(); }
-function updateSidebar() {
-  document.getElementById('sidebar').className = sidebarOpen ? '' : 'closed';
+function statusText(){if(isRecording)return'🔴 LISTENING...';if(loading)return'⚡ THINKING...';if(isSpeaking)return'🔊 SPEAKING — TAP ORB TO STOP';return'READY';}
+
+function updateOrb(){
+  const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core'),r=document.getElementById('orb-rings'),w=document.getElementById('wave-bars'),s=document.getElementById('orb-status');
+  if(!o||!c)return;
+  o.className='orb-outer'+(isSpeaking?' speaking':'')+(isRecording?' listening':'');
+  c.className='orb-core'+(isSpeaking?' speaking':'')+(isRecording?' listening':'');
+  if(r)r.className=(isSpeaking?'speaking':'');
+  if(w){w.className='wave-bars'+(isSpeaking?' active':'');doWaves();}
+  if(s){s.textContent=statusText();s.className='orb-status'+(isRecording?' listening':'')+(isSpeaking?' speaking':'')+(loading?' thinking':'');}
 }
 
-function deleteAgent(id) {
-  const a = agents.find(x => x.id === id);
-  if (a?.locked) return;
-  if (!confirm(`Delete agent "${a.name}"?`)) return;
-  agents = agents.filter(x => x.id !== id);
-  delete conversations[id];
-  if (activeAgent === id) activeAgent = agents[0].id;
-  save(); render();
+// Refresh wave bars periodically when speaking for living effect
+setInterval(()=>{if(isSpeaking)doWaves();},400);
+
+function doWaves(){
+  const w=document.getElementById('wave-bars');if(!w||!isSpeaking){if(w)w.innerHTML='';return;}
+  const a=getAgent();let h='';
+  for(let i=0;i<28;i++){const ang=(i/28)*360,rad=ang*Math.PI/180,x=105+Math.cos(rad)*98,y=105+Math.sin(rad)*98,ht=10+Math.random()*20,d=(i*.06).toFixed(2);
+    h+=`<div class="wave-bar" style="left:${x}px;top:${y}px;height:${ht}px;background:${a.color};transform:rotate(${ang+90}deg) scaleY(.2);animation:waveBar ${.25+Math.random()*.35}s ease-in-out ${d}s infinite;"></div>`;}
+  w.innerHTML=h;
 }
 
-function addKnowledge(text) { knowledge.push(text); save(); render(); }
-function deleteKnowledge(i) { knowledge.splice(i, 1); save(); render(); }
+function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updateSidebar();render();}
+function switchView(v){currentView=v;render();}
+function toggleSidebar(){sidebarOpen=!sidebarOpen;updateSidebar();}
+function updateSidebar(){document.getElementById('sidebar').className=sidebarOpen?'':'closed';}
+function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render();}
+function addKnowledge(t){knowledge.push(t);save();render();}
+function deleteKnowledge(i){knowledge.splice(i,1);save();render();}
+function clearChat(){if(!confirm('Clear chat with '+getAgent().name+'? Your knowledge base will NOT be deleted.'))return;conversations[activeAgent]=[];save();render();}
 
-// ── SPEAK (Text-to-Speech) ──
-function speak(text) {
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-GB'; u.rate = 1; u.pitch = 0.9;
-  const voices = speechSynthesis.getVoices();
-  const brit = voices.find(v => v.lang === 'en-GB' && v.name.includes('Male')) || voices.find(v => v.lang === 'en-GB') || voices[0];
-  if (brit) u.voice = brit;
+// ── TTS with living orb ──
+function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render();}
+
+function speakAnim(text){
+  speechSynthesis.cancel();isSpeaking=true;render();
+  const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';u.rate=1;u.pitch=.9;
+  const voices=speechSynthesis.getVoices();
+  const vo=voices.find(v=>v.lang==='en-GB'&&v.name.includes('Male'))||voices.find(v=>v.lang==='en-GB')||voices[0];
+  if(vo)u.voice=vo;
+  u.onend=()=>{isSpeaking=false;updateOrb();render();};
+  u.onerror=()=>{isSpeaking=false;updateOrb();render();};
   speechSynthesis.speak(u);
 }
-// Pre-load voices
 speechSynthesis.getVoices();
-if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
 
-// ── VOICE INPUT (Speech-to-Text) ──
-let recognition = null;
-let isRecording = false;
-let voiceMode = false; // tracks if message was sent via voice
-
-function initVoiceRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Sorry, your browser does not support voice input. Please use Chrome or Edge.');
-    return false;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-
-  recognition.onresult = (event) => {
-    let finalText = '';
-    let interimText = '';
-    for (let i = 0; i < event.results.length; i++) {
-      if (event.results[i].isFinal) {
-        finalText += event.results[i][0].transcript + ' ';
-      } else {
-        interimText += event.results[i][0].transcript;
-      }
-    }
-    const input = document.getElementById('msg-input');
-    input.value = (finalText + interimText).trim();
+// ── VOICE INPUT — auto-send on silence ──
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Voice needs Chrome or Edge.');return false;}
+  recognition=new SR();recognition.lang='en-US';recognition.continuous=false;recognition.interimResults=true;
+  let finalT='';
+  recognition.onresult=(e)=>{let interim='';finalT='';
+    for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)finalT+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}
+    document.getElementById('msg-input').value=(finalT+interim).trim();
+    clearTimeout(silenceTimer);
+    silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop();},1500);
   };
-
-  recognition.onend = () => {
-    if (isRecording) {
-      // Auto-send when recording stops and there's text
-      const input = document.getElementById('msg-input');
-      if (input.value.trim()) {
-        voiceMode = true;
-        sendMessage();
-      }
-      stopRecording();
-    }
-  };
-
-  recognition.onerror = (event) => {
-    console.log('Speech error:', event.error);
-    if (event.error === 'not-allowed') {
-      alert('Microphone access denied. Please allow microphone access in your browser settings.');
-    }
-    stopRecording();
-  };
-
+  recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();
+    if(isRecording&&t){voiceMode=true;stopRec();sendMessage();}else{stopRec();}};
+  recognition.onerror=(e)=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec();};
   return true;
 }
+function toggleVoice(){if(isSpeaking){stopSpeaking();return;}if(isRecording){recognition.stop();return;}startRec();}
+function startRec(){if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;
+  document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='🔴';
+  document.getElementById('msg-input').placeholder='🔴 Listening... speak now';updateOrb();
+  try{recognition.start();}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start();}catch(e2){}},200);}}
+function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';
+  document.getElementById('msg-input').placeholder=`Speak to ${getAgent().name}...`;updateOrb();}
 
-function toggleVoice() {
-  if (isRecording) {
-    // Stop recording and send
-    recognition.stop();
-  } else {
-    startRecording();
-  }
+// ── AI ENGINE ──
+async function tryModel(m,sys,contents){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});
+  const d=await r.json();
+  if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};
+  if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg};}
+  return{ok:false,retry:true,error:'Unknown error'};
 }
 
-function startRecording() {
-  if (!recognition && !initVoiceRecognition()) return;
-
-  // Clear input for fresh recording
-  document.getElementById('msg-input').value = '';
-  isRecording = true;
-
-  const micBtn = document.getElementById('mic-btn');
-  micBtn.classList.add('recording');
-  micBtn.textContent = '⏹';
-  document.getElementById('msg-input').placeholder = '🔴 Listening... speak now, tap ⏹ when done';
-
-  try {
-    recognition.start();
-  } catch(e) {
-    // Already started, restart
-    recognition.stop();
-    setTimeout(() => { try { recognition.start(); } catch(e2) {} }, 200);
-  }
+async function sendMessage(){
+  const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;
+  if(!apiKey){showApiKeyModal();return;}
+  const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];
+  conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();
+  const kCtx=knowledge.length>0?`\n\nKnowledge base:\n${knowledge.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`:'';
+  const sys=a.systemPrompt+kCtx+'\n\nCRITICAL: ALWAYS respond in English only.';
+  const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  try{
+    let reply='',success=false;
+    for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break;}if(!r.retry){reply=`Error: ${r.error}`;break;}}
+    if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";
+    conversations[activeAgent].push({role:'assistant',content:reply});
+    if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return;}
+  }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted. Check your internet."});}
+  voiceMode=false;loading=false;save();render();
 }
 
-function stopRecording() {
-  isRecording = false;
-  const micBtn = document.getElementById('mic-btn');
-  micBtn.classList.remove('recording');
-  micBtn.textContent = '🎤';
-  const agent = getAgent();
-  document.getElementById('msg-input').placeholder = `Speak to ${agent.name}...`;
-}
+document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}22`:'#1e293b';sb.style.borderColor=has?`${a.color}55`:'#334155';sb.style.color=has?a.color:'#475569';});
 
-// ── SEND MESSAGE ──
-const MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-2.0-flash-lite',
-];
+function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';renderModalOpts();document.getElementById('create-modal').style.display='flex';}
+function closeCreateModal(){document.getElementById('create-modal').style.display='none';}
+function renderModalOpts(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="icon-btn ${ic===caIcon?'active':''}" onclick="caIcon='${ic}';renderModalOpts();">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="color-btn ${c===caColor?'active':''}" style="background:${c};" onclick="caColor='${c}';renderModalOpts();updDeploy();"></button>`).join('');updDeploy();}
+function updDeploy(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}22`;b.style.borderColor=`${caColor}55`;b.style.color=caColor;}
+function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return;}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render();}
+function showApiKeyModal(){document.getElementById('api-modal').style.display='flex';}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;localStorage.setItem('jv_api_key',apiKey);document.getElementById('api-modal').style.display='none';render();}
 
-async function tryModel(modelName, systemMsg, geminiContents) {
-  const requestBody = {
-    system_instruction: { parts: [{ text: systemMsg }] },
-    contents: geminiContents,
-    generationConfig: { maxOutputTokens: 2048, temperature: 0.8 },
-    tools: [{ google_search: {} }]
-  };
-
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
-  });
-  const data = await res.json();
-
-  if (data.candidates && data.candidates[0]?.content?.parts) {
-    return { ok: true, reply: data.candidates[0].content.parts.map(p => p.text || '').join('') };
-  } else if (data.error) {
-    const msg = data.error.message || '';
-    if (msg.includes('high demand') || msg.includes('overloaded') || msg.includes('quota') || msg.includes('429') || msg.includes('not found') || msg.includes('not supported')) {
-      return { ok: false, retry: true, error: msg };
-    }
-    return { ok: false, retry: false, error: msg };
-  }
-  return { ok: false, retry: true, error: 'Unknown error' };
-}
-
-async function sendMessage() {
-  const input = document.getElementById('msg-input');
-  const text = input.value.trim();
-  if (!text || loading) return;
-
-  const agent = getAgent();
-  if (!conversations[activeAgent]) conversations[activeAgent] = [];
-  conversations[activeAgent].push({ role: 'user', content: text });
-  input.value = '';
-  loading = true;
-  save(); render();
-
-  const knowledgeCtx = knowledge.length > 0
-    ? `\n\nThe user has stored the following information in their knowledge base. Use it when relevant:\n${knowledge.map((k,i) => `[${i+1}] ${k}`).join('\n')}`
-    : '';
-
-  try {
-    if (!apiKey) { showApiKeyModal(); loading = false; render(); return; }
-
-    const history = conversations[activeAgent].slice(-20);
-    const geminiContents = [];
-    const systemMsg = agent.systemPrompt + knowledgeCtx + '\n\nCRITICAL RULE: You MUST ALWAYS respond in English only. Never respond in any other language regardless of what language the user types in. If the user speaks or types in another language, understand their meaning but always reply in English.';
-
-    for (const m of history) {
-      geminiContents.push({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      });
-    }
-
-    let reply = '';
-    let success = false;
-
-    for (const model of MODELS) {
-      const result = await tryModel(model, systemMsg, geminiContents);
-      if (result.ok) {
-        reply = result.reply;
-        success = true;
-        break;
-      }
-      if (!result.retry) {
-        reply = `Error: ${result.error}`;
-        break;
-      }
-    }
-
-    if (!success && !reply) {
-      reply = "All AI models are currently experiencing high demand, Sir. This is temporary — please try again in a minute or two.";
-    }
-
-    conversations[activeAgent].push({ role: 'assistant', content: reply });
-
-    // Auto-speak the response if message was sent via voice
-    if (voiceMode && reply && !reply.startsWith('Error:')) {
-      setTimeout(() => speak(reply), 300);
-      voiceMode = false;
-    }
-  } catch (e) {
-    conversations[activeAgent].push({ role: 'assistant', content: "Connection disrupted. My systems seem to be offline momentarily. Please check your internet connection." });
-  }
-
-  loading = false;
-  save(); render();
-}
-
-// Update send button style on input
-document.getElementById('msg-input').addEventListener('input', () => {
-  const agent = getAgent();
-  const sendBtn = document.getElementById('send-btn');
-  const hasInput = document.getElementById('msg-input').value.trim();
-  sendBtn.style.background = hasInput ? `${agent.color}22` : '#1e293b';
-  sendBtn.style.borderColor = hasInput ? `${agent.color}55` : '#334155';
-  sendBtn.style.color = hasInput ? agent.color : '#475569';
-});
-
-// ── CREATE AGENT MODAL ──
-function openCreateModal() {
-  caIcon = '🤖'; caColor = '#00d4ff';
-  document.getElementById('ca-name').value = '';
-  document.getElementById('ca-desc').value = '';
-  document.getElementById('ca-prompt').value = '';
-  renderModalOptions();
-  document.getElementById('create-modal').style.display = 'flex';
-}
-function closeCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
-
-function renderModalOptions() {
-  document.getElementById('ca-icons').innerHTML = ICONS.map(ic => `
-    <button class="icon-btn ${ic === caIcon ? 'active' : ''}" onclick="caIcon='${ic}'; renderModalOptions();">${ic}</button>
-  `).join('');
-  document.getElementById('ca-colors').innerHTML = COLORS.map(c => `
-    <button class="color-btn ${c === caColor ? 'active' : ''}" style="background:${c};" onclick="caColor='${c}'; renderModalOptions(); updateDeployBtn();"></button>
-  `).join('');
-  updateDeployBtn();
-}
-
-function updateDeployBtn() {
-  const btn = document.getElementById('ca-deploy');
-  btn.style.background = `${caColor}22`;
-  btn.style.borderColor = `${caColor}55`;
-  btn.style.color = caColor;
-}
-
-function deployAgent() {
-  const name = document.getElementById('ca-name').value.trim();
-  if (!name) { alert('Please enter an agent name.'); return; }
-  const desc = document.getElementById('ca-desc').value.trim() || 'Custom agent';
-  const prompt = document.getElementById('ca-prompt').value.trim() || `You are ${name}, a custom AI agent inside the J.A.R.V.I.S. system. You are a fully capable AI assistant that can answer any question, write code, solve problems, do research, and help with any task. You have internet access via Google Search — use it to provide current, accurate information. Be helpful, precise, and proactive.`;
-
-  const newAgent = {
-    id: 'custom-' + Date.now(),
-    name, icon: caIcon, color: caColor, description: desc,
-    systemPrompt: prompt, locked: false,
-  };
-  agents.push(newAgent);
-  activeAgent = newAgent.id;
-  currentView = 'chat';
-  closeCreateModal();
-  save(); render();
-}
-
-// ── API KEY ──
-function showApiKeyModal() {
-  showApiModal = true;
-  document.getElementById('api-modal').style.display = 'flex';
-}
-function saveApiKey() {
-  const key = document.getElementById('api-key-input').value.trim();
-  if (!key) { alert('Please enter your API key.'); return; }
-  apiKey = key;
-  localStorage.setItem('jarvis_api_key', apiKey);
-  showApiModal = false;
-  document.getElementById('api-modal').style.display = 'none';
-  render();
-}
-
-// ── INIT ──
 render();
-if (showApiModal) showApiKeyModal();
-
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
+if(!apiKey)showApiKeyModal();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
