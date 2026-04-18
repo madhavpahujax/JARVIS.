@@ -134,10 +134,11 @@
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:24px;"></span>
       <div style="flex:1;min-width:0;"><div class="header-agent-name" id="h-name"></div><div class="header-agent-desc" id="h-desc"></div></div>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;align-items:center;">
         <button class="tab-btn active" id="tab-chat" onclick="switchView('chat')">CHAT</button>
         <button class="tab-btn" id="tab-knowledge" onclick="switchView('knowledge')">KNOWLEDGE</button>
         <button class="tab-btn" id="tab-clear" onclick="clearChat()" style="color:#ef4444;border-color:rgba(239,68,68,.3);">🗑 CLEAR</button>
+        <select id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="padding:5px 8px;border-radius:8px;font-size:10px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.05em;background:#0f172a;border:1px solid #1e293b;color:#94a3b8;cursor:pointer;outline:none;"></select>
       </div>
     </div>
     <div id="chat-view" style="flex:1;display:flex;flex-direction:column;min-height:0;">
@@ -200,6 +201,18 @@ let currentView='chat',loading=false,sidebarOpen=true;
 let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 
+// 4 Voice presets — matched to browser voices by keywords
+const VOICE_PRESETS = [
+  { id:'friday', label:'Friday', desc:'Shrill female (high pitch)', gender:'female', pitch:1.4, rate:1.05, keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria'] },
+  { id:'arjun', label:'Arjun', desc:'Deep male (low pitch)', gender:'male', pitch:0.6, rate:0.9, keywords:['Male','David','Daniel','James','Google UK English Male','Alex','Fred'] },
+  { id:'nova', label:'Nova', desc:'Smooth female (natural)', gender:'female', pitch:1.1, rate:1.0, keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen'] },
+  { id:'titan', label:'Titan', desc:'Commanding male (mid pitch)', gender:'male', pitch:0.85, rate:0.95, keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas'] },
+];
+
+let agentVoices = JSON.parse(localStorage.getItem('jv_agent_voices')) || {};
+function getAgentVoice(agentId) { return agentVoices[agentId] || (agentId==='jarvis-core'?'arjun':'friday'); }
+function setAgentVoice(agentId, voiceId) { agentVoices[agentId]=voiceId; localStorage.setItem('jv_agent_voices',JSON.stringify(agentVoices)); }
+
 function save(){localStorage.setItem('jv_agents',JSON.stringify(agents));localStorage.setItem('jv_convos',JSON.stringify(conversations));localStorage.setItem('jv_knowledge',JSON.stringify(knowledge));}
 function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]}
 function getMessages(){return conversations[activeAgent]||[]}
@@ -220,6 +233,13 @@ function render(){
   document.getElementById('chat-view').style.display=currentView==='chat'?'flex':'none';
   document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
   document.getElementById('input-box').style.border=`1px solid ${a.color}22`;
+
+  // Voice selector
+  const vSel=document.getElementById('voice-select');
+  const curVoice=getAgentVoice(activeAgent);
+  vSel.innerHTML=VOICE_PRESETS.map(vp=>`<option value="${vp.id}" ${vp.id===curVoice?'selected':''}>${vp.label}</option>`).join('');
+  vSel.style.borderColor=`${a.color}33`;
+
   if(!isRecording)document.getElementById('msg-input').placeholder=`Speak to ${a.name}...`;
   const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
   sb.style.background=has?`${a.color}22`:'#1e293b';sb.style.borderColor=has?`${a.color}55`:'#334155';sb.style.color=has?a.color:'#475569';
@@ -269,14 +289,38 @@ function updateOrb(){
   if(s){s.textContent=statusText();s.className='orb-status'+(isRecording?' listening':'')+(isSpeaking?' speaking':'')+(loading?' thinking':'');}
 }
 
-// Refresh wave bars periodically when speaking for living effect
-setInterval(()=>{if(isSpeaking)doWaves();},400);
+// Refresh wave bars for living frequency-reactive effect
+setInterval(()=>{if(isSpeaking){doWaves();updateOrb();}},250);
 
 function doWaves(){
   const w=document.getElementById('wave-bars');if(!w||!isSpeaking){if(w)w.innerHTML='';return;}
-  const a=getAgent();let h='';
-  for(let i=0;i<28;i++){const ang=(i/28)*360,rad=ang*Math.PI/180,x=105+Math.cos(rad)*98,y=105+Math.sin(rad)*98,ht=10+Math.random()*20,d=(i*.06).toFixed(2);
-    h+=`<div class="wave-bar" style="left:${x}px;top:${y}px;height:${ht}px;background:${a.color};transform:rotate(${ang+90}deg) scaleY(.2);animation:waveBar ${.25+Math.random()*.35}s ease-in-out ${d}s infinite;"></div>`;}
+  const a=getAgent();
+  const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
+  // Frequency simulation based on voice pitch
+  const baseFreq=preset.pitch; // higher pitch = faster, shorter bars
+  const barCount=32;
+  let h='';
+  for(let i=0;i<barCount;i++){
+    const ang=(i/barCount)*360;
+    const rad=ang*Math.PI/180;
+    // Multi-layer: inner + outer bars radiating from all sides
+    const r1=85+Math.random()*15; // inner ring
+    const r2=100+Math.random()*10; // outer ring
+    const x1=105+Math.cos(rad)*r1, y1=105+Math.sin(rad)*r1;
+    const x2=105+Math.cos(rad)*r2, y2=105+Math.sin(rad)*r2;
+    // Height varies with simulated frequency bands
+    const freqBand=Math.sin(i*0.8+Date.now()*0.005*baseFreq)*0.5+0.5;
+    const ht1=6+freqBand*25*baseFreq;
+    const ht2=4+Math.random()*15*baseFreq;
+    const speed1=(0.15+Math.random()*0.25)/baseFreq;
+    const speed2=(0.2+Math.random()*0.3)/baseFreq;
+    const d1=(i*.04).toFixed(2);
+    const d2=(i*.03+0.1).toFixed(2);
+    // Inner bars (thicker, brighter)
+    h+=`<div class="wave-bar" style="left:${x1}px;top:${y1}px;height:${ht1}px;width:3px;background:${a.color};opacity:.8;transform:rotate(${ang+90}deg) scaleY(.2);animation:waveBar ${speed1}s ease-in-out ${d1}s infinite;"></div>`;
+    // Outer bars (thinner, dimmer — gives depth)
+    h+=`<div class="wave-bar" style="left:${x2}px;top:${y2}px;height:${ht2}px;width:2px;background:${a.color};opacity:.4;transform:rotate(${ang+90}deg) scaleY(.15);animation:waveBar ${speed2}s ease-in-out ${d2}s infinite;"></div>`;
+  }
   w.innerHTML=h;
 }
 
@@ -289,15 +333,38 @@ function addKnowledge(t){knowledge.push(t);save();render();}
 function deleteKnowledge(i){knowledge.splice(i,1);save();render();}
 function clearChat(){if(!confirm('Clear chat with '+getAgent().name+'? Your knowledge base will NOT be deleted.'))return;conversations[activeAgent]=[];save();render();}
 
-// ── TTS with living orb ──
+// ── TTS with living orb + voice presets ──
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render();}
+
+function findBestVoice(preset) {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  // Try matching by keyword
+  for (const kw of preset.keywords) {
+    const match = voices.find(v => v.name.includes(kw) && v.lang.startsWith('en'));
+    if (match) return match;
+  }
+  // Fallback: any English voice
+  const engVoices = voices.filter(v => v.lang.startsWith('en'));
+  if (preset.gender === 'female') {
+    const f = engVoices.find(v => v.name.toLowerCase().includes('female') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Karen'));
+    if (f) return f;
+  } else {
+    const m = engVoices.find(v => v.name.toLowerCase().includes('male') || v.name.includes('David') || v.name.includes('Daniel') || v.name.includes('George'));
+    if (m) return m;
+  }
+  return engVoices[0] || voices[0];
+}
 
 function speakAnim(text){
   speechSynthesis.cancel();isSpeaking=true;render();
-  const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';u.rate=1;u.pitch=.9;
-  const voices=speechSynthesis.getVoices();
-  const vo=voices.find(v=>v.lang==='en-GB'&&v.name.includes('Male'))||voices.find(v=>v.lang==='en-GB')||voices[0];
-  if(vo)u.voice=vo;
+  const preset = VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent)) || VOICE_PRESETS[0];
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='en-GB';
+  u.rate=preset.rate;
+  u.pitch=preset.pitch;
+  const bestVoice = findBestVoice(preset);
+  if(bestVoice) u.voice = bestVoice;
   u.onend=()=>{isSpeaking=false;updateOrb();render();};
   u.onerror=()=>{isSpeaking=false;updateOrb();render();};
   speechSynthesis.speak(u);
