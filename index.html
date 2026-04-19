@@ -762,7 +762,7 @@ async function sendMessage(){
   try{
     const reply=await generateReplyForAgent(activeAgent,contents);
     conversations[activeAgent].push({role:'assistant',content:reply});
-    if(voiceMode&&speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}
+    if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}
   }catch(e){
     conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})
   }
