@@ -393,6 +393,7 @@ let agentVoices={},activeAgent='jarvis-core';
 let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
 let startupCommands=[],speechFeedback=true;
 let cooldownEnd=0,cooldownInterval=null;
+let startupRunLock=false;
 
 function loadProfileData(){
   const p=pfx();
@@ -663,7 +664,7 @@ function render(){
   startupBtn.style.color=a.color;
   document.getElementById('startup-items').innerHTML=startupCommands.length===0
     ? `<p style="color:var(--dim);font-size:11px">No login commands yet. Add one to make Jarvis brief you automatically when you log in.</p>`
-    : startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
+    : startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
 }
 
 // ── 3D ORB ──
@@ -904,6 +905,15 @@ function addStartupCommand(){
   save();
   render();
 }
+function moveStartupCommand(i,dir){
+  const next=i+dir;
+  if(i<0||i>=startupCommands.length||next<0||next>=startupCommands.length)return;
+  const item=startupCommands[i];
+  startupCommands.splice(i,1);
+  startupCommands.splice(next,0,item);
+  save();
+  render();
+}
 function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render()}
 function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render()}
 function editStartupCommand(i){
@@ -928,21 +938,25 @@ async function runStartupCommand(command){
   const agentId=agents.find(ag=>ag.id===cmd.agentId)?.id||'jarvis-core';
   if(!conversations[agentId])conversations[agentId]=[];
   const startupPrompt=`Startup command for this login session: ${cmd.text}`;
+  conversations[agentId].push({role:'user',content:`[Login Command] ${cmd.text}`});
   const contents=conversations[agentId].slice(-12).concat([{role:'user',content:startupPrompt}]).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
   let reply='';
   try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}
-  conversations[agentId].push({role:'assistant',content:`[Login Command] ${cmd.text}\n\n${reply}`});
+  conversations[agentId].push({role:'assistant',content:reply});
   save();
   if(activeAgent===agentId)render();
   return true;
 }
 async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
 async function runStartupCommands(){
+  if(startupRunLock)return;
   normalizeStartupCommands();
   if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;
+  startupRunLock=true;
   for(const cmd of startupCommands){
     if(cmd.enabled)await runStartupCommand(cmd);
   }
+  startupRunLock=false;
   render();
 }
 
@@ -953,7 +967,7 @@ function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<but
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render()}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();setTimeout(()=>runStartupCommands(),200)}
 
 // ── PROFILES WITH PASSWORD ──
 // Simple hash function for password (not crypto-grade but obscures the password in localStorage)
@@ -1061,6 +1075,7 @@ function switchProfile(id){
   currentProfile=id;
   localStorage.setItem('jv_current_profile',id);
   loadProfileData();
+  startupRunLock=false;
   document.getElementById('profile-modal').style.display='none';
   render();
   if(!apiKey)showApiKeyModal();
