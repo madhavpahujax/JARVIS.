@@ -156,6 +156,41 @@ a{color:var(--ac)}
 .md-cancel{background:var(--input);border:1px solid var(--border);color:var(--dim)}
 .md-go{border:1px solid;background:transparent}
 
+
+
+/* ── MAIN PANELS + CALENDAR ── */
+#main-content{flex:1;min-height:0;position:relative;overflow:hidden}
+.panel{position:absolute;inset:0;overflow:auto;transition:transform .32s ease,opacity .32s ease;will-change:transform,opacity}
+.panel.hidden-right{transform:translateX(100%);opacity:.35;pointer-events:none}
+.panel.hidden-left{transform:translateX(-100%);opacity:.35;pointer-events:none}
+.panel.active{transform:translateX(0);opacity:1;pointer-events:auto}
+#chat-view{display:flex;flex-direction:column;min-height:0;position:absolute;inset:0}
+#chat{padding-bottom:170px}
+#knowledge-view{padding-bottom:170px}
+#calendar-view{padding:14px 14px 170px;overflow:auto}
+.calendar-shell{max-width:780px;margin:0 auto;background:linear-gradient(180deg,rgba(11,17,32,.85),rgba(6,10,18,.92));border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cal-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cal-title{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.08em;color:var(--ac)}
+.cal-actions{display:flex;gap:6px;flex-wrap:wrap}
+.cal-btn{padding:7px 11px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);font-size:11px;font-weight:700;cursor:pointer}
+.cal-btn.primary{color:var(--ac);border-color:var(--ac)33;background:var(--ac)0d}
+.cal-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal-dow{font-size:10px;color:var(--dim);text-align:center;letter-spacing:.1em;font-weight:700}
+.cal-days{display:flex;flex-direction:column;gap:8px}
+.cal-day{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:stretch;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:8px}
+.cal-day-meta{display:flex;flex-direction:column;justify-content:center;align-items:center;border-right:1px solid var(--border);padding-right:6px}
+.cal-day-date{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--ac)}
+.cal-day-name{font-size:11px;color:var(--dim);letter-spacing:.08em;font-weight:700}
+.cal-note{width:100%;min-height:62px;background:rgba(5,8,15,.7);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical;outline:none}
+.cal-note:focus{border-color:var(--ac)33}
+.swipe-hint{font-size:10px;color:var(--dim);letter-spacing:.06em;text-align:center;padding-top:4px}
+#composer-wrap{position:absolute;left:12px;right:12px;bottom:12px;z-index:20}
+#composer-wrap .inp-box{box-shadow:0 8px 20px rgba(0,0,0,.3)}
+@media(max-width:768px){
+  #composer-wrap{left:8px;right:8px;bottom:8px}
+  .cal-day{grid-template-columns:72px 1fr}
+}
+
 @media(max-width:768px){
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
   #sidebar.closed{width:0;min-width:0}
@@ -208,11 +243,13 @@ if('serviceWorker' in navigator){
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
+        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
         <button class="toggle-chip" id="speech-toggle" onclick="toggleSpeechFeedback()">Speech On</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
       </div>
     </div>
-    <div id="chat-view" style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative">
+    <div id="main-content">
+    <div id="chat-view" class="panel active">
       <!-- Background orb layer -->
       <div id="bg-orb" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden">
         <div class="orb-wrap" id="bg-orb-wrap" onclick="toggleVoice()" style="pointer-events:auto">
@@ -223,18 +260,8 @@ if('serviceWorker' in navigator){
         </div>
       </div>
       <div id="chat" style="position:relative;z-index:2"></div>
-      <div id="inp" style="position:relative;z-index:3">
-        <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
-          <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
-          <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
-        </div>
-        <div class="inp-box" id="input-box">
-        <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-        <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
-        <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
-      </div></div>
     </div>
-    <div id="knowledge-view" style="flex:1;overflow:auto;display:none">
+    <div id="knowledge-view" class="panel hidden-right">
       <div class="kp">
         <!-- Primary Memory -->
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
@@ -268,6 +295,39 @@ if('serviceWorker' in navigator){
         <div id="startup-items"></div>
       </div>
     </div>
+    <div id="calendar-view" class="panel hidden-right">
+      <div class="calendar-shell">
+        <div class="cal-top">
+          <div class="cal-title" id="cal-month-label">2026 — January</div>
+          <div class="cal-actions">
+            <button class="cal-btn" onclick="prevCalendarMonth()">← Prev Month</button>
+            <button class="cal-btn" onclick="nextCalendarMonth()">Next Month →</button>
+            <button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button>
+          </div>
+        </div>
+        <div class="cal-week">
+          <div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div><div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div>
+        </div>
+        <div class="cal-days" id="calendar-days"></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <button class="cal-btn" onclick="prevWeek()">↑ Previous Week</button>
+          <button class="cal-btn" onclick="nextWeek()">↓ Next Week</button>
+        </div>
+        <div class="swipe-hint">Swipe left from chat to open calendar, swipe right on calendar to close.</div>
+      </div>
+    </div>
+  </div>
+  <div id="composer-wrap">
+    <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
+      <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
+      <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
+    </div>
+    <div class="inp-box" id="input-box">
+      <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+      <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
+      <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -396,6 +456,8 @@ let cooldownEnd=0,cooldownInterval=null;
 let startupRunLock=false;
 let startupRunTimer=null;
 let appOpenStartupTriggered=false;
+let calendarMonth=0,calendarWeekOffset=0,calendarNotes={};
+let touchStartX=0,touchStartY=0;
 
 function loadProfileData(){
   const p=pfx();
@@ -410,6 +472,9 @@ function loadProfileData(){
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
   startupCommands=JSON.parse(localStorage.getItem(p+'startup_commands'))||[];
   speechFeedback=JSON.parse(localStorage.getItem(p+'speech_feedback') ?? 'true');
+  calendarNotes=JSON.parse(localStorage.getItem(p+'calendar_notes_2026'))||{};
+  calendarMonth=Number(localStorage.getItem(p+'calendar_month_2026')||0);
+  calendarWeekOffset=Number(localStorage.getItem(p+'calendar_week_2026')||0);
   // Migrate old flat knowledge to jarvis-core
   const oldK=JSON.parse(localStorage.getItem(p+'knowledge'));
   if(oldK&&oldK.length>0){agentKnowledge['jarvis-core']=(agentKnowledge['jarvis-core']||[]).concat(oldK);localStorage.removeItem(p+'knowledge');}
@@ -435,6 +500,9 @@ function save(){
   localStorage.setItem(p+'jimports',JSON.stringify(jarvisImports));
   localStorage.setItem(p+'startup_commands',JSON.stringify(startupCommands));
   localStorage.setItem(p+'speech_feedback',JSON.stringify(speechFeedback));
+  localStorage.setItem(p+'calendar_notes_2026',JSON.stringify(calendarNotes));
+  localStorage.setItem(p+'calendar_month_2026',String(calendarMonth));
+  localStorage.setItem(p+'calendar_week_2026',String(calendarWeekOffset));
 }
 function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey);saveGlobalApiKey(apiKey)}
 
@@ -587,12 +655,18 @@ function render(){
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
-  ['chat','knowledge'].forEach(v=>{const b=document.getElementById('tab-'+v);b.className='hbtn'+(currentView===v?' on':'')});
+  ['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'')});
   const speechToggle=document.getElementById('speech-toggle');
   speechToggle.innerHTML=`${speechFeedback?'Speech On':'Speech Off'}<span class="keyhint">K</span>`;
   speechToggle.className='toggle-chip'+(speechFeedback?' on':'');
-  document.getElementById('chat-view').style.display=currentView==='chat'?'flex':'none';
-  document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
+  ['chat','knowledge','calendar'].forEach(v=>{
+    const panel=document.getElementById(v+'-view');
+    if(!panel)return;
+    panel.classList.remove('active','hidden-left','hidden-right');
+    if(v===currentView)panel.classList.add('active');
+    else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))panel.classList.add('hidden-left');
+    else panel.classList.add('hidden-right');
+  });
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
   vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
   const input=document.getElementById('msg-input');
@@ -664,6 +738,8 @@ function render(){
   const startupBtn=document.getElementById('startup-add-btn');
   startupBtn.style.borderColor=`${a.color}44`;
   startupBtn.style.color=a.color;
+  renderCalendar();
+
   document.getElementById('startup-items').innerHTML=startupCommands.length===0
     ? `<p style="color:var(--dim);font-size:11px">No login commands yet. Add one to make Jarvis brief you automatically when you log in.</p>`
     : startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
@@ -794,9 +870,59 @@ function updateOrb(){
 }
 setInterval(()=>{startOrbAnim()},600);
 
+
+function calendarKey(dateObj){
+  const m=String(dateObj.getMonth()+1).padStart(2,'0');
+  const d=String(dateObj.getDate()).padStart(2,'0');
+  return `2026-${m}-${d}`;
+}
+function monthMeta(idx){return new Date(2026,idx,1)}
+function monthLabel(idx){return monthMeta(idx).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
+function daysInMonth(idx){return new Date(2026,idx+1,0).getDate()}
+function renderCalendar(){
+  const label=document.getElementById('cal-month-label'),container=document.getElementById('calendar-days');
+  if(!label||!container)return;
+  calendarMonth=Math.max(0,Math.min(11,calendarMonth));
+  const totalDays=daysInMonth(calendarMonth);
+  const maxWeek=Math.max(0,Math.ceil(totalDays/7)-1);
+  calendarWeekOffset=Math.max(0,Math.min(maxWeek,calendarWeekOffset));
+  label.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');
+  const start=calendarWeekOffset*7+1,end=Math.min(totalDays,start+6);
+  let html='';
+  for(let d=start;d<=end;d++){
+    const dateObj=new Date(2026,calendarMonth,d);
+    const k=calendarKey(dateObj);
+    html+=`<div class="cal-day"><div class="cal-day-meta"><div class="cal-day-date">${d}</div><div class="cal-day-name">${dateObj.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div></div><textarea class="cal-note" placeholder="Write note for this day..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea></div>`;
+  }
+  container.innerHTML=html;
+}
+function updateCalendarNote(k,v){calendarNotes[k]=v;save()}
+function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;save();render()}}
+function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;save();render()}}
+function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();render()}
+function nextWeek(){
+  const maxWeek=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);
+  calendarWeekOffset=Math.min(maxWeek,calendarWeekOffset+1);
+  save();render();
+}
+function refreshCalendar(){
+  calendarNotes=JSON.parse(localStorage.getItem(pfx()+'calendar_notes_2026'))||calendarNotes;
+  renderCalendar();
+}
+function handlePanelSwipeStart(e){
+  const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY;
+}
+function handlePanelSwipeEnd(e){
+  const t=e.changedTouches?.[0];if(!t)return;
+  const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;
+  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;
+  if(dx<0&&currentView==='chat')switchView('calendar');
+  if(dx>0&&currentView==='calendar')switchView('chat');
+}
+
 // ── ACTIONS ──
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render()}
-function switchView(v){currentView=v;render()}
+function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render()}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB()}
 function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed'}
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render()}
@@ -845,7 +971,7 @@ function handleAppHotkeys(e){
     toggleSpeechFeedback();
   }else if(key==='m'){
     e.preventDefault();
-    switchView(currentView==='knowledge'?'chat':'knowledge');
+    switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');
   }
 }
 
@@ -892,6 +1018,7 @@ async function sendMessage(){
   const input=document.getElementById('msg-input'),text=input.value.trim();
   if(!text||loading||isCooldownActive())return;
   if(!apiKey){showApiKeyModal();return}
+  if(currentView!=='chat')switchView('chat');
   if(!conversations[activeAgent])conversations[activeAgent]=[];
   conversations[activeAgent].push({role:'user',content:text});
   input.value='';loading=true;startCooldown(12);save();render();
@@ -1205,6 +1332,8 @@ function getProfileName(){
 
 render();
 document.addEventListener('keydown',handleAppHotkeys);
+const mainContent=document.getElementById('main-content');
+if(mainContent){mainContent.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mainContent.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});}
 bindEnterAction(['api-key-input'],saveApiKey);
 bindEnterAction(['new-profile-name','new-profile-pass'],createProfile);
 bindEnterAction(['pass-input'],checkPassword);
