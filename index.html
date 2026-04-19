@@ -149,11 +149,15 @@ a{color:var(--ac)}
 <body>
 <div id="app">
   <div id="sidebar">
-    <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small>MULTI-AGENT SYSTEM v1.0 IRON</small></div></div></div>
+    <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
     <div class="sb-agents"><div class="sb-label">AGENTS <span id="agent-count">5</span></div><div id="agent-cards"></div></div>
     <div class="sb-foot">
       <button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button>
-      <button class="sb-btn sb-key" onclick="showApiKeyModal()">🔑 API Key</button>
+      <div style="display:flex;gap:6px">
+        <button class="sb-btn sb-key" style="flex:1" onclick="showApiKeyModal()">🔑 API</button>
+        <button class="sb-btn sb-key" style="flex:1" onclick="showProfileModal()">👤 Profile</button>
+        <button class="sb-btn sb-key" style="flex:1" onclick="document.getElementById('chpass-modal').style.display='flex'">🔒 PIN</button>
+      </div>
     </div>
   </div>
   <div id="main">
@@ -161,6 +165,7 @@ a{color:var(--ac)}
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
+      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.1</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
@@ -182,9 +187,24 @@ a{color:var(--ac)}
     </div>
     <div id="knowledge-view" style="flex:1;overflow:auto;display:none">
       <div class="kp">
-        <div class="kp-title" id="k-title">Knowledge Base</div>
-        <div class="kp-row"><input class="kp-in" id="k-input" placeholder="Store information..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k-add-btn" onclick="let v=document.getElementById('k-input');if(v.value.trim()){addKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
+        <!-- Primary Memory -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#00d4ff;flex-shrink:0"></div>
+          <div class="kp-title" id="k-title" style="margin-bottom:0">Primary Memory</div>
+        </div>
+        <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Permanent — stored forever until you delete it.</p>
+        <div class="kp-row"><input class="kp-in" id="k-input" placeholder="Store permanent info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k-add-btn" onclick="let v=document.getElementById('k-input');if(v.value.trim()){addKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
         <div id="k-items"></div>
+
+        <!-- Secondary Memory -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:20px;margin-bottom:6px">
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #f59e0b;flex-shrink:0"></div>
+          <div class="kp-title" style="margin-bottom:0;color:#f59e0b">Secondary Memory</div>
+          <span style="font-size:9px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.06em">⚠ TEMPORARY</span>
+        </div>
+        <p style="color:#f59e0b;font-size:10px;margin-bottom:10px;opacity:.7">⚠ Auto-deletes after 24 hours. Use for short-term notes.</p>
+        <div class="kp-row"><input class="kp-in" id="k2-input" placeholder="Store temporary info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addTempKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k2-add-btn" onclick="let v=document.getElementById('k2-input');if(v.value.trim()){addTempKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
+        <div id="k2-items"></div>
       </div>
     </div>
   </div>
@@ -207,6 +227,63 @@ a{color:var(--ac)}
   <div class="md-act"><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="saveApiKey()">Activate</button></div>
 </div></div>
 
+<!-- Profile Picker -->
+<div class="ov" id="profile-modal" style="display:none">
+  <div class="md" style="max-width:400px;text-align:center">
+    <h2>Who's using J.A.R.V.I.S.?</h2>
+    <div id="profile-list" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+      <p style="color:var(--dim);font-size:10px;margin-bottom:10px;letter-spacing:.08em;font-weight:700">NEW PROFILE</p>
+      <input id="new-profile-name" placeholder="Enter name..." style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:8px"/>
+      <input id="new-profile-pass" type="password" placeholder="Set password (required)" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
+      <button onclick="createProfile()" style="width:100%;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Create Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Entry Modal -->
+<div class="ov" id="pass-modal" style="display:none">
+  <div class="md" style="max-width:360px;text-align:center">
+    <h2>🔒 Enter Password</h2>
+    <div id="pass-profile-info" style="margin-bottom:16px"></div>
+    <input id="pass-input" type="password" placeholder="Password" style="width:100%;padding:10px 14px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;margin-bottom:6px;text-align:center" onkeydown="if(event.key==='Enter')checkPassword()"/>
+    <p id="pass-error" style="color:#ff5050;font-size:10px;margin-bottom:8px;min-height:14px"></p>
+    <p><a href="#" onclick="event.preventDefault();showResetModal()" style="color:var(--dim);font-size:10px;text-decoration:none;opacity:.7">Forgot password?</a></p>
+    <div class="md-act" style="margin-top:12px">
+      <button class="md-cancel" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()">Back</button>
+      <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="checkPassword()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="ov" id="reset-modal" style="display:none">
+  <div class="md" style="max-width:360px;text-align:center">
+    <h2>🔓 Reset Password</h2>
+    <div id="reset-profile-info" style="margin-bottom:12px"></div>
+    <p style="color:var(--dim);font-size:10px;margin-bottom:14px">Enter the universal reset code to set a new password.</p>
+    <input id="reset-code" type="password" placeholder="Universal code" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;text-align:center"/>
+    <input id="reset-newpass" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/>
+    <p id="reset-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p>
+    <div class="md-act">
+      <button class="md-cancel" onclick="document.getElementById('reset-modal').style.display='none';document.getElementById('pass-modal').style.display='flex'">Back</button>
+      <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="resetPassword()">Reset</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="chpass-modal" style="display:none">
+  <div class="md" style="max-width:360px;text-align:center">
+    <h2>🔑 Change Password</h2>
+    <input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
+    <input id="chpass-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
+    <p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p>
+    <div class="md-act">
+      <button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button>
+      <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DEFAULT_AGENTS=[
   {id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},
@@ -219,11 +296,41 @@ const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","
 const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
 const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];
 
-let agents=JSON.parse(localStorage.getItem('jv_agents'))||[...DEFAULT_AGENTS];
-let activeAgent=agents[0].id,conversations=JSON.parse(localStorage.getItem('jv_convos'))||{},knowledge=JSON.parse(localStorage.getItem('jv_knowledge'))||[];
-let apiKey=localStorage.getItem('jv_api_key')||'',currentView='chat',loading=false,sidebarOpen=true;
+// ── PROFILE SYSTEM ──
+let profiles = JSON.parse(localStorage.getItem('jv_profiles')) || [];
+let currentProfile = localStorage.getItem('jv_current_profile') || '';
+
+function pfx(){return currentProfile?`jv_${currentProfile}_`:'jv_'}
+
+function loadProfileData(){
+  const p=pfx();
+  agents=JSON.parse(localStorage.getItem(p+'agents'))||[...DEFAULT_AGENTS];
+  activeAgent=agents[0].id;
+  conversations=JSON.parse(localStorage.getItem(p+'convos'))||{};
+  knowledge=JSON.parse(localStorage.getItem(p+'knowledge'))||[];
+  tempKnowledge=JSON.parse(localStorage.getItem(p+'tempknow'))||[];
+  apiKey=localStorage.getItem(p+'api_key')||localStorage.getItem('jv_api_key')||'';
+  agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
+  currentView='chat';loading=false;
+  cleanExpiredTemp();
+}
+
+let agents,conversations,knowledge,tempKnowledge,apiKey;
+let currentView='chat',loading=false,sidebarOpen=true;
 let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
+let agentVoices={},activeAgent;
+
+loadProfileData();
+
+function save(){
+  const p=pfx();
+  localStorage.setItem(p+'agents',JSON.stringify(agents));
+  localStorage.setItem(p+'convos',JSON.stringify(conversations));
+  localStorage.setItem(p+'knowledge',JSON.stringify(knowledge));
+  localStorage.setItem(p+'tempknow',JSON.stringify(tempKnowledge));
+}
+function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey)}
 
 const VOICE_PRESETS=[
   {id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},
@@ -233,7 +340,7 @@ const VOICE_PRESETS=[
 ];
 let agentVoices=JSON.parse(localStorage.getItem('jv_agent_voices'))||{};
 function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday')}
-function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem('jv_agent_voices',JSON.stringify(agentVoices))}
+function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem(pfx()+'voices',JSON.stringify(agentVoices))}
 function save(){localStorage.setItem('jv_agents',JSON.stringify(agents));localStorage.setItem('jv_convos',JSON.stringify(conversations));localStorage.setItem('jv_knowledge',JSON.stringify(knowledge))}
 function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]}
 function getMessages(){return conversations[activeAgent]||[]}
@@ -245,6 +352,7 @@ function render(){
   const a=getAgent(),msgs=getMessages();
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
+  document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
   document.getElementById('agent-cards').innerHTML=agents.map(ag=>`<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`).join('');
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
@@ -274,7 +382,12 @@ function render(){
 
   document.getElementById('k-title').style.color=a.color;
   const kab=document.getElementById('k-add-btn');kab.style.borderColor=`${a.color}44`;kab.style.color=a.color;
-  document.getElementById('k-items').innerHTML=knowledge.length===0?`<p style="color:var(--dim);font-size:11px">No data stored yet.</p>`:knowledge.map((item,i)=>`<div class="kp-item"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}</span><button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`).join('');
+  document.getElementById('k-items').innerHTML=knowledge.length===0?`<p style="color:var(--dim);font-size:11px">No permanent data stored yet.</p>`:knowledge.map((item,i)=>`<div class="kp-item"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}</span><button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`).join('');
+
+  // Secondary memory
+  cleanExpiredTemp();
+  const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';
+  document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Items added here auto-delete after 24 hours.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
 }
 
 // ── 3D ORB ──
@@ -369,6 +482,20 @@ function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'cl
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render()}
 function addKnowledge(t){knowledge.push(t);save();render()}
 function deleteKnowledge(i){knowledge.splice(i,1);save();render()}
+function addTempKnowledge(t){tempKnowledge.push({text:t,created:Date.now()});save();render()}
+function deleteTempKnowledge(i){tempKnowledge.splice(i,1);save();render()}
+function cleanExpiredTemp(){
+  const day=24*60*60*1000;
+  const before=tempKnowledge.length;
+  tempKnowledge=tempKnowledge.filter(item=>Date.now()-item.created<day);
+  if(tempKnowledge.length!==before)save();
+}
+function timeLeft(created){
+  const ms=(created+24*60*60*1000)-Date.now();
+  if(ms<=0)return'Expired';
+  const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
+  return h>0?`${h}h ${m}m left`:`${m}m left`;
+}
 function clearChat(){if(!confirm('Clear chat? Knowledge stays.'))return;conversations[activeAgent]=[];save();render()}
 
 // ── TTS ──
@@ -396,7 +523,7 @@ function stopRec(){isRecording=false;document.getElementById('mic-btn').classLis
 
 // ── AI ──
 async function tryModel(m,sys,c){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});const d=await r.json();if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg}}return{ok:false,retry:true,error:'Unknown'}}
-async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();const kCtx=knowledge.length>0?`\n\nKnowledge base:\n${knowledge.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`:'';const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
+async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();const kCtx=(knowledge.length>0?`\n\nPrimary Memory (permanent):\n${knowledge.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`:'')+(tempKnowledge.length>0?`\n\nSecondary Memory (temporary, auto-deletes in 24h):\n${tempKnowledge.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`:'');const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
 
 // ── MODALS ──
@@ -406,9 +533,179 @@ function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<but
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-modal').style.display='flex'}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;localStorage.setItem('jv_api_key',apiKey);document.getElementById('api-modal').style.display='none';render()}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render()}
 
-render();if(!apiKey)showApiKeyModal();
+// ── PROFILES WITH PASSWORD ──
+// Simple hash function for password (not crypto-grade but obscures the password in localStorage)
+function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}return 'h_'+Math.abs(h).toString(36)}
+
+let failedAttempts={};
+let lockoutUntil={};
+
+function showProfileModal(){
+  const list=document.getElementById('profile-list');
+  list.innerHTML=profiles.length===0?'<p style="color:var(--dim);font-size:11px;width:100%">No profiles yet. Create one below.</p>':
+    profiles.map(p=>{
+      const locked=lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id];
+      return `<div onclick="${locked?'':`promptPassword('${p.id}')`}" style="cursor:${locked?'not-allowed':'pointer'};display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 18px;border-radius:12px;border:1px solid ${p.id===currentProfile?'var(--ac)44':'var(--border)'};background:${p.id===currentProfile?'var(--ac)08':'var(--input)'};min-width:80px;transition:all .2s;position:relative;${locked?'opacity:.5':''}">
+      <div style="width:44px;height:44px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:20px;border:2px solid ${p.id===currentProfile?'var(--ac)':'var(--border)'}">${locked?'🔒':p.avatar||'👤'}</div>
+      <span style="font-size:12px;font-weight:700;color:${p.id===currentProfile?'var(--ac)':'var(--text)'}">${esc(p.name)}</span>
+      ${locked?`<span style="font-size:8px;color:#ff5050">Locked</span>`:p.id===currentProfile?'<span style="font-size:8px;color:var(--ac);letter-spacing:.1em">ACTIVE</span>':'<span style="font-size:8px;color:var(--dim)">🔒</span>'}
+      <button onclick="event.stopPropagation();deleteProfileSecure('${p.id}')" style="position:absolute;top:4px;right:4px;width:16px;height:16px;border-radius:4px;background:rgba(255,50,50,.1);border:1px solid rgba(255,50,50,.2);color:#ff5050;cursor:pointer;font-size:10px;display:grid;place-items:center">×</button>
+    </div>`}).join('');
+  document.getElementById('profile-modal').style.display='flex';
+}
+
+function createProfile(){
+  const name=document.getElementById('new-profile-name').value.trim();
+  const pass=document.getElementById('new-profile-pass').value;
+  if(!name){alert('Enter a name.');return}
+  if(!pass||pass.length<3){alert('Password must be at least 3 characters.');return}
+  const avatars=['👤','👦','👧','🧑','👨','👩','🦸','🧙','🥷','🤓'];
+  const colors=['#1e3a5f','#2d1b4e','#1b3d2f','#4a2020','#3d3520'];
+  const id='p_'+Date.now();
+  profiles.push({id,name,avatar:avatars[profiles.length%avatars.length],color:colors[profiles.length%colors.length],passHash:simpleHash(pass)});
+  localStorage.setItem('jv_profiles',JSON.stringify(profiles));
+  document.getElementById('new-profile-name').value='';
+  document.getElementById('new-profile-pass').value='';
+  switchProfile(id);
+}
+
+let pendingProfileId='';
+function promptPassword(id){
+  // If it's the current active profile, just switch
+  if(id===currentProfile){document.getElementById('profile-modal').style.display='none';return}
+  const p=profiles.find(x=>x.id===id);
+  if(!p)return;
+  pendingProfileId=id;
+  document.getElementById('pass-profile-info').innerHTML=`<div style="width:50px;height:50px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:24px;margin:0 auto 8px;border:2px solid var(--border)">${p.avatar||'👤'}</div><div style="font-weight:700;font-size:14px;color:var(--text)">${esc(p.name)}</div>`;
+  document.getElementById('pass-input').value='';
+  document.getElementById('pass-error').textContent='';
+  document.getElementById('profile-modal').style.display='none';
+  document.getElementById('pass-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('pass-input').focus(),100);
+}
+
+function checkPassword(){
+  const pass=document.getElementById('pass-input').value;
+  const p=profiles.find(x=>x.id===pendingProfileId);
+  if(!p)return;
+
+  // Check lockout
+  if(lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id]){
+    const secs=Math.ceil((lockoutUntil[p.id]-Date.now())/1000);
+    document.getElementById('pass-error').textContent=`Locked. Try again in ${secs}s.`;
+    return;
+  }
+
+  if(simpleHash(pass)===p.passHash){
+    // Success
+    failedAttempts[p.id]=0;
+    document.getElementById('pass-modal').style.display='none';
+    switchProfile(p.id);
+  } else {
+    // Failed
+    failedAttempts[p.id]=(failedAttempts[p.id]||0)+1;
+    if(failedAttempts[p.id]>=3){
+      lockoutUntil[p.id]=Date.now()+60000;
+      document.getElementById('pass-error').textContent='Too many attempts. Locked for 60 seconds.';
+      document.getElementById('pass-input').value='';
+      setTimeout(()=>{delete lockoutUntil[p.id];failedAttempts[p.id]=0},60000);
+    } else {
+      document.getElementById('pass-error').textContent=`Wrong password. ${3-failedAttempts[p.id]} attempt${3-failedAttempts[p.id]===1?'':'s'} left.`;
+      document.getElementById('pass-input').value='';
+    }
+  }
+}
+
+function switchProfile(id){
+  currentProfile=id;
+  localStorage.setItem('jv_current_profile',id);
+  loadProfileData();
+  document.getElementById('profile-modal').style.display='none';
+  render();
+  if(!apiKey)showApiKeyModal();
+}
+
+function deleteProfileSecure(id){
+  const p=profiles.find(x=>x.id===id);
+  if(!p)return;
+  const pass=prompt(`Enter password for "${p.name}" to delete:`);
+  if(pass===null)return;
+  if(simpleHash(pass)!==p.passHash){alert('Wrong password. Cannot delete.');return}
+  if(!confirm(`Are you sure? This will permanently delete "${p.name}" and all their data.`))return;
+  const px=`jv_${id}_`;
+  ['agents','convos','knowledge','tempknow','api_key','voices'].forEach(k=>localStorage.removeItem(px+k));
+  profiles=profiles.filter(x=>x.id!==id);
+  localStorage.setItem('jv_profiles',JSON.stringify(profiles));
+  if(currentProfile===id){
+    currentProfile=profiles.length>0?profiles[0].id:'';
+    localStorage.setItem('jv_current_profile',currentProfile);
+    if(currentProfile)loadProfileData();
+  }
+  if(document.getElementById('profile-modal').style.display==='flex')showProfileModal();
+  else render();
+}
+
+function changePassword(){
+  const oldP=document.getElementById('chpass-old').value;
+  const newP=document.getElementById('chpass-new').value;
+  const msg=document.getElementById('chpass-msg');
+  const p=profiles.find(x=>x.id===currentProfile);
+  if(!p){msg.textContent='No profile selected.';msg.style.color='#ff5050';return}
+  if(simpleHash(oldP)!==p.passHash){msg.textContent='Current password is wrong.';msg.style.color='#ff5050';return}
+  if(!newP||newP.length<3){msg.textContent='New password must be at least 3 characters.';msg.style.color='#ff5050';return}
+  p.passHash=simpleHash(newP);
+  localStorage.setItem('jv_profiles',JSON.stringify(profiles));
+  msg.textContent='Password updated!';msg.style.color='#00d4ff';
+  document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';
+  setTimeout(()=>{document.getElementById('chpass-modal').style.display='none'},1200);
+}
+
+const UNIVERSAL_CODE='6070';
+
+function showResetModal(){
+  const p=profiles.find(x=>x.id===pendingProfileId);
+  if(!p)return;
+  document.getElementById('pass-modal').style.display='none';
+  document.getElementById('reset-profile-info').innerHTML=`<div style="font-weight:700;font-size:13px;color:var(--text)">${esc(p.name)}</div>`;
+  document.getElementById('reset-code').value='';
+  document.getElementById('reset-newpass').value='';
+  document.getElementById('reset-msg').textContent='';
+  document.getElementById('reset-modal').style.display='flex';
+}
+
+function resetPassword(){
+  const code=document.getElementById('reset-code').value;
+  const newP=document.getElementById('reset-newpass').value;
+  const msg=document.getElementById('reset-msg');
+  if(code!==UNIVERSAL_CODE){msg.textContent='Invalid reset code.';msg.style.color='#ff5050';return}
+  if(!newP||newP.length<3){msg.textContent='New password must be at least 3 characters.';msg.style.color='#ff5050';return}
+  const p=profiles.find(x=>x.id===pendingProfileId);
+  if(!p)return;
+  p.passHash=simpleHash(newP);
+  localStorage.setItem('jv_profiles',JSON.stringify(profiles));
+  failedAttempts[p.id]=0;delete lockoutUntil[p.id];
+  msg.textContent='Password reset! Logging in...';msg.style.color='#00d4ff';
+  setTimeout(()=>{document.getElementById('reset-modal').style.display='none';switchProfile(p.id)},1000);
+}
+
+// Show current profile name in sidebar
+function getProfileName(){
+  if(!currentProfile)return'Guest';
+  const p=profiles.find(x=>x.id===currentProfile);
+  return p?p.name:'Guest';
+}
+
+render();
+// Clean expired temp knowledge every 60 seconds and refresh timers
+setInterval(()=>{const before=tempKnowledge.length;cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
+if(profiles.length===0&&!currentProfile){
+  // First time — show profile creation
+  showProfileModal();
+} else if(!apiKey){
+  showApiKeyModal();
+}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
