@@ -176,7 +176,7 @@ if('serviceWorker' in navigator){
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.1</span>
+      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.2</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
@@ -338,6 +338,7 @@ let currentView='chat',loading=false,sidebarOpen=true;
 let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 let agentVoices={},activeAgent='jarvis-core';
+let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
 
 function loadProfileData(){
   const p=pfx();
@@ -345,13 +346,24 @@ function loadProfileData(){
   if(!agents||!agents.length)agents=[...DEFAULT_AGENTS];
   activeAgent=agents[0].id;
   conversations=JSON.parse(localStorage.getItem(p+'convos'))||{};
-  knowledge=JSON.parse(localStorage.getItem(p+'knowledge'))||[];
-  tempKnowledge=JSON.parse(localStorage.getItem(p+'tempknow'))||[];
+  agentKnowledge=JSON.parse(localStorage.getItem(p+'agentknow'))||{};
+  agentTempKnowledge=JSON.parse(localStorage.getItem(p+'agenttempknow'))||{};
+  jarvisImports=JSON.parse(localStorage.getItem(p+'jimports'))||{};
   apiKey=localStorage.getItem(p+'api_key')||'';
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
+  // Migrate old flat knowledge to jarvis-core
+  const oldK=JSON.parse(localStorage.getItem(p+'knowledge'));
+  if(oldK&&oldK.length>0){agentKnowledge['jarvis-core']=(agentKnowledge['jarvis-core']||[]).concat(oldK);localStorage.removeItem(p+'knowledge');}
+  const oldT=JSON.parse(localStorage.getItem(p+'tempknow'));
+  if(oldT&&oldT.length>0){agentTempKnowledge['jarvis-core']=(agentTempKnowledge['jarvis-core']||[]).concat(oldT);localStorage.removeItem(p+'tempknow');}
   currentView='chat';loading=false;
   try{cleanExpiredTemp()}catch(e){}
 }
+
+// Helpers for per-agent memory
+function getKnowledge(agId){return agentKnowledge[agId||activeAgent]||[]}
+function getTempKnowledge(agId){return agentTempKnowledge[agId||activeAgent]||[]}
+function isImportedToJarvis(agId,idx){return !!(jarvisImports[agId]&&jarvisImports[agId][idx])}
 
 if(currentProfile&&profiles.find(x=>x.id===currentProfile)){loadProfileData()}else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;}
 
@@ -359,8 +371,9 @@ function save(){
   const p=pfx();
   localStorage.setItem(p+'agents',JSON.stringify(agents));
   localStorage.setItem(p+'convos',JSON.stringify(conversations));
-  localStorage.setItem(p+'knowledge',JSON.stringify(knowledge));
-  localStorage.setItem(p+'tempknow',JSON.stringify(tempKnowledge));
+  localStorage.setItem(p+'agentknow',JSON.stringify(agentKnowledge));
+  localStorage.setItem(p+'agenttempknow',JSON.stringify(agentTempKnowledge));
+  localStorage.setItem(p+'jimports',JSON.stringify(jarvisImports));
 }
 function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey)}
 
@@ -383,7 +396,10 @@ function render(){
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
   document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
-  document.getElementById('agent-cards').innerHTML=agents.map(ag=>`<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`).join('');
+  document.getElementById('agent-cards').innerHTML=agents.map(ag=>{
+    const isMain=ag.id==='jarvis-core';
+    const isSub=!isMain;
+    return `${isMain?'':''}${isSub&&agents.indexOf(ag)===1?'<div style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.15em;padding:10px 8px 4px;border-top:1px solid var(--border);margin-top:6px">SUB-AGENTS</div>':''}<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}${isMain?';border-width:1.5px':''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}${isMain?' <span style="font-size:8px;opacity:.5;letter-spacing:.05em">MAIN</span>':''}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`}).join('');
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
@@ -410,14 +426,43 @@ function render(){
     setTimeout(()=>{startOrbAnim();updateOrb()},60);
   }
 
+  const isJarvis=activeAgent==='jarvis-core';
+  const knowledge=getKnowledge(activeAgent);
+  const tempKnowledge=getTempKnowledge(activeAgent);
+
+  // Title shows agent name
   document.getElementById('k-title').style.color=a.color;
+  document.getElementById('k-title').textContent=isJarvis?'JARVIS Primary Memory':`${a.name} — Primary Memory`;
+
   const kab=document.getElementById('k-add-btn');kab.style.borderColor=`${a.color}44`;kab.style.color=a.color;
-  document.getElementById('k-items').innerHTML=knowledge.length===0?`<p style="color:var(--dim);font-size:11px">No permanent data stored yet.</p>`:knowledge.map((item,i)=>`<div class="kp-item"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}</span><button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`).join('');
+
+  // Primary memory items — with import-to-JARVIS button for sub-agents
+  let kHtml='';
+  if(knowledge.length===0){kHtml=`<p style="color:var(--dim);font-size:11px">${isJarvis?'No data stored yet.':'No data for this agent yet.'}</p>`}
+  else{kHtml=knowledge.map((item,i)=>{
+    const imported=!isJarvis&&isImportedToJarvis(activeAgent,i);
+    return `<div class="kp-item" style="${imported?'border-color:var(--ac)25;background:var(--ac)05':''}"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}${imported?'<span style="display:block;font-size:9px;color:var(--ac);margin-top:2px;font-weight:700">✓ Shared with JARVIS</span>':''}</span>${!isJarvis?`<button onclick="toggleJarvisImport('${activeAgent}',${i})" style="padding:2px 6px;border-radius:5px;background:${imported?'var(--ac)15':'var(--input)'};border:1px solid ${imported?'var(--ac)33':'var(--border)'};color:${imported?'var(--ac)':'var(--dim)'};cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">${imported?'✓ Shared':'→ Share'}</button>`:''}<button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`}).join('')}
+  document.getElementById('k-items').innerHTML=kHtml;
+
+  // If JARVIS, show imported memories from sub-agents
+  if(isJarvis){
+    let impHtml='';
+    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
+      const agK=getKnowledge(ag.id);
+      const imported=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
+      if(imported.length>0){
+        impHtml+=`<div style="margin-top:8px;padding:8px 10px;background:var(--input);border:1px solid var(--border);border-radius:8px"><div style="font-size:10px;font-weight:700;color:${ag.color};margin-bottom:4px">${ag.icon} ${ag.name} — shared items</div>`;
+        imported.forEach(item=>{impHtml+=`<div style="font-size:11px;color:var(--dim);padding:2px 0;line-height:1.4">• ${esc(item)}</div>`});
+        impHtml+=`</div>`;
+      }
+    });
+    if(impHtml){document.getElementById('k-items').innerHTML+=`<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--ac);letter-spacing:.08em;margin-bottom:8px">📥 IMPORTED FROM SUB-AGENTS</div>${impHtml}</div>`}
+  }
 
   // Secondary memory
   cleanExpiredTemp();
   const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';
-  document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Items added here auto-delete after 24 hours.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
+  document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Auto-deletes after 24h.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
 }
 
 // ── 3D ORB ──
@@ -510,15 +555,22 @@ function switchView(v){currentView=v;render()}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB()}
 function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed'}
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render()}
-function addKnowledge(t){knowledge.push(t);save();render()}
-function deleteKnowledge(i){knowledge.splice(i,1);save();render()}
-function addTempKnowledge(t){tempKnowledge.push({text:t,created:Date.now()});save();render()}
-function deleteTempKnowledge(i){tempKnowledge.splice(i,1);save();render()}
+function addKnowledge(t){if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];agentKnowledge[activeAgent].push(t);save();render()}
+function deleteKnowledge(i){if(agentKnowledge[activeAgent])agentKnowledge[activeAgent].splice(i,1);save();render()}
+function addTempKnowledge(t){if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];agentTempKnowledge[activeAgent].push({text:t,created:Date.now()});save();render()}
+function deleteTempKnowledge(i){if(agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent].splice(i,1);save();render()}
+function toggleJarvisImport(agId,idx){
+  if(!jarvisImports[agId])jarvisImports[agId]={};
+  if(jarvisImports[agId][idx])delete jarvisImports[agId][idx];
+  else jarvisImports[agId][idx]=true;
+  save();render();
+}
 function cleanExpiredTemp(){
   const day=24*60*60*1000;
-  const before=tempKnowledge.length;
-  tempKnowledge=tempKnowledge.filter(item=>Date.now()-item.created<day);
-  if(tempKnowledge.length!==before)save();
+  for(const agId in agentTempKnowledge){
+    agentTempKnowledge[agId]=agentTempKnowledge[agId].filter(item=>Date.now()-item.created<day);
+  }
+  save();
 }
 function timeLeft(created){
   const ms=(created+24*60*60*1000)-Date.now();
@@ -526,7 +578,7 @@ function timeLeft(created){
   const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
   return h>0?`${h}h ${m}m left`:`${m}m left`;
 }
-function clearChat(){if(!confirm('Clear chat? Knowledge stays.'))return;conversations[activeAgent]=[];save();render()}
+function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}
 
 // ── TTS ──
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}
@@ -553,7 +605,22 @@ function stopRec(){isRecording=false;document.getElementById('mic-btn').classLis
 
 // ── AI ──
 async function tryModel(m,sys,c){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});const d=await r.json();if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg}}return{ok:false,retry:true,error:'Unknown'}}
-async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();const kCtx=(knowledge.length>0?`\n\nPrimary Memory (permanent):\n${knowledge.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`:'')+(tempKnowledge.length>0?`\n\nSecondary Memory (temporary, auto-deletes in 24h):\n${tempKnowledge.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`:'');const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
+async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();
+  // Build memory context
+  const myK=getKnowledge(activeAgent);
+  const myT=getTempKnowledge(activeAgent);
+  let kCtx='';
+  if(myK.length>0)kCtx+=`\n\nPrimary Memory:\n${myK.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`;
+  if(myT.length>0)kCtx+=`\n\nTemporary Memory (24h):\n${myT.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`;
+  // If JARVIS, also include imported sub-agent memories
+  if(activeAgent==='jarvis-core'){
+    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
+      const agK=getKnowledge(ag.id);
+      const imported=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
+      if(imported.length>0)kCtx+=`\n\nImported from ${ag.name}:\n${imported.map((k,i)=>`[${ag.name}-${i+1}] ${k}`).join('\n')}`;
+    });
+  }
+  const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
 
 // ── MODALS ──
