@@ -1,5 +1,5 @@
 // JARVIS v1.1 — Force refresh service worker
-const CACHE_NAME = 'jarvis-v1.6';
+const CACHE_NAME = 'jarvis-v1.7';
 
 // On install, clear ALL old caches
 self.addEventListener('install', e => {
