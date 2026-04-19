@@ -52,6 +52,15 @@ a{color:var(--ac)}
 .ag-name{font-weight:700;font-size:12.5px;letter-spacing:.04em;color:var(--dim);line-height:1.2;transition:color .2s}.ag.on .ag-name{color:var(--text)}
 .ag-desc{font-size:10px;color:var(--dim);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 .ag .del{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:5px;background:rgba(255,50,50,.08);border:1px solid rgba(255,50,50,.18);color:#ff5050;font-size:11px;cursor:pointer;display:none;place-items:center}.ag.on .del.yes{display:grid}
+.sb-cooldown-wrap{padding:8px 10px 0;display:flex;justify-content:flex-start}
+.sb-cooldown{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:
+  radial-gradient(circle at center, rgba(11,17,32,.96) 58%, transparent 59%),
+  conic-gradient(#f59e0b var(--cooldown-angle,0deg), rgba(245,158,11,.12) 0deg);
+  border:1px solid rgba(245,158,11,.24);box-shadow:0 0 16px rgba(0,0,0,.16);backdrop-filter:blur(8px)}
+.sb-cooldown.hidden{display:none}
+.sb-cooldown-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.sb-cooldown strong{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:#f59e0b}
+.sb-cooldown span{margin-top:3px;font-size:7px;font-weight:700;letter-spacing:.12em;color:#d3a44b}
 .sb-foot{padding:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
 .sb-btn{width:100%;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center;transition:all .2s}
 .sb-add{background:transparent;border:1px dashed var(--ac)30;color:var(--ac)}
@@ -91,9 +100,6 @@ a{color:var(--ac)}
 .mic.rec{background:rgba(255,60,60,.15);border-color:#ff3c3c;animation:micPulse .9s ease-in-out infinite}
 .mic:disabled,.snd:disabled{opacity:.45;cursor:not-allowed}
 .snd{padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--dim);flex-shrink:0}
-.cooldown-badge{display:flex;align-items:center;justify-content:center;gap:6px;align-self:flex-start;margin:0 0 6px 4px;padding:5px 9px;border-radius:999px;background:rgba(11,17,32,.82);border:1px solid rgba(245,158,11,.24);backdrop-filter:blur(8px);box-shadow:0 0 14px rgba(0,0,0,.14)}
-.cooldown-badge strong{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.06em;color:#f59e0b}
-.cooldown-badge span{font-size:9px;color:#d3a44b;font-weight:700;letter-spacing:.07em}
 
 /* ── ORB ── */
 .orb-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
@@ -176,6 +182,14 @@ if('serviceWorker' in navigator){
   <div id="sidebar">
     <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
     <div class="sb-agents"><div class="sb-label">AGENTS <span id="agent-count">5</span></div><div id="agent-cards"></div></div>
+    <div class="sb-cooldown-wrap">
+      <div id="cooldown-badge" class="sb-cooldown hidden" style="--cooldown-angle:0deg">
+        <div class="sb-cooldown-inner">
+          <strong id="cooldown-seconds">12</strong>
+          <span>WAIT</span>
+        </div>
+      </div>
+    </div>
     <div class="sb-foot">
       <button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button>
       <div style="display:flex;gap:6px">
@@ -210,10 +224,6 @@ if('serviceWorker' in navigator){
       </div>
       <div id="chat" style="position:relative;z-index:2"></div>
       <div id="inp" style="position:relative;z-index:3">
-        <div id="cooldown-badge" class="cooldown-badge" style="display:none">
-          <strong id="cooldown-seconds">12s</strong>
-          <span>COOLDOWN</span>
-        </div>
         <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
           <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
           <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
@@ -439,29 +449,54 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
 function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000))}
 function isCooldownActive(){return getCooldownRemaining()>0}
+function syncCooldownState(){
+  const cooldownActive=isCooldownActive(),cooldownRemaining=getCooldownRemaining();
+  const input=document.getElementById('msg-input');
+  const sb=document.getElementById('send-btn');
+  const mic=document.getElementById('mic-btn');
+  const box=document.getElementById('input-box');
+  if(input){
+    if(!isRecording)input.placeholder=cooldownActive?`Please wait ${cooldownRemaining}s before asking again...`:`Ask ${getAgent().name} anything...`;
+    input.readOnly=cooldownActive;
+  }
+  if(sb){
+    sb.disabled=cooldownActive||loading;
+    sb.textContent=cooldownActive?`${cooldownRemaining}s`:'Send';
+  }
+  if(mic)mic.disabled=cooldownActive;
+  if(box)box.classList.toggle('locked',cooldownActive);
+}
 function updateCooldownUI(){
   const badge=document.getElementById('cooldown-badge');
   const seconds=document.getElementById('cooldown-seconds');
   if(!badge||!seconds)return;
   const remaining=getCooldownRemaining();
   if(remaining>0){
-    badge.style.display='flex';
-    seconds.textContent=`${remaining}s`;
+    badge.classList.remove('hidden');
+    seconds.textContent=`${remaining}`;
+    badge.style.setProperty('--cooldown-angle',`${Math.max(0,Math.min(360,(remaining/12)*360))}deg`);
   }else{
-    badge.style.display='none';
+    badge.classList.add('hidden');
+    badge.style.setProperty('--cooldown-angle','0deg');
   }
 }
 function startCooldown(seconds=12){
   cooldownEnd=Date.now()+(seconds*1000);
   if(cooldownInterval)clearInterval(cooldownInterval);
   cooldownInterval=setInterval(()=>{
+    syncCooldownState();
+    updateCooldownUI();
+    updateOrb();
     if(!isCooldownActive()){
       clearInterval(cooldownInterval);
       cooldownInterval=null;
+      render();
+      return;
     }
-    render();
   },250);
-  render();
+  syncCooldownState();
+  updateCooldownUI();
+  updateOrb();
 }
 function cleanSpeechText(text){
   return (text||'')
@@ -558,16 +593,9 @@ function render(){
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
   vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
   const input=document.getElementById('msg-input');
-  if(!isRecording)input.placeholder=cooldownActive?`Please wait ${cooldownRemaining}s before asking again...`:`Ask ${a.name} anything...`;
   const sb=document.getElementById('send-btn'),has=input.value.trim();
-  const mic=document.getElementById('mic-btn');
-  const box=document.getElementById('input-box');
   sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
-  sb.disabled=cooldownActive||loading;
-  mic.disabled=cooldownActive;
-  input.readOnly=cooldownActive;
-  box.classList.toggle('locked',cooldownActive);
-  sb.textContent=cooldownActive?`${cooldownRemaining}s`:'Send';
+  syncCooldownState();
   updateCooldownUI();
 
   const ca=document.getElementById('chat');
