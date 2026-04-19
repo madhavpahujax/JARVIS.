@@ -263,7 +263,7 @@ if('serviceWorker' in navigator){
     <div id="pass-profile-info" style="margin-bottom:16px"></div>
     <input id="pass-input" type="password" placeholder="Password" style="width:100%;padding:10px 14px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;margin-bottom:6px;text-align:center" onkeydown="if(event.key==='Enter')checkPassword()"/>
     <p id="pass-error" style="color:#ff5050;font-size:10px;margin-bottom:8px;min-height:14px"></p>
-    <p><a href="#" onclick="event.preventDefault();showResetModal()" style="color:var(--ac);font-size:11px;text-decoration:none;font-weight:700">Forgot password? Use reset code</a></p>
+    <button onclick="showResetModal()" style="width:100%;padding:8px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#f59e0b;cursor:pointer;font-weight:700;font-size:11px;margin-bottom:4px">⚠ Forgot password?</button>
     <div class="md-act" style="margin-top:12px">
       <button class="md-cancel" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()">Back</button>
       <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="checkPassword()">Unlock</button>
@@ -289,12 +289,27 @@ if('serviceWorker' in navigator){
 <div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'">
   <div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
     <h2>🔑 Change Password</h2>
-    <input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
-    <input id="chpass-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
-    <p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p>
-    <div class="md-act">
-      <button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button>
-      <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button>
+    <div id="chpass-normal">
+      <input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
+      <input id="chpass-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/>
+      <p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p>
+      <div class="md-act" style="margin-top:8px">
+        <button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button>
+        <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <button onclick="document.getElementById('chpass-normal').style.display='none';document.getElementById('chpass-reset').style.display='block'" style="width:100%;padding:10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#f59e0b;cursor:pointer;font-weight:700;font-size:12px">⚠ Forgot password? Use reset code</button>
+      </div>
+    </div>
+    <div id="chpass-reset" style="display:none">
+      <p style="color:var(--dim);font-size:10px;margin-bottom:12px">Enter the universal reset code to set a new password.</p>
+      <input id="chpass-code" type="password" placeholder="Universal code" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;text-align:center"/>
+      <input id="chpass-reset-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/>
+      <p id="chpass-reset-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p>
+      <div class="md-act">
+        <button class="md-cancel" onclick="document.getElementById('chpass-reset').style.display='none';document.getElementById('chpass-normal').style.display='block'">Back</button>
+        <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="resetFromChangeScreen()">Reset</button>
+      </div>
     </div>
   </div>
 </div>
@@ -664,10 +679,10 @@ function switchProfile(id){
 function deleteProfileSecure(id){
   const p=profiles.find(x=>x.id===id);
   if(!p)return;
-  const pass=prompt(`Enter password for "${p.name}" to delete:`);
+  const pass=prompt(`Delete "${p.name}"?\n\nEnter the profile password OR the universal reset code:`);
   if(pass===null)return;
-  if(simpleHash(pass)!==p.passHash){alert('Wrong password. Cannot delete.');return}
-  if(!confirm(`Are you sure? This will permanently delete "${p.name}" and all their data.`))return;
+  if(simpleHash(pass)!==p.passHash && pass!==UNIVERSAL_CODE){alert('Wrong password / code. Cannot delete.');return}
+  if(!confirm(`FINAL WARNING: This will permanently delete "${p.name}" and ALL their data.\n\nThis cannot be undone.`))return;
   const px=`jv_${id}_`;
   ['agents','convos','knowledge','tempknow','api_key','voices'].forEach(k=>localStorage.removeItem(px+k));
   profiles=profiles.filter(x=>x.id!==id);
@@ -720,6 +735,25 @@ function resetPassword(){
   failedAttempts[p.id]=0;delete lockoutUntil[p.id];
   msg.textContent='Password reset! Logging in...';msg.style.color='#00d4ff';
   setTimeout(()=>{document.getElementById('reset-modal').style.display='none';switchProfile(p.id)},1000);
+}
+
+function resetFromChangeScreen(){
+  const code=document.getElementById('chpass-code').value;
+  const newP=document.getElementById('chpass-reset-new').value;
+  const msg=document.getElementById('chpass-reset-msg');
+  if(code!==UNIVERSAL_CODE){msg.textContent='Invalid reset code.';msg.style.color='#ff5050';return}
+  if(!newP||newP.length<3){msg.textContent='New password must be at least 3 characters.';msg.style.color='#ff5050';return}
+  const p=profiles.find(x=>x.id===currentProfile);
+  if(!p)return;
+  p.passHash=simpleHash(newP);
+  localStorage.setItem('jv_profiles',JSON.stringify(profiles));
+  msg.textContent='Password reset successfully!';msg.style.color='#00d4ff';
+  document.getElementById('chpass-code').value='';document.getElementById('chpass-reset-new').value='';
+  setTimeout(()=>{
+    document.getElementById('chpass-modal').style.display='none';
+    document.getElementById('chpass-reset').style.display='none';
+    document.getElementById('chpass-normal').style.display='block';
+  },1200);
 }
 
 // Show current profile name in sidebar
