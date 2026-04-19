@@ -394,6 +394,8 @@ let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
 let startupCommands=[],speechFeedback=true;
 let cooldownEnd=0,cooldownInterval=null;
 let startupRunLock=false;
+let startupRunTimer=null;
+let appOpenStartupTriggered=false;
 
 function loadProfileData(){
   const p=pfx();
@@ -959,6 +961,18 @@ async function runStartupCommands(){
   startupRunLock=false;
   render();
 }
+function scheduleStartupCommands(delay=250){
+  if(startupRunTimer)clearTimeout(startupRunTimer);
+  startupRunTimer=setTimeout(()=>{
+    startupRunTimer=null;
+    runStartupCommands();
+  },delay);
+}
+function triggerAppOpenStartup(){
+  if(appOpenStartupTriggered)return;
+  appOpenStartupTriggered=true;
+  scheduleStartupCommands(400);
+}
 
 // ── MODALS ──
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}
@@ -967,7 +981,7 @@ function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<but
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();setTimeout(()=>runStartupCommands(),200)}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();scheduleStartupCommands(200)}
 
 // ── PROFILES WITH PASSWORD ──
 // Simple hash function for password (not crypto-grade but obscures the password in localStorage)
@@ -1076,10 +1090,11 @@ function switchProfile(id){
   localStorage.setItem('jv_current_profile',id);
   loadProfileData();
   startupRunLock=false;
+  appOpenStartupTriggered=true;
   document.getElementById('profile-modal').style.display='none';
   render();
   if(!apiKey)showApiKeyModal();
-  else setTimeout(()=>runStartupCommands(),250);
+  else scheduleStartupCommands(250);
 }
 
 function deleteProfileSecure(id){
@@ -1194,8 +1209,9 @@ if(!currentProfile || !profiles.find(x=>x.id===currentProfile)){
 } else if(!apiKey){
   showApiKeyModal();
 } else {
-  setTimeout(()=>runStartupCommands(),350);
+  triggerAppOpenStartup();
 }
+window.addEventListener('pageshow',()=>{if(currentProfile&&apiKey)triggerAppOpenStartup()});
 if('serviceWorker' in navigator){
   // Register new SW after clearing old ones
   setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000);
