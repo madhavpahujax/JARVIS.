@@ -147,6 +147,17 @@ a{color:var(--ac)}
 </style>
 </head>
 <body>
+<script>
+// Force unregister old service workers and clear caches on load
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
+  if('caches' in window){
+    caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
+  }
+}
+</script>
 <div id="app">
   <div id="sidebar">
     <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
@@ -339,10 +350,8 @@ const VOICE_PRESETS=[
   {id:'nova',label:'Nova',gender:'female',pitch:1.1,rate:1.0,keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen']},
   {id:'titan',label:'Titan',gender:'male',pitch:0.85,rate:0.95,keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas']},
 ];
-let agentVoices=JSON.parse(localStorage.getItem('jv_agent_voices'))||{};
 function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday')}
 function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem(pfx()+'voices',JSON.stringify(agentVoices))}
-function save(){localStorage.setItem('jv_agents',JSON.stringify(agents));localStorage.setItem('jv_convos',JSON.stringify(conversations));localStorage.setItem('jv_knowledge',JSON.stringify(knowledge))}
 function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAULT_AGENTS[0]}
 function getMessages(){return conversations[activeAgent]||[]}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -714,7 +723,10 @@ if(!currentProfile || !profiles.find(x=>x.id===currentProfile)){
 } else if(!apiKey){
   showApiKeyModal();
 }
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  // Register new SW after clearing old ones
+  setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000);
+}
 </script>
 </body>
 </html>
