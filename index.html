@@ -360,6 +360,8 @@ let profiles = JSON.parse(localStorage.getItem('jv_profiles')) || [];
 let currentProfile = localStorage.getItem('jv_current_profile') || '';
 
 function pfx(){return currentProfile?`jv_${currentProfile}_`:'jv_'}
+function getGlobalApiKey(){return localStorage.getItem('jv_api_key_global')||''}
+function saveGlobalApiKey(key){localStorage.setItem('jv_api_key_global',key||'')}
 
 let agents=[...DEFAULT_AGENTS],conversations={},knowledge=[],tempKnowledge=[],apiKey='';
 let currentView='chat',loading=false,sidebarOpen=true;
@@ -378,7 +380,7 @@ function loadProfileData(){
   agentKnowledge=JSON.parse(localStorage.getItem(p+'agentknow'))||{};
   agentTempKnowledge=JSON.parse(localStorage.getItem(p+'agenttempknow'))||{};
   jarvisImports=JSON.parse(localStorage.getItem(p+'jimports'))||{};
-  apiKey=localStorage.getItem(p+'api_key')||'';
+  apiKey=localStorage.getItem(p+'api_key')||getGlobalApiKey()||'';
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
   startupCommands=JSON.parse(localStorage.getItem(p+'startup_commands'))||[];
   speechFeedback=JSON.parse(localStorage.getItem(p+'speech_feedback') ?? 'true');
@@ -408,7 +410,7 @@ function save(){
   localStorage.setItem(p+'startup_commands',JSON.stringify(startupCommands));
   localStorage.setItem(p+'speech_feedback',JSON.stringify(speechFeedback));
 }
-function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey)}
+function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey);saveGlobalApiKey(apiKey)}
 
 const VOICE_PRESETS=[
   {id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},
@@ -827,7 +829,7 @@ function closeCreateModal(){document.getElementById('create-modal').style.displa
 function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
-function showApiKeyModal(){document.getElementById('api-modal').style.display='flex'}
+function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}
 function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render()}
 
 // ── PROFILES WITH PASSWORD ──
