@@ -204,7 +204,7 @@ if('serviceWorker' in navigator){
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.6</span>
+      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.7</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
@@ -824,7 +824,16 @@ function timeLeft(created){
   return h>0?`${h}h ${m}m left`:`${m}m left`;
 }
 function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}
-function toggleSpeechFeedback(){speechFeedback=!speechFeedback;if(!speechFeedback&&isSpeaking)stopSpeaking();save();render()}
+function toggleSpeechFeedback(){
+  if(isSpeaking){
+    stopSpeaking();
+    speechFeedback=false;
+  }else{
+    speechFeedback=!speechFeedback;
+  }
+  save();
+  render();
+}
 function handleAppHotkeys(e){
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
   const tag=(document.activeElement?.tagName||'').toLowerCase();
@@ -947,6 +956,16 @@ async function runStartupCommand(command){
   conversations[agentId].push({role:'assistant',content:reply});
   save();
   if(activeAgent===agentId)render();
+  if(speechFeedback&&reply&&!reply.startsWith('Error:')){
+    const previousAgent=activeAgent;
+    activeAgent=agentId;
+    render();
+    setTimeout(()=>{
+      speakAnim(reply);
+      activeAgent=previousAgent;
+      render();
+    },150);
+  }
   return true;
 }
 async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
