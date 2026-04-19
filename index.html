@@ -32,7 +32,7 @@ a{color:var(--ac)}
 
 /* ── LAYOUT ── */
 #app{display:flex;height:100dvh;width:100vw;background:var(--bg)}
-#sidebar{width:280px;min-width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s,min-width .25s;overflow:hidden;z-index:10}
+#sidebar{width:280px;min-width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s,min-width .25s;overflow:hidden;z-index:50}
 #sidebar.closed{width:0;min-width:0}
 #main{flex:1;display:flex;flex-direction:column;min-width:0}
 
@@ -52,15 +52,6 @@ a{color:var(--ac)}
 .ag-name{font-weight:700;font-size:12.5px;letter-spacing:.04em;color:var(--dim);line-height:1.2;transition:color .2s}.ag.on .ag-name{color:var(--text)}
 .ag-desc{font-size:10px;color:var(--dim);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 .ag .del{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:5px;background:rgba(255,50,50,.08);border:1px solid rgba(255,50,50,.18);color:#ff5050;font-size:11px;cursor:pointer;display:none;place-items:center}.ag.on .del.yes{display:grid}
-.sb-cooldown-wrap{padding:8px 10px 0;display:flex;justify-content:flex-start}
-.sb-cooldown{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:
-  radial-gradient(circle at center, rgba(11,17,32,.96) 58%, transparent 59%),
-  conic-gradient(#f59e0b var(--cooldown-angle,0deg), rgba(245,158,11,.12) 0deg);
-  border:1px solid rgba(245,158,11,.24);box-shadow:0 0 16px rgba(0,0,0,.16);backdrop-filter:blur(8px)}
-.sb-cooldown.hidden{display:none}
-.sb-cooldown-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
-.sb-cooldown strong{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:#f59e0b}
-.sb-cooldown span{margin-top:3px;font-size:7px;font-weight:700;letter-spacing:.12em;color:#d3a44b}
 .sb-foot{padding:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
 .sb-btn{width:100%;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center;transition:all .2s}
 .sb-add{background:transparent;border:1px dashed var(--ac)30;color:var(--ac)}
@@ -87,18 +78,14 @@ a{color:var(--ac)}
 .stop-btn{display:block;margin:6px auto;padding:6px 18px;border-radius:8px;background:rgba(255,50,50,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,50,50,.4);color:#ff5050;cursor:pointer;font-weight:700;font-size:11px;letter-spacing:.06em}
 
 /* ── INPUT ── */
-#inp{padding:8px 14px 14px}
+#inp{padding:8px 14px 14px;position:relative;z-index:3}
 #voice-bar{transition:opacity .2s}
 #voice-bar:hover{opacity:1!important}
 .inp-box{display:flex;gap:8px;align-items:flex-end;background:rgba(14,22,40,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:6px 6px 6px 14px;transition:border-color .2s}
 .inp-box:focus-within{border-color:var(--ac)33}
-.inp-box.locked{border-color:rgba(245,158,11,.32);background:rgba(18,23,34,.88)}
 .inp-box textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;resize:none;line-height:1.5;max-height:100px}
-.inp-box.locked textarea{color:var(--dim)}
-.inp-box textarea[readonly]{cursor:not-allowed}
 .mic{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--border);font-size:16px;cursor:pointer;transition:all .2s;display:grid;place-items:center;flex-shrink:0}
 .mic.rec{background:rgba(255,60,60,.15);border-color:#ff3c3c;animation:micPulse .9s ease-in-out infinite}
-.mic:disabled,.snd:disabled{opacity:.45;cursor:not-allowed}
 .snd{padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--dim);flex-shrink:0}
 
 /* ── ORB ── */
@@ -134,11 +121,6 @@ a{color:var(--ac)}
 .kp-idx{font-size:9px;margin-top:2px;font-family:'Orbitron',sans-serif;font-weight:600}
 .kp-txt{flex:1;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5}
 .kp-del{background:none;border:none;color:rgba(255,50,50,.45);cursor:pointer;font-size:13px;padding:0 2px}
-.toggle-chip{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap;transition:all .15s}
-.toggle-chip.on{border-color:var(--ac)44;color:var(--ac);background:var(--ac)0a}
-.toggle-chip .keyhint{display:inline-block;margin-left:6px;padding:1px 4px;border-radius:999px;border:1px solid currentColor;font-size:8px;line-height:1;opacity:.7;vertical-align:middle}
-.kp-mini-btn{padding:6px 10px;border-radius:7px;cursor:pointer;font-weight:700;font-size:10px;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap}
-.kp-mini-btn.on{border-color:var(--ac)33;color:var(--ac);background:var(--ac)0a}
 
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(12px);animation:fadeIn .2s}
@@ -155,41 +137,6 @@ a{color:var(--ac)}
 .md-act button{flex:1;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px}
 .md-cancel{background:var(--input);border:1px solid var(--border);color:var(--dim)}
 .md-go{border:1px solid;background:transparent}
-
-
-
-/* ── MAIN PANELS + CALENDAR ── */
-#main-content{flex:1;min-height:0;position:relative;overflow:hidden}
-.panel{position:absolute;inset:0;overflow:auto;transition:transform .32s ease,opacity .32s ease;will-change:transform,opacity}
-.panel.hidden-right{transform:translateX(100%);opacity:.35;pointer-events:none}
-.panel.hidden-left{transform:translateX(-100%);opacity:.35;pointer-events:none}
-.panel.active{transform:translateX(0);opacity:1;pointer-events:auto}
-#chat-view{display:flex;flex-direction:column;min-height:0;position:absolute;inset:0}
-#chat{padding-bottom:170px}
-#knowledge-view{padding-bottom:170px}
-#calendar-view{padding:14px 14px 170px;overflow:auto}
-.calendar-shell{max-width:780px;margin:0 auto;background:linear-gradient(180deg,rgba(11,17,32,.85),rgba(6,10,18,.92));border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
-.cal-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.cal-title{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.08em;color:var(--ac)}
-.cal-actions{display:flex;gap:6px;flex-wrap:wrap}
-.cal-btn{padding:7px 11px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);font-size:11px;font-weight:700;cursor:pointer}
-.cal-btn.primary{color:var(--ac);border-color:var(--ac)33;background:var(--ac)0d}
-.cal-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-.cal-dow{font-size:10px;color:var(--dim);text-align:center;letter-spacing:.1em;font-weight:700}
-.cal-days{display:flex;flex-direction:column;gap:8px}
-.cal-day{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:stretch;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:8px}
-.cal-day-meta{display:flex;flex-direction:column;justify-content:center;align-items:center;border-right:1px solid var(--border);padding-right:6px}
-.cal-day-date{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--ac)}
-.cal-day-name{font-size:11px;color:var(--dim);letter-spacing:.08em;font-weight:700}
-.cal-note{width:100%;min-height:62px;background:rgba(5,8,15,.7);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical;outline:none}
-.cal-note:focus{border-color:var(--ac)33}
-.swipe-hint{font-size:10px;color:var(--dim);letter-spacing:.06em;text-align:center;padding-top:4px}
-#composer-wrap{position:absolute;left:12px;right:12px;bottom:12px;z-index:20}
-#composer-wrap .inp-box{box-shadow:0 8px 20px rgba(0,0,0,.3)}
-@media(max-width:768px){
-  #composer-wrap{left:8px;right:8px;bottom:8px}
-  .cal-day{grid-template-columns:72px 1fr}
-}
 
 @media(max-width:768px){
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
@@ -217,14 +164,6 @@ if('serviceWorker' in navigator){
   <div id="sidebar">
     <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
     <div class="sb-agents"><div class="sb-label">AGENTS <span id="agent-count">5</span></div><div id="agent-cards"></div></div>
-    <div class="sb-cooldown-wrap">
-      <div id="cooldown-badge" class="sb-cooldown hidden" style="--cooldown-angle:0deg">
-        <div class="sb-cooldown-inner">
-          <strong id="cooldown-seconds">12</strong>
-          <span>WAIT</span>
-        </div>
-      </div>
-    </div>
     <div class="sb-foot">
       <button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button>
       <div style="display:flex;gap:6px">
@@ -239,17 +178,14 @@ if('serviceWorker' in navigator){
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.7</span>
+      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.7.3</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
-        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
-        <button class="toggle-chip" id="speech-toggle" onclick="toggleSpeechFeedback()">Speech On</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
       </div>
     </div>
-    <div id="main-content">
-    <div id="chat-view" class="panel active">
+    <div id="chat-view" style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative">
       <!-- Background orb layer -->
       <div id="bg-orb" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden">
         <div class="orb-wrap" id="bg-orb-wrap" onclick="toggleVoice()" style="pointer-events:auto">
@@ -260,8 +196,18 @@ if('serviceWorker' in navigator){
         </div>
       </div>
       <div id="chat" style="position:relative;z-index:2"></div>
+      <div id="inp" style="position:relative;z-index:3">
+        <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
+          <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
+          <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
+        </div>
+        <div class="inp-box" id="input-box">
+        <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+        <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
+        <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
+      </div></div>
     </div>
-    <div id="knowledge-view" class="panel hidden-right">
+    <div id="knowledge-view" style="flex:1;overflow:auto;display:none">
       <div class="kp">
         <!-- Primary Memory -->
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
@@ -281,53 +227,8 @@ if('serviceWorker' in navigator){
         <p style="color:#f59e0b;font-size:10px;margin-bottom:10px;opacity:.7">⚠ Auto-deletes after 24 hours. Use for short-term notes.</p>
         <div class="kp-row"><input class="kp-in" id="k2-input" placeholder="Store temporary info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addTempKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k2-add-btn" onclick="let v=document.getElementById('k2-input');if(v.value.trim()){addTempKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
         <div id="k2-items"></div>
-
-        <div style="display:flex;align-items:center;gap:6px;margin-top:22px;margin-bottom:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0"></div>
-          <div class="kp-title" style="margin-bottom:0">Login Commands</div>
-        </div>
-        <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Run these automatically whenever this profile logs in. You can pause, edit, rerun, or delete them anytime.</p>
-        <div class="kp-row">
-          <select class="hsel" id="startup-agent" style="min-width:120px"></select>
-          <input class="kp-in" id="startup-input" placeholder="e.g. Give me the latest football news" onkeydown="if(event.key==='Enter'&&this.value.trim()){addStartupCommand();}" />
-          <button class="kp-add" id="startup-add-btn" onclick="addStartupCommand()">+ Add</button>
-        </div>
-        <div id="startup-items"></div>
       </div>
     </div>
-    <div id="calendar-view" class="panel hidden-right">
-      <div class="calendar-shell">
-        <div class="cal-top">
-          <div class="cal-title" id="cal-month-label">2026 — January</div>
-          <div class="cal-actions">
-            <button class="cal-btn" onclick="prevCalendarMonth()">← Prev Month</button>
-            <button class="cal-btn" onclick="nextCalendarMonth()">Next Month →</button>
-            <button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button>
-          </div>
-        </div>
-        <div class="cal-week">
-          <div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div><div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div>
-        </div>
-        <div class="cal-days" id="calendar-days"></div>
-        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
-          <button class="cal-btn" onclick="prevWeek()">↑ Previous Week</button>
-          <button class="cal-btn" onclick="nextWeek()">↓ Next Week</button>
-        </div>
-        <div class="swipe-hint">Swipe left from chat to open calendar, swipe right on calendar to close.</div>
-      </div>
-    </div>
-  </div>
-  <div id="composer-wrap">
-    <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
-      <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
-      <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
-    </div>
-    <div class="inp-box" id="input-box">
-      <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-      <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
-      <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
   </div>
 </div>
 
@@ -424,6 +325,49 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- Changelog Modal -->
+<div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'">
+  <div class="md" style="max-width:460px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin-bottom:0">J.A.R.V.I.S. Changelog</h2>
+      <button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
+
+      <div style="margin-bottom:14px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div>
+        <div style="color:var(--dim)">• Input bar no longer blocks sidebar buttons<br>• All agents now access calendar notes in AI context<br>• Clickable version badge with changelog</div>
+      </div>
+
+      <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div>
+        <div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run prompts on profile login<br>• Speech on/off toggle with keyboard shortcut (K)<br>• Swipe navigation between chat and calendar<br>• Cooldown timer between messages</div>
+      </div>
+
+      <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#a855f7;letter-spacing:.08em;margin-bottom:4px">v1.4</div>
+        <div style="color:var(--dim)">• 3D orb with canvas rendering and organic bulging rings<br>• Translucent chat bubbles with backdrop blur<br>• Orb visible behind messages as background layer<br>• Orbiting energy particles and arc sweeps<br>• Bigger 320px orb</div>
+      </div>
+
+      <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#00ff88;letter-spacing:.08em;margin-bottom:4px">v1.3</div>
+        <div style="color:var(--dim)">• Per-agent memory — each agent has separate storage<br>• Share-to-JARVIS import system for sub-agent data<br>• JARVIS as main agent with sub-agent hierarchy<br>• Password-protected profiles with universal reset (6070)<br>• Forgot password in PIN screen<br>• Primary + secondary (24h auto-delete) memory</div>
+      </div>
+
+      <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#ff6b35;letter-spacing:.08em;margin-bottom:4px">v1.1</div>
+        <div style="color:var(--dim)">• Profile system — multiple users on one device<br>• Password protection with 3-strike lockout<br>• Clear chat button<br>• Professional UI overhaul<br>• Voice selector (Friday, Arjun, Nova, Titan)</div>
+      </div>
+
+      <div style="padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.08em;margin-bottom:4px">v1.0 IRON</div>
+        <div style="color:var(--dim)">• Initial release — multi-agent AI system<br>• 5 agents: JARVIS, Pitch Intel, Transfer Wire, Scholar, Campus<br>• Voice input with auto-send on silence<br>• Text-to-speech with British voice<br>• Custom agent creation<br>• Knowledge base storage<br>• Google Gemini API with 3-model fallback<br>• Internet access via Google Search<br>• Multilingual support<br>• PWA — installable as app</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script>
 const DEFAULT_AGENTS=[
   {id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},
@@ -442,8 +386,6 @@ let profiles = JSON.parse(localStorage.getItem('jv_profiles')) || [];
 let currentProfile = localStorage.getItem('jv_current_profile') || '';
 
 function pfx(){return currentProfile?`jv_${currentProfile}_`:'jv_'}
-function getGlobalApiKey(){return localStorage.getItem('jv_api_key_global')||''}
-function saveGlobalApiKey(key){localStorage.setItem('jv_api_key_global',key||'')}
 
 let agents=[...DEFAULT_AGENTS],conversations={},knowledge=[],tempKnowledge=[],apiKey='';
 let currentView='chat',loading=false,sidebarOpen=true;
@@ -451,13 +393,6 @@ let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 let agentVoices={},activeAgent='jarvis-core';
 let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
-let startupCommands=[],speechFeedback=true;
-let cooldownEnd=0,cooldownInterval=null;
-let startupRunLock=false;
-let startupRunTimer=null;
-let appOpenStartupTriggered=false;
-let calendarMonth=0,calendarWeekOffset=0,calendarNotes={};
-let touchStartX=0,touchStartY=0;
 
 function loadProfileData(){
   const p=pfx();
@@ -468,13 +403,8 @@ function loadProfileData(){
   agentKnowledge=JSON.parse(localStorage.getItem(p+'agentknow'))||{};
   agentTempKnowledge=JSON.parse(localStorage.getItem(p+'agenttempknow'))||{};
   jarvisImports=JSON.parse(localStorage.getItem(p+'jimports'))||{};
-  apiKey=localStorage.getItem(p+'api_key')||getGlobalApiKey()||'';
+  apiKey=localStorage.getItem(p+'api_key')||'';
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
-  startupCommands=JSON.parse(localStorage.getItem(p+'startup_commands'))||[];
-  speechFeedback=JSON.parse(localStorage.getItem(p+'speech_feedback') ?? 'true');
-  calendarNotes=JSON.parse(localStorage.getItem(p+'calendar_notes_2026'))||{};
-  calendarMonth=Number(localStorage.getItem(p+'calendar_month_2026')||0);
-  calendarWeekOffset=Number(localStorage.getItem(p+'calendar_week_2026')||0);
   // Migrate old flat knowledge to jarvis-core
   const oldK=JSON.parse(localStorage.getItem(p+'knowledge'));
   if(oldK&&oldK.length>0){agentKnowledge['jarvis-core']=(agentKnowledge['jarvis-core']||[]).concat(oldK);localStorage.removeItem(p+'knowledge');}
@@ -498,13 +428,8 @@ function save(){
   localStorage.setItem(p+'agentknow',JSON.stringify(agentKnowledge));
   localStorage.setItem(p+'agenttempknow',JSON.stringify(agentTempKnowledge));
   localStorage.setItem(p+'jimports',JSON.stringify(jarvisImports));
-  localStorage.setItem(p+'startup_commands',JSON.stringify(startupCommands));
-  localStorage.setItem(p+'speech_feedback',JSON.stringify(speechFeedback));
-  localStorage.setItem(p+'calendar_notes_2026',JSON.stringify(calendarNotes));
-  localStorage.setItem(p+'calendar_month_2026',String(calendarMonth));
-  localStorage.setItem(p+'calendar_week_2026',String(calendarWeekOffset));
 }
-function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey);saveGlobalApiKey(apiKey)}
+function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey)}
 
 const VOICE_PRESETS=[
   {id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},
@@ -518,133 +443,10 @@ function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAUL
 function getMessages(){return conversations[activeAgent]||[]}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
-function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000))}
-function isCooldownActive(){return getCooldownRemaining()>0}
-function syncCooldownState(){
-  const cooldownActive=isCooldownActive(),cooldownRemaining=getCooldownRemaining();
-  const input=document.getElementById('msg-input');
-  const sb=document.getElementById('send-btn');
-  const mic=document.getElementById('mic-btn');
-  const box=document.getElementById('input-box');
-  if(input){
-    if(!isRecording)input.placeholder=cooldownActive?`Please wait ${cooldownRemaining}s before asking again...`:`Ask ${getAgent().name} anything...`;
-    input.readOnly=cooldownActive;
-  }
-  if(sb){
-    sb.disabled=cooldownActive||loading;
-    sb.textContent=cooldownActive?`${cooldownRemaining}s`:'Send';
-  }
-  if(mic)mic.disabled=cooldownActive;
-  if(box)box.classList.toggle('locked',cooldownActive);
-}
-function updateCooldownUI(){
-  const badge=document.getElementById('cooldown-badge');
-  const seconds=document.getElementById('cooldown-seconds');
-  if(!badge||!seconds)return;
-  const remaining=getCooldownRemaining();
-  if(remaining>0){
-    badge.classList.remove('hidden');
-    seconds.textContent=`${remaining}`;
-    badge.style.setProperty('--cooldown-angle',`${Math.max(0,Math.min(360,(remaining/12)*360))}deg`);
-  }else{
-    badge.classList.add('hidden');
-    badge.style.setProperty('--cooldown-angle','0deg');
-  }
-}
-function startCooldown(seconds=12){
-  cooldownEnd=Date.now()+(seconds*1000);
-  if(cooldownInterval)clearInterval(cooldownInterval);
-  cooldownInterval=setInterval(()=>{
-    syncCooldownState();
-    updateCooldownUI();
-    updateOrb();
-    if(!isCooldownActive()){
-      clearInterval(cooldownInterval);
-      cooldownInterval=null;
-      render();
-      return;
-    }
-  },250);
-  syncCooldownState();
-  updateCooldownUI();
-  updateOrb();
-}
-function cleanSpeechText(text){
-  return (text||'')
-    .replace(/```[\s\S]*?```/g,' ')
-    .replace(/`([^`]+)`/g,' $1 ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ')
-    .replace(/https?:\/\/\S+/gi,' ')
-    .replace(/[\*_#>~|]+/g,' ')
-    .replace(/[•▪◦■□]+/g,' ')
-    .replace(/\[(.*?)\]/g,' $1 ')
-    .replace(/!/g,'.')
-    .replace(/[;:]+/g,', ')
-    .replace(/\s*\n+\s*/g,'. ')
-    .replace(/\s{2,}/g,' ')
-    .replace(/\.{2,}/g,'.')
-    .replace(/,{2,}/g,',')
-    .trim();
-}
-function bindEnterAction(ids, action, opts={}){
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    el.addEventListener('keydown',e=>{
-      if(e.key!=='Enter')return;
-      if(opts.allowShiftEnter&&e.shiftKey)return;
-      if(el.tagName==='TEXTAREA'&&!opts.allowTextareaEnter)return;
-      e.preventDefault();
-      action();
-    });
-  });
-}
-function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
-function normalizeStartupCommands(){
-  startupCommands=(startupCommands||[]).map(cmd=>({
-    id:cmd.id||('sc-'+Date.now()+Math.random().toString(36).slice(2,7)),
-    agentId:agents.find(a=>a.id===cmd.agentId)?.id||'jarvis-core',
-    text:(cmd.text||'').trim(),
-    enabled:cmd.enabled!==false
-  })).filter(cmd=>cmd.text);
-}
-function buildMemoryContext(agentId){
-  const myK=getKnowledge(agentId);
-  const myT=getTempKnowledge(agentId);
-  const isJarvis=agentId==='jarvis-core';
-  let kCtx='';
-  if(myK.length>0)kCtx+=`\n\nPrimary Memory:\n${myK.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`;
-  if(myT.length>0)kCtx+=`\n\nTemporary Memory (24h):\n${myT.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`;
-  if(isJarvis){
-    let networkCtx='';
-    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
-      const agK=getKnowledge(ag.id);
-      const agT=getTempKnowledge(ag.id);
-      const shared=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
-      if(agK.length||agT.length){
-        networkCtx+=`\n\nSub-agent: ${ag.name}`;
-        if(agK.length)networkCtx+=`\nPrimary Memory:\n${agK.map((k,i)=>`[${ag.name}-${i+1}] ${k}${isImportedToJarvis(ag.id,i)?' [PRIORITY SHARED]':''}`).join('\n')}`;
-        if(shared.length)networkCtx+=`\nPriority Shared Memory:\n${shared.map((k,i)=>`[Shared-${ag.name}-${i+1}] ${k}`).join('\n')}`;
-        if(agT.length)networkCtx+=`\nTemporary Memory:\n${agT.map((k,i)=>`[${ag.name}-T${i+1}] ${k.text}`).join('\n')}`;
-      }
-    });
-    if(networkCtx)kCtx+=`\n\nJarvis Sub-agent Memory Network:${networkCtx}`;
-  }
-  return kCtx;
-}
-function buildSystemPrompt(agentId){
-  const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
-  const jarvisDirective=agentId==='jarvis-core'
-    ? '\n\nROLE UPGRADE: You are the main J.A.R.V.I.S. agent. Treat yourself as the central coordinator for every specialist sub-agent. You have direct access to your own memory and the full sub-agent memory network shown below. When specialist memory is relevant, use it naturally without saying you cannot access it.'
-    : '\n\nROLE UPGRADE: You are a specialist sub-agent operating under the main J.A.R.V.I.S. system. Use your own memory confidently and stay consistent with the wider Jarvis experience.';
-  return agent.systemPrompt+jarvisDirective+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';
-}
 
 // ── RENDER ──
 function render(){
   const a=getAgent(),msgs=getMessages();
-  normalizeStartupCommands();
-  const cooldownActive=isCooldownActive(),cooldownRemaining=getCooldownRemaining();
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
   document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
@@ -655,25 +457,14 @@ function render(){
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
-  ['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'')});
-  const speechToggle=document.getElementById('speech-toggle');
-  speechToggle.innerHTML=`${speechFeedback?'Speech On':'Speech Off'}<span class="keyhint">K</span>`;
-  speechToggle.className='toggle-chip'+(speechFeedback?' on':'');
-  ['chat','knowledge','calendar'].forEach(v=>{
-    const panel=document.getElementById(v+'-view');
-    if(!panel)return;
-    panel.classList.remove('active','hidden-left','hidden-right');
-    if(v===currentView)panel.classList.add('active');
-    else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))panel.classList.add('hidden-left');
-    else panel.classList.add('hidden-right');
-  });
+  ['chat','knowledge'].forEach(v=>{const b=document.getElementById('tab-'+v);b.className='hbtn'+(currentView===v?' on':'')});
+  document.getElementById('chat-view').style.display=currentView==='chat'?'flex':'none';
+  document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
   vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
-  const input=document.getElementById('msg-input');
-  const sb=document.getElementById('send-btn'),has=input.value.trim();
+  if(!isRecording)document.getElementById('msg-input').placeholder=`Ask ${a.name} anything...`;
+  const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
   sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
-  syncCooldownState();
-  updateCooldownUI();
 
   const ca=document.getElementById('chat');
   const bgBox=document.getElementById('bg-orb-box');
@@ -688,7 +479,7 @@ function render(){
     bgStatus.textContent='Tap to speak';
   } else {
     let h='';
-    h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
+    h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
     if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
     if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;
     ca.innerHTML=h;ca.scrollTop=ca.scrollHeight;
@@ -732,17 +523,6 @@ function render(){
   cleanExpiredTemp();
   const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';
   document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Auto-deletes after 24h.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
-  const startupAgent=document.getElementById('startup-agent');
-  startupAgent.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');
-  if(!startupAgent.value||!agents.find(ag=>ag.id===startupAgent.value))startupAgent.value='jarvis-core';
-  const startupBtn=document.getElementById('startup-add-btn');
-  startupBtn.style.borderColor=`${a.color}44`;
-  startupBtn.style.color=a.color;
-  renderCalendar();
-
-  document.getElementById('startup-items').innerHTML=startupCommands.length===0
-    ? `<p style="color:var(--dim);font-size:11px">No login commands yet. Add one to make Jarvis brief you automatically when you log in.</p>`
-    : startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
 }
 
 // ── 3D ORB ──
@@ -860,7 +640,7 @@ function startOrbAnim(){
   if(orbAF)cancelAnimationFrame(orbAF);draw();
 }
 
-function statusText(){if(isCooldownActive())return`Cooldown ${getCooldownRemaining()}s`;if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
+function statusText(){if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
 function updateOrb(){
   const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core'),s=document.getElementById('orb-status');
   if(!o||!c)return;
@@ -870,59 +650,9 @@ function updateOrb(){
 }
 setInterval(()=>{startOrbAnim()},600);
 
-
-function calendarKey(dateObj){
-  const m=String(dateObj.getMonth()+1).padStart(2,'0');
-  const d=String(dateObj.getDate()).padStart(2,'0');
-  return `2026-${m}-${d}`;
-}
-function monthMeta(idx){return new Date(2026,idx,1)}
-function monthLabel(idx){return monthMeta(idx).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
-function daysInMonth(idx){return new Date(2026,idx+1,0).getDate()}
-function renderCalendar(){
-  const label=document.getElementById('cal-month-label'),container=document.getElementById('calendar-days');
-  if(!label||!container)return;
-  calendarMonth=Math.max(0,Math.min(11,calendarMonth));
-  const totalDays=daysInMonth(calendarMonth);
-  const maxWeek=Math.max(0,Math.ceil(totalDays/7)-1);
-  calendarWeekOffset=Math.max(0,Math.min(maxWeek,calendarWeekOffset));
-  label.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');
-  const start=calendarWeekOffset*7+1,end=Math.min(totalDays,start+6);
-  let html='';
-  for(let d=start;d<=end;d++){
-    const dateObj=new Date(2026,calendarMonth,d);
-    const k=calendarKey(dateObj);
-    html+=`<div class="cal-day"><div class="cal-day-meta"><div class="cal-day-date">${d}</div><div class="cal-day-name">${dateObj.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div></div><textarea class="cal-note" placeholder="Write note for this day..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea></div>`;
-  }
-  container.innerHTML=html;
-}
-function updateCalendarNote(k,v){calendarNotes[k]=v;save()}
-function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;save();render()}}
-function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;save();render()}}
-function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();render()}
-function nextWeek(){
-  const maxWeek=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);
-  calendarWeekOffset=Math.min(maxWeek,calendarWeekOffset+1);
-  save();render();
-}
-function refreshCalendar(){
-  calendarNotes=JSON.parse(localStorage.getItem(pfx()+'calendar_notes_2026'))||calendarNotes;
-  renderCalendar();
-}
-function handlePanelSwipeStart(e){
-  const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY;
-}
-function handlePanelSwipeEnd(e){
-  const t=e.changedTouches?.[0];if(!t)return;
-  const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;
-  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;
-  if(dx<0&&currentView==='chat')switchView('calendar');
-  if(dx>0&&currentView==='calendar')switchView('chat');
-}
-
 // ── ACTIONS ──
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render()}
-function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render()}
+function switchView(v){currentView=v;render()}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB()}
 function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed'}
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render()}
@@ -950,42 +680,15 @@ function timeLeft(created){
   return h>0?`${h}h ${m}m left`:`${m}m left`;
 }
 function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}
-function toggleSpeechFeedback(){
-  if(isSpeaking){
-    stopSpeaking();
-    speechFeedback=false;
-  }else{
-    speechFeedback=!speechFeedback;
-  }
-  save();
-  render();
-}
-function handleAppHotkeys(e){
-  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
-  const tag=(document.activeElement?.tagName||'').toLowerCase();
-  const typingContext=tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable;
-  if(typingContext)return;
-  const key=(e.key||'').toLowerCase();
-  if(key==='k'){
-    e.preventDefault();
-    toggleSpeechFeedback();
-  }else if(key==='m'){
-    e.preventDefault();
-    switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');
-  }
-}
 
 // ── TTS ──
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}
 function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m}return ev[0]||voices[0]}
 function speakAnim(text){
-  if(!speechFeedback)return;
-  const spoken=cleanSpeechText(text);
-  if(!spoken)return;
   speechSynthesis.cancel();isSpeaking=true;render();
   const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
-  const u=new SpeechSynthesisUtterance(spoken);
-  const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
+  const u=new SpeechSynthesisUtterance(text);
+  const hD=/[\u0900-\u097F]/.test(text),hA=/[\u0600-\u06FF]/.test(text),hC=/[\u4e00-\u9fff]/.test(text),hJ=/[\u3040-\u30ff]/.test(text),hK=/[\uac00-\ud7af]/.test(text),hR=/[\u0400-\u04FF]/.test(text);
   u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
   u.rate=preset.rate;u.pitch=preset.pitch;
   const voices=speechSynthesis.getVoices(),lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
@@ -997,128 +700,40 @@ speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speec
 
 // ── VOICE INPUT ──
 function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false}recognition=new SR();try{recognition.lang=''}catch(e){recognition.lang='en-US'}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop()},1500)};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage()}else{stopRec()}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec()};return true}
-function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}
-function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}
+function toggleVoice(){if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}
+function startRec(){if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}
 function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb()}
 
 // ── AI ──
 async function tryModel(m,sys,c){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});const d=await r.json();if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg}}return{ok:false,retry:true,error:'Unknown'}}
-async function generateReplyForAgent(agentId,contents){
-  const sys=buildSystemPrompt(agentId);
-  let reply='',success=false;
-  for(const model of MODELS){
-    const r=await tryModel(model,sys,contents);
-    if(r.ok){reply=r.reply;success=true;break}
-    if(!r.retry){reply=`Error: ${r.error}`;break}
+async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();
+  // Build memory context
+  const myK=getKnowledge(activeAgent);
+  const myT=getTempKnowledge(activeAgent);
+  let kCtx='';
+  if(myK.length>0)kCtx+=`\n\nPrimary Memory:\n${myK.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`;
+  if(myT.length>0)kCtx+=`\n\nTemporary Memory (24h):\n${myT.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`;
+  // If JARVIS, also include imported sub-agent memories
+  if(activeAgent==='jarvis-core'){
+    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
+      const agK=getKnowledge(ag.id);
+      const imported=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
+      if(imported.length>0)kCtx+=`\n\nImported from ${ag.name}:\n${imported.map((k,i)=>`[${ag.name}-${i+1}] ${k}`).join('\n')}`;
+    });
   }
-  if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";
-  return reply;
-}
-async function sendMessage(){
-  const input=document.getElementById('msg-input'),text=input.value.trim();
-  if(!text||loading||isCooldownActive())return;
-  if(!apiKey){showApiKeyModal();return}
-  if(currentView!=='chat')switchView('chat');
-  if(!conversations[activeAgent])conversations[activeAgent]=[];
-  conversations[activeAgent].push({role:'user',content:text});
-  input.value='';loading=true;startCooldown(12);save();render();
-  const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
-  try{
-    const reply=await generateReplyForAgent(activeAgent,contents);
-    conversations[activeAgent].push({role:'assistant',content:reply});
-    if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}
-  }catch(e){
-    conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})
+  // Calendar notes — give all agents access to upcoming notes
+  const calEntries=Object.entries(calendarNotes).filter(([k,v])=>v&&v.trim()).sort(([a],[b])=>a.localeCompare(b));
+  if(calEntries.length>0){
+    const today=new Date().toISOString().slice(0,10);
+    const upcoming=calEntries.filter(([k])=>k>=today).slice(0,14);
+    const past=calEntries.filter(([k])=>k<today).slice(-7);
+    let calCtx='\n\nCalendar Notes (2026):';
+    if(upcoming.length)calCtx+=`\nUpcoming:\n${upcoming.map(([k,v])=>`[${k}] ${v}`).join('\n')}`;
+    if(past.length)calCtx+=`\nRecent past:\n${past.map(([k,v])=>`[${k}] ${v}`).join('\n')}`;
+    kCtx+=calCtx;
   }
-  voiceMode=false;loading=false;save();render()
-}
+  const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
-function addStartupCommand(){
-  const input=document.getElementById('startup-input');
-  const text=input.value.trim();
-  if(!text)return;
-  const agentId=document.getElementById('startup-agent').value||'jarvis-core';
-  startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});
-  input.value='';
-  save();
-  render();
-}
-function moveStartupCommand(i,dir){
-  const next=i+dir;
-  if(i<0||i>=startupCommands.length||next<0||next>=startupCommands.length)return;
-  const item=startupCommands[i];
-  startupCommands.splice(i,1);
-  startupCommands.splice(next,0,item);
-  save();
-  render();
-}
-function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render()}
-function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render()}
-function editStartupCommand(i){
-  const cmd=startupCommands[i];
-  if(!cmd)return;
-  const next=prompt('Edit this login command:',cmd.text);
-  if(next===null)return;
-  const clean=next.trim();
-  if(!clean){deleteStartupCommand(i);return}
-  cmd.text=clean;
-  const agentPick=prompt(`Run this through which agent?\nCurrent: ${getStartupAgentName(cmd.agentId)}\n\nEnter an exact agent name or leave blank to keep it.`,getStartupAgentName(cmd.agentId));
-  if(agentPick!==null&&agentPick.trim()){
-    const found=agents.find(ag=>ag.name.toLowerCase()===agentPick.trim().toLowerCase());
-    if(found)cmd.agentId=found.id;
-  }
-  save();render();
-}
-async function runStartupCommand(command){
-  if(!apiKey)return false;
-  const cmd=typeof command==='number'?startupCommands[command]:command;
-  if(!cmd||!cmd.enabled)return false;
-  const agentId=agents.find(ag=>ag.id===cmd.agentId)?.id||'jarvis-core';
-  if(!conversations[agentId])conversations[agentId]=[];
-  const startupPrompt=`Startup command for this login session: ${cmd.text}`;
-  conversations[agentId].push({role:'user',content:`[Login Command] ${cmd.text}`});
-  const contents=conversations[agentId].slice(-12).concat([{role:'user',content:startupPrompt}]).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
-  let reply='';
-  try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}
-  conversations[agentId].push({role:'assistant',content:reply});
-  save();
-  if(activeAgent===agentId)render();
-  if(speechFeedback&&reply&&!reply.startsWith('Error:')){
-    const previousAgent=activeAgent;
-    activeAgent=agentId;
-    render();
-    setTimeout(()=>{
-      speakAnim(reply);
-      activeAgent=previousAgent;
-      render();
-    },150);
-  }
-  return true;
-}
-async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
-async function runStartupCommands(){
-  if(startupRunLock)return;
-  normalizeStartupCommands();
-  if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;
-  startupRunLock=true;
-  for(const cmd of startupCommands){
-    if(cmd.enabled)await runStartupCommand(cmd);
-  }
-  startupRunLock=false;
-  render();
-}
-function scheduleStartupCommands(delay=250){
-  if(startupRunTimer)clearTimeout(startupRunTimer);
-  startupRunTimer=setTimeout(()=>{
-    startupRunTimer=null;
-    runStartupCommands();
-  },delay);
-}
-function triggerAppOpenStartup(){
-  if(appOpenStartupTriggered)return;
-  appOpenStartupTriggered=true;
-  scheduleStartupCommands(400);
-}
 
 // ── MODALS ──
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}
@@ -1126,8 +741,8 @@ function closeCreateModal(){document.getElementById('create-modal').style.displa
 function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
-function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();scheduleStartupCommands(200)}
+function showApiKeyModal(){document.getElementById('api-modal').style.display='flex'}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render()}
 
 // ── PROFILES WITH PASSWORD ──
 // Simple hash function for password (not crypto-grade but obscures the password in localStorage)
@@ -1235,12 +850,9 @@ function switchProfile(id){
   currentProfile=id;
   localStorage.setItem('jv_current_profile',id);
   loadProfileData();
-  startupRunLock=false;
-  appOpenStartupTriggered=true;
   document.getElementById('profile-modal').style.display='none';
   render();
   if(!apiKey)showApiKeyModal();
-  else scheduleStartupCommands(250);
 }
 
 function deleteProfileSecure(id){
@@ -1251,7 +863,7 @@ function deleteProfileSecure(id){
   if(simpleHash(pass)!==p.passHash && pass!==UNIVERSAL_CODE){alert('Wrong password / code. Cannot delete.');return}
   if(!confirm(`FINAL WARNING: This will permanently delete "${p.name}" and ALL their data.\n\nThis cannot be undone.`))return;
   const px=`jv_${id}_`;
-  ['agents','convos','knowledge','tempknow','agentknow','agenttempknow','jimports','api_key','voices','startup_commands','speech_feedback'].forEach(k=>localStorage.removeItem(px+k));
+  ['agents','convos','knowledge','tempknow','api_key','voices'].forEach(k=>localStorage.removeItem(px+k));
   profiles=profiles.filter(x=>x.id!==id);
   localStorage.setItem('jv_profiles',JSON.stringify(profiles));
   if(currentProfile===id){
@@ -1331,16 +943,6 @@ function getProfileName(){
 }
 
 render();
-document.addEventListener('keydown',handleAppHotkeys);
-const mainContent=document.getElementById('main-content');
-if(mainContent){mainContent.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mainContent.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});}
-bindEnterAction(['api-key-input'],saveApiKey);
-bindEnterAction(['new-profile-name','new-profile-pass'],createProfile);
-bindEnterAction(['pass-input'],checkPassword);
-bindEnterAction(['reset-code','reset-newpass'],resetPassword);
-bindEnterAction(['chpass-old','chpass-new'],changePassword);
-bindEnterAction(['chpass-code','chpass-reset-new'],resetFromChangeScreen);
-bindEnterAction(['ca-name','ca-desc'],deployAgent);
 // Clean expired temp knowledge every 60 seconds
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
 
@@ -1351,15 +953,11 @@ if(!currentProfile || !profiles.find(x=>x.id===currentProfile)){
   localStorage.setItem('jv_current_profile','');
   // Load defaults so the app doesn't break
   agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};knowledge=[];tempKnowledge=[];
-  startupCommands=[];speechFeedback=true;
   render();
   showProfileModal();
 } else if(!apiKey){
   showApiKeyModal();
-} else {
-  triggerAppOpenStartup();
 }
-window.addEventListener('pageshow',()=>{if(currentProfile&&apiKey)triggerAppOpenStartup()});
 if('serviceWorker' in navigator){
   // Register new SW after clearing old ones
   setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000);
