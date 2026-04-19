@@ -121,6 +121,10 @@ a{color:var(--ac)}
 .kp-idx{font-size:9px;margin-top:2px;font-family:'Orbitron',sans-serif;font-weight:600}
 .kp-txt{flex:1;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5}
 .kp-del{background:none;border:none;color:rgba(255,50,50,.45);cursor:pointer;font-size:13px;padding:0 2px}
+.toggle-chip{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap;transition:all .15s}
+.toggle-chip.on{border-color:var(--ac)44;color:var(--ac);background:var(--ac)0a}
+.kp-mini-btn{padding:6px 10px;border-radius:7px;cursor:pointer;font-weight:700;font-size:10px;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap}
+.kp-mini-btn.on{border-color:var(--ac)33;color:var(--ac);background:var(--ac)0a}
 
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(12px);animation:fadeIn .2s}
@@ -182,6 +186,7 @@ if('serviceWorker' in navigator){
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
+        <button class="toggle-chip" id="speech-toggle" onclick="toggleSpeechFeedback()">Speech On</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
       </div>
     </div>
@@ -227,6 +232,18 @@ if('serviceWorker' in navigator){
         <p style="color:#f59e0b;font-size:10px;margin-bottom:10px;opacity:.7">⚠ Auto-deletes after 24 hours. Use for short-term notes.</p>
         <div class="kp-row"><input class="kp-in" id="k2-input" placeholder="Store temporary info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addTempKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k2-add-btn" onclick="let v=document.getElementById('k2-input');if(v.value.trim()){addTempKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
         <div id="k2-items"></div>
+
+        <div style="display:flex;align-items:center;gap:6px;margin-top:22px;margin-bottom:6px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0"></div>
+          <div class="kp-title" style="margin-bottom:0">Login Commands</div>
+        </div>
+        <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Run these automatically whenever this profile logs in. You can pause, edit, rerun, or delete them anytime.</p>
+        <div class="kp-row">
+          <select class="hsel" id="startup-agent" style="min-width:120px"></select>
+          <input class="kp-in" id="startup-input" placeholder="e.g. Give me the latest football news" onkeydown="if(event.key==='Enter'&&this.value.trim()){addStartupCommand();}" />
+          <button class="kp-add" id="startup-add-btn" onclick="addStartupCommand()">+ Add</button>
+        </div>
+        <div id="startup-items"></div>
       </div>
     </div>
   </div>
@@ -350,6 +367,7 @@ let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 let agentVoices={},activeAgent='jarvis-core';
 let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
+let startupCommands=[],speechFeedback=true;
 
 function loadProfileData(){
   const p=pfx();
@@ -362,6 +380,8 @@ function loadProfileData(){
   jarvisImports=JSON.parse(localStorage.getItem(p+'jimports'))||{};
   apiKey=localStorage.getItem(p+'api_key')||'';
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
+  startupCommands=JSON.parse(localStorage.getItem(p+'startup_commands'))||[];
+  speechFeedback=JSON.parse(localStorage.getItem(p+'speech_feedback') ?? 'true');
   // Migrate old flat knowledge to jarvis-core
   const oldK=JSON.parse(localStorage.getItem(p+'knowledge'));
   if(oldK&&oldK.length>0){agentKnowledge['jarvis-core']=(agentKnowledge['jarvis-core']||[]).concat(oldK);localStorage.removeItem(p+'knowledge');}
@@ -385,6 +405,8 @@ function save(){
   localStorage.setItem(p+'agentknow',JSON.stringify(agentKnowledge));
   localStorage.setItem(p+'agenttempknow',JSON.stringify(agentTempKnowledge));
   localStorage.setItem(p+'jimports',JSON.stringify(jarvisImports));
+  localStorage.setItem(p+'startup_commands',JSON.stringify(startupCommands));
+  localStorage.setItem(p+'speech_feedback',JSON.stringify(speechFeedback));
 }
 function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey)}
 
@@ -400,10 +422,51 @@ function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAUL
 function getMessages(){return conversations[activeAgent]||[]}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
+function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
+function normalizeStartupCommands(){
+  startupCommands=(startupCommands||[]).map(cmd=>({
+    id:cmd.id||('sc-'+Date.now()+Math.random().toString(36).slice(2,7)),
+    agentId:agents.find(a=>a.id===cmd.agentId)?.id||'jarvis-core',
+    text:(cmd.text||'').trim(),
+    enabled:cmd.enabled!==false
+  })).filter(cmd=>cmd.text);
+}
+function buildMemoryContext(agentId){
+  const myK=getKnowledge(agentId);
+  const myT=getTempKnowledge(agentId);
+  const isJarvis=agentId==='jarvis-core';
+  let kCtx='';
+  if(myK.length>0)kCtx+=`\n\nPrimary Memory:\n${myK.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`;
+  if(myT.length>0)kCtx+=`\n\nTemporary Memory (24h):\n${myT.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`;
+  if(isJarvis){
+    let networkCtx='';
+    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
+      const agK=getKnowledge(ag.id);
+      const agT=getTempKnowledge(ag.id);
+      const shared=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
+      if(agK.length||agT.length){
+        networkCtx+=`\n\nSub-agent: ${ag.name}`;
+        if(agK.length)networkCtx+=`\nPrimary Memory:\n${agK.map((k,i)=>`[${ag.name}-${i+1}] ${k}${isImportedToJarvis(ag.id,i)?' [PRIORITY SHARED]':''}`).join('\n')}`;
+        if(shared.length)networkCtx+=`\nPriority Shared Memory:\n${shared.map((k,i)=>`[Shared-${ag.name}-${i+1}] ${k}`).join('\n')}`;
+        if(agT.length)networkCtx+=`\nTemporary Memory:\n${agT.map((k,i)=>`[${ag.name}-T${i+1}] ${k.text}`).join('\n')}`;
+      }
+    });
+    if(networkCtx)kCtx+=`\n\nJarvis Sub-agent Memory Network:${networkCtx}`;
+  }
+  return kCtx;
+}
+function buildSystemPrompt(agentId){
+  const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
+  const jarvisDirective=agentId==='jarvis-core'
+    ? '\n\nROLE UPGRADE: You are the main J.A.R.V.I.S. agent. Treat yourself as the central coordinator for every specialist sub-agent. You have direct access to your own memory and the full sub-agent memory network shown below. When specialist memory is relevant, use it naturally without saying you cannot access it.'
+    : '\n\nROLE UPGRADE: You are a specialist sub-agent operating under the main J.A.R.V.I.S. system. Use your own memory confidently and stay consistent with the wider Jarvis experience.';
+  return agent.systemPrompt+jarvisDirective+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';
+}
 
 // ── RENDER ──
 function render(){
   const a=getAgent(),msgs=getMessages();
+  normalizeStartupCommands();
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
   document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
@@ -415,6 +478,9 @@ function render(){
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
   ['chat','knowledge'].forEach(v=>{const b=document.getElementById('tab-'+v);b.className='hbtn'+(currentView===v?' on':'')});
+  const speechToggle=document.getElementById('speech-toggle');
+  speechToggle.textContent=speechFeedback?'Speech On':'Speech Off';
+  speechToggle.className='toggle-chip'+(speechFeedback?' on':'');
   document.getElementById('chat-view').style.display=currentView==='chat'?'flex':'none';
   document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
@@ -436,7 +502,7 @@ function render(){
     bgStatus.textContent='Tap to speak';
   } else {
     let h='';
-    h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
+    h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
     if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
     if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;
     ca.innerHTML=h;ca.scrollTop=ca.scrollHeight;
@@ -480,6 +546,15 @@ function render(){
   cleanExpiredTemp();
   const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';
   document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Auto-deletes after 24h.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
+  const startupAgent=document.getElementById('startup-agent');
+  startupAgent.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');
+  if(!startupAgent.value||!agents.find(ag=>ag.id===startupAgent.value))startupAgent.value='jarvis-core';
+  const startupBtn=document.getElementById('startup-add-btn');
+  startupBtn.style.borderColor=`${a.color}44`;
+  startupBtn.style.color=a.color;
+  document.getElementById('startup-items').innerHTML=startupCommands.length===0
+    ? `<p style="color:var(--dim);font-size:11px">No login commands yet. Add one to make Jarvis brief you automatically when you log in.</p>`
+    : startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
 }
 
 // ── 3D ORB ──
@@ -637,11 +712,13 @@ function timeLeft(created){
   return h>0?`${h}h ${m}m left`:`${m}m left`;
 }
 function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}
+function toggleSpeechFeedback(){speechFeedback=!speechFeedback;if(!speechFeedback&&isSpeaking)stopSpeaking();save();render()}
 
 // ── TTS ──
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}
 function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m}return ev[0]||voices[0]}
 function speakAnim(text){
+  if(!speechFeedback)return;
   speechSynthesis.cancel();isSpeaking=true;render();
   const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
   const u=new SpeechSynthesisUtterance(text);
@@ -663,23 +740,86 @@ function stopRec(){isRecording=false;document.getElementById('mic-btn').classLis
 
 // ── AI ──
 async function tryModel(m,sys,c){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});const d=await r.json();if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg}}return{ok:false,retry:true,error:'Unknown'}}
-async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading)return;if(!apiKey){showApiKeyModal();return}const a=getAgent();if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;save();render();
-  // Build memory context
-  const myK=getKnowledge(activeAgent);
-  const myT=getTempKnowledge(activeAgent);
-  let kCtx='';
-  if(myK.length>0)kCtx+=`\n\nPrimary Memory:\n${myK.map((k,i)=>`[${i+1}] ${k}`).join('\n')}`;
-  if(myT.length>0)kCtx+=`\n\nTemporary Memory (24h):\n${myT.map((k,i)=>`[T${i+1}] ${k.text}`).join('\n')}`;
-  // If JARVIS, also include imported sub-agent memories
-  if(activeAgent==='jarvis-core'){
-    agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{
-      const agK=getKnowledge(ag.id);
-      const imported=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));
-      if(imported.length>0)kCtx+=`\n\nImported from ${ag.name}:\n${imported.map((k,i)=>`[${ag.name}-${i+1}] ${k}`).join('\n')}`;
-    });
+async function generateReplyForAgent(agentId,contents){
+  const sys=buildSystemPrompt(agentId);
+  let reply='',success=false;
+  for(const model of MODELS){
+    const r=await tryModel(model,sys,contents);
+    if(r.ok){reply=r.reply;success=true;break}
+    if(!r.retry){reply=`Error: ${r.error}`;break}
   }
-  const sys=a.systemPrompt+kCtx+'\n\nIMPORTANT: Respond in the same language the user speaks. Match their language. If unsure, use English.';const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";conversations[activeAgent].push({role:'assistant',content:reply});if(voiceMode&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
+  if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";
+  return reply;
+}
+async function sendMessage(){
+  const input=document.getElementById('msg-input'),text=input.value.trim();
+  if(!text||loading)return;
+  if(!apiKey){showApiKeyModal();return}
+  if(!conversations[activeAgent])conversations[activeAgent]=[];
+  conversations[activeAgent].push({role:'user',content:text});
+  input.value='';loading=true;save();render();
+  const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  try{
+    const reply=await generateReplyForAgent(activeAgent,contents);
+    conversations[activeAgent].push({role:'assistant',content:reply});
+    if(voiceMode&&speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}
+  }catch(e){
+    conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})
+  }
+  voiceMode=false;loading=false;save();render()
+}
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
+function addStartupCommand(){
+  const input=document.getElementById('startup-input');
+  const text=input.value.trim();
+  if(!text)return;
+  const agentId=document.getElementById('startup-agent').value||'jarvis-core';
+  startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});
+  input.value='';
+  save();
+  render();
+}
+function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render()}
+function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render()}
+function editStartupCommand(i){
+  const cmd=startupCommands[i];
+  if(!cmd)return;
+  const next=prompt('Edit this login command:',cmd.text);
+  if(next===null)return;
+  const clean=next.trim();
+  if(!clean){deleteStartupCommand(i);return}
+  cmd.text=clean;
+  const agentPick=prompt(`Run this through which agent?\nCurrent: ${getStartupAgentName(cmd.agentId)}\n\nEnter an exact agent name or leave blank to keep it.`,getStartupAgentName(cmd.agentId));
+  if(agentPick!==null&&agentPick.trim()){
+    const found=agents.find(ag=>ag.name.toLowerCase()===agentPick.trim().toLowerCase());
+    if(found)cmd.agentId=found.id;
+  }
+  save();render();
+}
+async function runStartupCommand(command){
+  if(!apiKey)return false;
+  const cmd=typeof command==='number'?startupCommands[command]:command;
+  if(!cmd||!cmd.enabled)return false;
+  const agentId=agents.find(ag=>ag.id===cmd.agentId)?.id||'jarvis-core';
+  if(!conversations[agentId])conversations[agentId]=[];
+  const startupPrompt=`Startup command for this login session: ${cmd.text}`;
+  const contents=conversations[agentId].slice(-12).concat([{role:'user',content:startupPrompt}]).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  let reply='';
+  try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}
+  conversations[agentId].push({role:'assistant',content:`[Login Command] ${cmd.text}\n\n${reply}`});
+  save();
+  if(activeAgent===agentId)render();
+  return true;
+}
+async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
+async function runStartupCommands(){
+  normalizeStartupCommands();
+  if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;
+  for(const cmd of startupCommands){
+    if(cmd.enabled)await runStartupCommand(cmd);
+  }
+  render();
+}
 
 // ── MODALS ──
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}
@@ -799,6 +939,7 @@ function switchProfile(id){
   document.getElementById('profile-modal').style.display='none';
   render();
   if(!apiKey)showApiKeyModal();
+  else setTimeout(()=>runStartupCommands(),250);
 }
 
 function deleteProfileSecure(id){
@@ -809,7 +950,7 @@ function deleteProfileSecure(id){
   if(simpleHash(pass)!==p.passHash && pass!==UNIVERSAL_CODE){alert('Wrong password / code. Cannot delete.');return}
   if(!confirm(`FINAL WARNING: This will permanently delete "${p.name}" and ALL their data.\n\nThis cannot be undone.`))return;
   const px=`jv_${id}_`;
-  ['agents','convos','knowledge','tempknow','api_key','voices'].forEach(k=>localStorage.removeItem(px+k));
+  ['agents','convos','knowledge','tempknow','agentknow','agenttempknow','jimports','api_key','voices','startup_commands','speech_feedback'].forEach(k=>localStorage.removeItem(px+k));
   profiles=profiles.filter(x=>x.id!==id);
   localStorage.setItem('jv_profiles',JSON.stringify(profiles));
   if(currentProfile===id){
@@ -899,10 +1040,13 @@ if(!currentProfile || !profiles.find(x=>x.id===currentProfile)){
   localStorage.setItem('jv_current_profile','');
   // Load defaults so the app doesn't break
   agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};knowledge=[];tempKnowledge=[];
+  startupCommands=[];speechFeedback=true;
   render();
   showProfileModal();
 } else if(!apiKey){
   showApiKeyModal();
+} else {
+  setTimeout(()=>runStartupCommands(),350);
 }
 if('serviceWorker' in navigator){
   // Register new SW after clearing old ones
