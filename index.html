@@ -85,6 +85,8 @@ a{color:var(--ac)}
 
 /* ── INPUT ── */
 #inp{padding:8px 14px 14px}
+#voice-bar{transition:opacity .2s}
+#voice-bar:hover{opacity:1!important}
 .inp-box{display:flex;gap:8px;align-items:flex-end;background:var(--input);border:1px solid var(--border);border-radius:14px;padding:6px 6px 6px 14px;transition:border-color .2s}
 .inp-box:focus-within{border-color:var(--ac)33}
 .inp-box textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;resize:none;line-height:1.5;max-height:100px}
@@ -163,12 +165,16 @@ a{color:var(--ac)}
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
-        <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();"></select>
       </div>
     </div>
     <div id="chat-view" style="flex:1;display:flex;flex-direction:column;min-height:0">
       <div id="chat"></div>
-      <div id="inp"><div class="inp-box" id="input-box">
+      <div id="inp">
+        <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
+          <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
+          <select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select>
+        </div>
+        <div class="inp-box" id="input-box">
         <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
         <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
         <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
