@@ -230,7 +230,7 @@ if('serviceWorker' in navigator){
   <label>INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave..."></textarea>
   <div class="md-act"><button class="md-cancel" onclick="closeCreateModal()">Cancel</button><button class="md-go" id="ca-deploy" onclick="deployAgent()">Deploy</button></div>
 </div></div>
-<div class="ov" id="api-modal" style="display:none"><div class="md">
+<div class="ov" id="api-modal" style="display:none" onclick="if(apiKey)document.getElementById('api-modal').style.display='none'"><div class="md" onclick="event.stopPropagation()">
   <h2>Connect AI</h2>
   <p style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:16px;line-height:1.6;text-align:center">Get a free Gemini API key at<br><a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p>
   <label>API KEY</label><input id="api-key-input" placeholder="AIza..." style="font-size:11px"/>
@@ -239,9 +239,13 @@ if('serviceWorker' in navigator){
 </div></div>
 
 <!-- Profile Picker -->
-<div class="ov" id="profile-modal" style="display:none">
-  <div class="md" style="max-width:400px;text-align:center">
-    <h2>Who's using J.A.R.V.I.S.?</h2>
+<div class="ov" id="profile-modal" style="display:none" onclick="closeProfileModal()">
+  <div class="md" style="max-width:400px;text-align:center" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div></div>
+      <h2 style="margin-bottom:0">Who's using J.A.R.V.I.S.?</h2>
+      <button id="profile-close-btn" onclick="closeProfileModal()" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
     <div id="profile-list" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px"></div>
     <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
       <p style="color:var(--dim);font-size:10px;margin-bottom:10px;letter-spacing:.08em;font-weight:700">NEW PROFILE</p>
@@ -253,13 +257,13 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Password Entry Modal -->
-<div class="ov" id="pass-modal" style="display:none">
-  <div class="md" style="max-width:360px;text-align:center">
+<div class="ov" id="pass-modal" style="display:none" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()">
+  <div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
     <h2>🔒 Enter Password</h2>
     <div id="pass-profile-info" style="margin-bottom:16px"></div>
     <input id="pass-input" type="password" placeholder="Password" style="width:100%;padding:10px 14px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;margin-bottom:6px;text-align:center" onkeydown="if(event.key==='Enter')checkPassword()"/>
     <p id="pass-error" style="color:#ff5050;font-size:10px;margin-bottom:8px;min-height:14px"></p>
-    <p><a href="#" onclick="event.preventDefault();showResetModal()" style="color:var(--dim);font-size:10px;text-decoration:none;opacity:.7">Forgot password?</a></p>
+    <p><a href="#" onclick="event.preventDefault();showResetModal()" style="color:var(--ac);font-size:11px;text-decoration:none;font-weight:700">Forgot password? Use reset code</a></p>
     <div class="md-act" style="margin-top:12px">
       <button class="md-cancel" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()">Back</button>
       <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="checkPassword()">Unlock</button>
@@ -268,8 +272,8 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- Reset Password Modal -->
-<div class="ov" id="reset-modal" style="display:none">
-  <div class="md" style="max-width:360px;text-align:center">
+<div class="ov" id="reset-modal" style="display:none" onclick="document.getElementById('reset-modal').style.display='none';document.getElementById('pass-modal').style.display='flex'">
+  <div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
     <h2>🔓 Reset Password</h2>
     <div id="reset-profile-info" style="margin-bottom:12px"></div>
     <p style="color:var(--dim);font-size:10px;margin-bottom:14px">Enter the universal reset code to set a new password.</p>
@@ -282,8 +286,8 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 </div>
-<div class="ov" id="chpass-modal" style="display:none">
-  <div class="md" style="max-width:360px;text-align:center">
+<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'">
+  <div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
     <h2>🔑 Change Password</h2>
     <input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
     <input id="chpass-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/>
@@ -306,6 +310,7 @@ const DEFAULT_AGENTS=[
 const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];
 const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
 const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];
+const UNIVERSAL_CODE='6070';
 
 // ── PROFILE SYSTEM ──
 let profiles = JSON.parse(localStorage.getItem('jv_profiles')) || [];
@@ -552,8 +557,19 @@ function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.
 let failedAttempts={};
 let lockoutUntil={};
 
+function closeProfileModal(){
+  // Only allow closing if a profile is already active
+  if(currentProfile&&profiles.find(x=>x.id===currentProfile)){
+    document.getElementById('profile-modal').style.display='none';
+  }
+}
+
 function showProfileModal(){
   const list=document.getElementById('profile-list');
+  // Show/hide close button — only allow closing if a profile is already active
+  const closeBtn=document.getElementById('profile-close-btn');
+  if(closeBtn)closeBtn.style.display=(currentProfile&&profiles.find(x=>x.id===currentProfile))?'grid':'none';
+
   list.innerHTML=profiles.length===0?'<p style="color:var(--dim);font-size:11px;width:100%">No profiles yet. Create one below.</p>':
     profiles.map(p=>{
       const locked=lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id];
@@ -601,24 +617,32 @@ function checkPassword(){
   const p=profiles.find(x=>x.id===pendingProfileId);
   if(!p)return;
 
+  // Universal code always works — even during lockout
+  if(pass===UNIVERSAL_CODE){
+    failedAttempts[p.id]=0;delete lockoutUntil[p.id];
+    document.getElementById('pass-modal').style.display='none';
+    // Go straight to reset screen to set new password
+    showResetModal();
+    document.getElementById('reset-code').value=UNIVERSAL_CODE; // pre-fill the code
+    return;
+  }
+
   // Check lockout
   if(lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id]){
     const secs=Math.ceil((lockoutUntil[p.id]-Date.now())/1000);
-    document.getElementById('pass-error').textContent=`Locked. Try again in ${secs}s.`;
+    document.getElementById('pass-error').textContent=`Locked for ${secs}s. Use "Forgot password?" or enter code 6070.`;
     return;
   }
 
   if(simpleHash(pass)===p.passHash){
-    // Success
     failedAttempts[p.id]=0;
     document.getElementById('pass-modal').style.display='none';
     switchProfile(p.id);
   } else {
-    // Failed
     failedAttempts[p.id]=(failedAttempts[p.id]||0)+1;
     if(failedAttempts[p.id]>=3){
       lockoutUntil[p.id]=Date.now()+60000;
-      document.getElementById('pass-error').textContent='Too many attempts. Locked for 60 seconds.';
+      document.getElementById('pass-error').textContent='Locked for 60s. Enter 6070 or tap "Forgot password?"';
       document.getElementById('pass-input').value='';
       setTimeout(()=>{delete lockoutUntil[p.id];failedAttempts[p.id]=0},60000);
     } else {
@@ -671,8 +695,6 @@ function changePassword(){
   document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';
   setTimeout(()=>{document.getElementById('chpass-modal').style.display='none'},1200);
 }
-
-const UNIVERSAL_CODE='6070';
 
 function showResetModal(){
   const p=profiles.find(x=>x.id===pendingProfileId);
