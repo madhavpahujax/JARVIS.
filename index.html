@@ -302,26 +302,27 @@ let currentProfile = localStorage.getItem('jv_current_profile') || '';
 
 function pfx(){return currentProfile?`jv_${currentProfile}_`:'jv_'}
 
+let agents=[...DEFAULT_AGENTS],conversations={},knowledge=[],tempKnowledge=[],apiKey='';
+let currentView='chat',loading=false,sidebarOpen=true;
+let caIcon="🤖",caColor="#00d4ff";
+let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
+let agentVoices={},activeAgent='jarvis-core';
+
 function loadProfileData(){
   const p=pfx();
   agents=JSON.parse(localStorage.getItem(p+'agents'))||[...DEFAULT_AGENTS];
+  if(!agents||!agents.length)agents=[...DEFAULT_AGENTS];
   activeAgent=agents[0].id;
   conversations=JSON.parse(localStorage.getItem(p+'convos'))||{};
   knowledge=JSON.parse(localStorage.getItem(p+'knowledge'))||[];
   tempKnowledge=JSON.parse(localStorage.getItem(p+'tempknow'))||[];
-  apiKey=localStorage.getItem(p+'api_key')||localStorage.getItem('jv_api_key')||'';
+  apiKey=localStorage.getItem(p+'api_key')||'';
   agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};
   currentView='chat';loading=false;
-  cleanExpiredTemp();
+  try{cleanExpiredTemp()}catch(e){}
 }
 
-let agents,conversations,knowledge,tempKnowledge,apiKey;
-let currentView='chat',loading=false,sidebarOpen=true;
-let caIcon="🤖",caColor="#00d4ff";
-let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
-let agentVoices={},activeAgent;
-
-loadProfileData();
+if(currentProfile&&profiles.find(x=>x.id===currentProfile)){loadProfileData()}else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;}
 
 function save(){
   const p=pfx();
@@ -342,7 +343,7 @@ let agentVoices=JSON.parse(localStorage.getItem('jv_agent_voices'))||{};
 function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday')}
 function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem(pfx()+'voices',JSON.stringify(agentVoices))}
 function save(){localStorage.setItem('jv_agents',JSON.stringify(agents));localStorage.setItem('jv_convos',JSON.stringify(conversations));localStorage.setItem('jv_knowledge',JSON.stringify(knowledge))}
-function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]}
+function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAULT_AGENTS[0]}
 function getMessages(){return conversations[activeAgent]||[]}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
@@ -698,10 +699,17 @@ function getProfileName(){
 }
 
 render();
-// Clean expired temp knowledge every 60 seconds and refresh timers
-setInterval(()=>{const before=tempKnowledge.length;cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
-if(profiles.length===0&&!currentProfile){
-  // First time — show profile creation
+// Clean expired temp knowledge every 60 seconds
+setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
+
+// Init flow — always show profile picker if no valid profile is active
+if(!currentProfile || !profiles.find(x=>x.id===currentProfile)){
+  // Clear stale current profile
+  currentProfile='';
+  localStorage.setItem('jv_current_profile','');
+  // Load defaults so the app doesn't break
+  agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};knowledge=[];tempKnowledge=[];
+  render();
   showProfileModal();
 } else if(!apiKey){
   showApiKeyModal();
