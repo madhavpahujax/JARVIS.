@@ -480,6 +480,19 @@ function cleanSpeechText(text){
     .replace(/,{2,}/g,',')
     .trim();
 }
+function bindEnterAction(ids, action, opts={}){
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('keydown',e=>{
+      if(e.key!=='Enter')return;
+      if(opts.allowShiftEnter&&e.shiftKey)return;
+      if(el.tagName==='TEXTAREA'&&!opts.allowTextareaEnter)return;
+      e.preventDefault();
+      action();
+    });
+  });
+}
 function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
 function normalizeStartupCommands(){
   startupCommands=(startupCommands||[]).map(cmd=>({
@@ -1115,6 +1128,13 @@ function getProfileName(){
 
 render();
 document.addEventListener('keydown',handleAppHotkeys);
+bindEnterAction(['api-key-input'],saveApiKey);
+bindEnterAction(['new-profile-name','new-profile-pass'],createProfile);
+bindEnterAction(['pass-input'],checkPassword);
+bindEnterAction(['reset-code','reset-newpass'],resetPassword);
+bindEnterAction(['chpass-old','chpass-new'],changePassword);
+bindEnterAction(['chpass-code','chpass-reset-new'],resetFromChangeScreen);
+bindEnterAction(['ca-name','ca-desc'],deployAgent);
 // Clean expired temp knowledge every 60 seconds
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
 
