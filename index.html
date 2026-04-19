@@ -83,10 +83,16 @@ a{color:var(--ac)}
 #voice-bar:hover{opacity:1!important}
 .inp-box{display:flex;gap:8px;align-items:flex-end;background:rgba(14,22,40,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:6px 6px 6px 14px;transition:border-color .2s}
 .inp-box:focus-within{border-color:var(--ac)33}
+.inp-box.locked{border-color:rgba(245,158,11,.32);background:rgba(18,23,34,.88)}
 .inp-box textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;resize:none;line-height:1.5;max-height:100px}
+.inp-box.locked textarea{color:var(--dim)}
 .mic{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--border);font-size:16px;cursor:pointer;transition:all .2s;display:grid;place-items:center;flex-shrink:0}
 .mic.rec{background:rgba(255,60,60,.15);border-color:#ff3c3c;animation:micPulse .9s ease-in-out infinite}
+.mic:disabled,.snd:disabled{opacity:.45;cursor:not-allowed}
 .snd{padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--dim);flex-shrink:0}
+.cooldown-badge{position:absolute;left:14px;bottom:14px;z-index:4;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:rgba(11,17,32,.88);border:1px solid rgba(245,158,11,.28);backdrop-filter:blur(10px);box-shadow:0 0 18px rgba(0,0,0,.2)}
+.cooldown-badge strong{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:.08em;color:#f59e0b}
+.cooldown-badge span{font-size:10px;color:#d3a44b;font-weight:700;letter-spacing:.08em}
 
 /* ── ORB ── */
 .orb-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
@@ -182,7 +188,7 @@ if('serviceWorker' in navigator){
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.4</span>
+      <span style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap">v1.6</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
@@ -201,6 +207,10 @@ if('serviceWorker' in navigator){
         </div>
       </div>
       <div id="chat" style="position:relative;z-index:2"></div>
+      <div id="cooldown-badge" class="cooldown-badge" style="display:none">
+        <strong id="cooldown-seconds">12s</strong>
+        <span>QUERY COOLDOWN</span>
+      </div>
       <div id="inp" style="position:relative;z-index:3">
         <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7">
           <span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span>
@@ -370,6 +380,7 @@ let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceT
 let agentVoices={},activeAgent='jarvis-core';
 let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
 let startupCommands=[],speechFeedback=true;
+let cooldownEnd=0,cooldownInterval=null;
 
 function loadProfileData(){
   const p=pfx();
@@ -424,6 +435,49 @@ function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAUL
 function getMessages(){return conversations[activeAgent]||[]}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
+function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000))}
+function isCooldownActive(){return getCooldownRemaining()>0}
+function updateCooldownUI(){
+  const badge=document.getElementById('cooldown-badge');
+  const seconds=document.getElementById('cooldown-seconds');
+  if(!badge||!seconds)return;
+  const remaining=getCooldownRemaining();
+  if(remaining>0){
+    badge.style.display='flex';
+    seconds.textContent=`${remaining}s`;
+  }else{
+    badge.style.display='none';
+  }
+}
+function startCooldown(seconds=12){
+  cooldownEnd=Date.now()+(seconds*1000);
+  if(cooldownInterval)clearInterval(cooldownInterval);
+  cooldownInterval=setInterval(()=>{
+    if(!isCooldownActive()){
+      clearInterval(cooldownInterval);
+      cooldownInterval=null;
+    }
+    render();
+  },250);
+  render();
+}
+function cleanSpeechText(text){
+  return (text||'')
+    .replace(/```[\s\S]*?```/g,' ')
+    .replace(/`([^`]+)`/g,' $1 ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ')
+    .replace(/https?:\/\/\S+/gi,' ')
+    .replace(/[\*_#>~|]+/g,' ')
+    .replace(/[•▪◦■□]+/g,' ')
+    .replace(/\[(.*?)\]/g,' $1 ')
+    .replace(/!/g,'.')
+    .replace(/[;:]+/g,', ')
+    .replace(/\s*\n+\s*/g,'. ')
+    .replace(/\s{2,}/g,' ')
+    .replace(/\.{2,}/g,'.')
+    .replace(/,{2,}/g,',')
+    .trim();
+}
 function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
 function normalizeStartupCommands(){
   startupCommands=(startupCommands||[]).map(cmd=>({
@@ -469,6 +523,7 @@ function buildSystemPrompt(agentId){
 function render(){
   const a=getAgent(),msgs=getMessages();
   normalizeStartupCommands();
+  const cooldownActive=isCooldownActive(),cooldownRemaining=getCooldownRemaining();
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
   document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
@@ -487,9 +542,18 @@ function render(){
   document.getElementById('knowledge-view').style.display=currentView==='knowledge'?'block':'none';
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
   vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
-  if(!isRecording)document.getElementById('msg-input').placeholder=`Ask ${a.name} anything...`;
-  const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
+  const input=document.getElementById('msg-input');
+  if(!isRecording)input.placeholder=cooldownActive?`Please wait ${cooldownRemaining}s before asking again...`:`Ask ${a.name} anything...`;
+  const sb=document.getElementById('send-btn'),has=input.value.trim();
+  const mic=document.getElementById('mic-btn');
+  const box=document.getElementById('input-box');
   sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
+  sb.disabled=cooldownActive||loading;
+  mic.disabled=cooldownActive;
+  input.disabled=cooldownActive;
+  box.classList.toggle('locked',cooldownActive);
+  sb.textContent=cooldownActive?`${cooldownRemaining}s`:'Send';
+  updateCooldownUI();
 
   const ca=document.getElementById('chat');
   const bgBox=document.getElementById('bg-orb-box');
@@ -674,7 +738,7 @@ function startOrbAnim(){
   if(orbAF)cancelAnimationFrame(orbAF);draw();
 }
 
-function statusText(){if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
+function statusText(){if(isCooldownActive())return`Cooldown ${getCooldownRemaining()}s`;if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
 function updateOrb(){
   const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core'),s=document.getElementById('orb-status');
   if(!o||!c)return;
@@ -721,10 +785,12 @@ function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();re
 function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m}return ev[0]||voices[0]}
 function speakAnim(text){
   if(!speechFeedback)return;
+  const spoken=cleanSpeechText(text);
+  if(!spoken)return;
   speechSynthesis.cancel();isSpeaking=true;render();
   const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
-  const u=new SpeechSynthesisUtterance(text);
-  const hD=/[\u0900-\u097F]/.test(text),hA=/[\u0600-\u06FF]/.test(text),hC=/[\u4e00-\u9fff]/.test(text),hJ=/[\u3040-\u30ff]/.test(text),hK=/[\uac00-\ud7af]/.test(text),hR=/[\u0400-\u04FF]/.test(text);
+  const u=new SpeechSynthesisUtterance(spoken);
+  const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
   u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
   u.rate=preset.rate;u.pitch=preset.pitch;
   const voices=speechSynthesis.getVoices(),lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
@@ -736,8 +802,8 @@ speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speec
 
 // ── VOICE INPUT ──
 function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false}recognition=new SR();try{recognition.lang=''}catch(e){recognition.lang='en-US'}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop()},1500)};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage()}else{stopRec()}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec()};return true}
-function toggleVoice(){if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}
-function startRec(){if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}
+function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}
+function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}
 function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb()}
 
 // ── AI ──
@@ -755,11 +821,11 @@ async function generateReplyForAgent(agentId,contents){
 }
 async function sendMessage(){
   const input=document.getElementById('msg-input'),text=input.value.trim();
-  if(!text||loading)return;
+  if(!text||loading||isCooldownActive())return;
   if(!apiKey){showApiKeyModal();return}
   if(!conversations[activeAgent])conversations[activeAgent]=[];
   conversations[activeAgent].push({role:'user',content:text});
-  input.value='';loading=true;save();render();
+  input.value='';loading=true;startCooldown(12);save();render();
   const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
   try{
     const reply=await generateReplyForAgent(activeAgent,contents);
