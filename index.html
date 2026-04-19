@@ -27,10 +27,16 @@ a{color:var(--ac)}
 @keyframes speakPulse{0%{transform:translate(-50%,-50%) scale(1);opacity:.45}30%{transform:translate(-50%,-50%) scale(1.35);opacity:.9}60%{transform:translate(-50%,-50%) scale(.92);opacity:.5}100%{transform:translate(-50%,-50%) scale(1);opacity:.45}}
 @keyframes glow{0%,100%{box-shadow:0 0 25px var(--ac)22,0 0 50px var(--ac)0a}50%{box-shadow:0 0 45px var(--ac)44,0 0 90px var(--ac)18}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-#app{display:flex;height:100dvh;width:100vw;background:var(--bg)}
-#sidebar{width:280px;min-width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s,min-width .25s;overflow:hidden;z-index:50}
+@keyframes cogSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes cogRotate{0%{transform:rotate(0deg)}100%{transform:rotate(180deg)}}
+@keyframes bootOrbEmerge{0%{transform:scale(0);opacity:0;filter:blur(20px)}40%{transform:scale(.6) rotate(720deg);opacity:.6;filter:blur(8px)}70%{transform:scale(1.3) rotate(1260deg);opacity:1;filter:blur(2px)}100%{transform:scale(1) rotate(1440deg);opacity:1;filter:blur(0)}}
+@keyframes bootFadeOut{0%{opacity:1}80%{opacity:1}100%{opacity:0;visibility:hidden}}
+@keyframes bootPulse{0%,100%{box-shadow:0 0 40px var(--ac)55,0 0 80px var(--ac)22,0 0 120px var(--ac)11}50%{box-shadow:0 0 60px var(--ac)88,0 0 120px var(--ac)44,0 0 180px var(--ac)22}}
+@keyframes bootTextFade{0%,60%{opacity:0}80%,100%{opacity:1}}
+#app{display:flex;height:100dvh;width:100vw;background:transparent;position:relative;z-index:1}
+#sidebar{width:280px;min-width:280px;background:rgba(11,17,32,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s,min-width .25s;overflow:hidden;z-index:50}
 #sidebar.closed{width:0;min-width:0}
-#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;background:transparent}
 .sb-head{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
 .sb-logo{display:flex;align-items:center;gap:10px}
 .sb-logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--ac)15,var(--ac)05);border:1px solid var(--ac)25;display:grid;place-items:center;font-size:15px}
@@ -56,7 +62,7 @@ a{color:var(--ac)}
 .sb-btn{width:100%;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center;transition:all .2s}
 .sb-add{background:transparent;border:1px dashed var(--ac)30;color:var(--ac)}
 .sb-key{background:transparent;border:1px solid var(--border);color:var(--dim);font-size:11px}
-#hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);min-height:52px}
+#hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(11,17,32,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:52px;position:relative;z-index:5}
 .hdr-menu{background:none;border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;padding:5px 9px;font-size:15px;flex-shrink:0}
 .hdr-info{flex:1;min-width:0;overflow:hidden}
 .hdr-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -86,7 +92,7 @@ a{color:var(--ac)}
 .mic:disabled,.snd:disabled{opacity:.45;cursor:not-allowed}
 .snd{padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--dim);flex-shrink:0}
 .orb-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
-.orb-box{position:relative;width:320px;height:320px}
+.orb-box{position:relative;width:380px;height:380px}
 .orb-box:active{transform:scale(.96)}
 .orb-outer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;transition:all .4s}
 .orb-outer.speaking{animation:glow .5s ease-in-out infinite}
@@ -132,6 +138,45 @@ a{color:var(--ac)}
 .md-act button{flex:1;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px}
 .md-cancel{background:var(--input);border:1px solid var(--border);color:var(--dim)}
 .md-go{border:1px solid;background:transparent}
+
+/* Settings cog */
+.cog-btn{width:32px;height:32px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--ac);cursor:pointer;display:grid;place-items:center;font-size:16px;flex-shrink:0;transition:all .2s}
+.cog-btn:hover{border-color:var(--ac)44}
+.cog-btn.spinning .cog-icon{animation:cogSpin .8s ease-in-out}
+.cog-icon{display:inline-block;transition:transform .3s}
+
+/* Settings menu items */
+.settings-btn{width:100%;padding:14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;text-align:left;display:flex;align-items:center;gap:12px;background:var(--input);border:1px solid var(--border);color:var(--text);margin-bottom:8px;transition:all .15s}
+.settings-btn:hover{border-color:var(--ac)33;background:var(--ac)05}
+.settings-btn .ico{font-size:18px;width:26px;text-align:center}
+.settings-btn .hint{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:.06em}
+.settings-btn.on{border-color:var(--ac)44;background:var(--ac)08;color:var(--ac)}
+
+/* Boot screen */
+#boot-screen{position:fixed;inset:0;background:#020409;z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;animation:bootFadeOut .8s ease-in forwards;animation-delay:3.5s}
+#boot-screen.hidden{display:none}
+#boot-orb-container{position:relative;width:400px;height:400px;animation:bootOrbEmerge 3s cubic-bezier(.25,.46,.45,.94) forwards}
+#boot-orb-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 38% 38%,var(--ac)ee,var(--ac)88 35%,var(--ac)33 65%,transparent);animation:bootPulse 1.2s ease-in-out infinite}
+#boot-text{position:absolute;bottom:15%;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.4em;color:var(--ac);opacity:0;animation:bootTextFade 3s ease-in forwards;text-align:center;width:100%}
+#boot-text .line2{font-size:9px;letter-spacing:.2em;color:var(--dim);margin-top:6px}
+
+/* Translucent panels for memory/calendar so orb shows through */
+#knowledge-view,#calendar-view{background:transparent}
+.kp{background:transparent}
+.kp-item{background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.kp-in{background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.kp-add{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.calendar-shell{background:rgba(11,17,32,.55)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.cal-day{background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.cal-note{background:rgba(5,8,15,.45)}
+.cal-btn{background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* Global orb layer — visible on all views */
+#global-orb{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
+#global-orb .orb-wrap{pointer-events:none;transform:scale(.95)}
+
+/* Bigger orb */
+.orb-box{width:380px;height:380px}
 #main-content{flex:1;min-height:0;position:relative;overflow:hidden}
 .panel{position:absolute;inset:0;overflow:auto;transition:transform .32s ease,opacity .32s ease;will-change:transform,opacity}
 .panel.hidden-right{transform:translateX(100%);opacity:.35;pointer-events:none}
@@ -175,6 +220,20 @@ a{color:var(--ac)}
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister())});if('caches' in window){caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)))}}
 </script>
+
+<!-- Boot screen — shown on login -->
+<div id="boot-screen" class="hidden">
+  <div id="boot-orb-container">
+    <div id="boot-orb-core"></div>
+  </div>
+  <div id="boot-text">J.A.R.V.I.S. ONLINE<div class="line2">MULTI-AGENT SYSTEM INITIALISED</div></div>
+</div>
+
+<!-- Global orb layer — stays visible behind all views -->
+<div id="global-orb">
+  <div class="orb-wrap" onclick="toggleVoice()" style="pointer-events:auto"><div class="orb-box" id="global-orb-box"></div></div>
+</div>
+
 <div id="app">
   <div id="sidebar">
     <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
@@ -182,11 +241,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
     <div class="sb-cooldown-wrap"><div id="cooldown-badge" class="sb-cooldown hidden" style="--cooldown-angle:0deg"><div class="sb-cooldown-inner"><strong id="cooldown-seconds">12</strong><span>WAIT</span></div></div></div>
     <div class="sb-foot">
       <button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button>
-      <div style="display:flex;gap:6px">
-        <button class="sb-btn sb-key" style="flex:1" onclick="showApiKeyModal()">🔑 API</button>
-        <button class="sb-btn sb-key" style="flex:1" onclick="showProfileModal()">👤 Profile</button>
-        <button class="sb-btn sb-key" style="flex:1" onclick="document.getElementById('chpass-modal').style.display='flex'">🔒 PIN</button>
-      </div>
+      <button class="sb-btn sb-key" onclick="openSettings()">⚙ Settings</button>
     </div>
   </div>
   <div id="main">
@@ -194,20 +249,17 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.7.3</span>
+      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.8</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
         <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
-        <button class="toggle-chip" id="speech-toggle" onclick="toggleSpeechFeedback()">Speech On</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
+        <button class="cog-btn" id="settings-cog" onclick="openSettings()" title="Settings"><span class="cog-icon">⚙</span></button>
       </div>
     </div>
     <div id="main-content">
     <div id="chat-view" class="panel active">
-      <div id="bg-orb" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden">
-        <div class="orb-wrap" id="bg-orb-wrap" onclick="toggleVoice()" style="pointer-events:auto"><div class="orb-box" id="bg-orb-box"></div><div class="orb-label" id="orb-status"></div></div>
-      </div>
       <div id="chat" style="position:relative;z-index:2"></div>
     </div>
     <div id="knowledge-view" class="panel hidden-right">
@@ -236,7 +288,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
         <div class="cal-week"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div><div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>
         <div class="cal-days" id="calendar-days"></div>
         <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
-        <div class="swipe-hint">Swipe left from chat to open calendar.</div>
+        <div class="swipe-hint">Swipe or use ← → keys to switch views.</div>
       </div>
     </div>
     </div>
@@ -270,11 +322,21 @@ if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then
   <div id="chpass-reset" style="display:none"><p style="color:var(--dim);font-size:10px;margin-bottom:12px">Enter the universal reset code to set a new password.</p><input id="chpass-code" type="password" placeholder="Universal code" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;text-align:center"/><input id="chpass-reset-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/><p id="chpass-reset-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-reset').style.display='none';document.getElementById('chpass-normal').style.display='block'">Back</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="resetFromChangeScreen()">Reset</button></div></div>
 </div></div>
 
+<!-- Settings -->
+<div class="ov" id="settings-modal" style="display:none" onclick="document.getElementById('settings-modal').style.display='none'"><div class="md" style="max-width:400px" onclick="event.stopPropagation()">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">⚙ Settings</h2><button onclick="document.getElementById('settings-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
+  <button class="settings-btn" onclick="document.getElementById('settings-modal').style.display='none';showProfileModal()"><span class="ico">👤</span><div>Change Profile</div><span class="hint">→</span></button>
+  <button class="settings-btn" onclick="document.getElementById('settings-modal').style.display='none';showApiKeyModal()"><span class="ico">🔑</span><div>API Key</div><span class="hint">→</span></button>
+  <button class="settings-btn" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex'"><span class="ico">🔒</span><div>Change PIN</div><span class="hint">→</span></button>
+  <button class="settings-btn" id="settings-speech-btn" onclick="toggleSpeechFeedback();updateSettingsUI()"><span class="ico">🔊</span><div id="settings-speech-label">Speech Output: On</div><span class="hint">K</span></button>
+</div></div>
+
 <!-- Changelog -->
 <div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'"><div class="md" style="max-width:460px" onclick="event.stopPropagation()">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">Changelog</h2><button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
-    <div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar no longer blocks sidebar buttons<br>• All agents access calendar notes in AI context<br>• Clickable version badge with changelog</div></div>
+    <div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog button (⚙) — spins on click<br>• Boot animation — orb emerges on login<br>• Bigger 380px orb visible on all views<br>• Arrow keys: ↑↓ agents, ←→ views/weeks<br>• Swipe cycles chat → memory → calendar<br>• Translucent panels — orb visible everywhere</div></div>
+    <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar no longer blocks sidebar buttons<br>• All agents access calendar notes in AI context<br>• Clickable version badge with changelog</div></div>
     <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on profile login<br>• Speech on/off toggle (K shortcut)<br>• Swipe between chat and calendar<br>• Cooldown timer between messages</div></div>
     <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#a855f7;letter-spacing:.08em;margin-bottom:4px">v1.4</div><div style="color:var(--dim)">• 3D canvas orb with organic bulging rings<br>• Translucent chat with backdrop blur<br>• Orbiting particles and energy arcs<br>• 320px orb behind messages</div></div>
     <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#00ff88;letter-spacing:.08em;margin-bottom:4px">v1.3</div><div style="color:var(--dim)">• Per-agent memory with share-to-JARVIS<br>• Password profiles with universal reset (6070)<br>• Primary + secondary (24h) memory<br>• Main/sub-agent hierarchy</div></div>
@@ -389,9 +451,9 @@ function render(){
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
   const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
   syncCooldownState();updateCooldownUI();
-  const ca=document.getElementById('chat'),bgBox=document.getElementById('bg-orb-box'),bgStatus=document.getElementById('orb-status');
-  bgBox.innerHTML=renderOrb(a.color);bgStatus.style.color=a.color;
-  if(msgs.length===0){ca.innerHTML='';bgStatus.textContent='Tap to speak'}else{
+  const ca=document.getElementById('chat'),bgBox=document.getElementById('global-orb-box');
+  bgBox.innerHTML=renderOrb(a.color);
+  if(msgs.length===0){ca.innerHTML=`<div style="height:100%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:30px"><div style="font-family:'Orbitron',sans-serif;font-size:10px;color:${a.color};letter-spacing:.3em;opacity:.7;text-align:center">TAP ORB TO SPEAK</div></div>`}else{
     let h='';h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
     if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
     if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;
@@ -411,11 +473,11 @@ function render(){
   renderCalendar();
 }
 
-function renderOrb(c){return `<canvas id="orb-canvas" width="320" height="320" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:320px;height:320px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`}
+function renderOrb(c){return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`}
 let orbAF=null,orbT=0;
-function startOrbAnim(){function draw(){const cv=document.getElementById('orb-canvas');if(!cv){orbAF=requestAnimationFrame(draw);return}const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;ctx.clearRect(0,0,W,H);const a=getAgent(),c=a.color;orbT+=isSpeaking?.12:.015;const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);const ag=ctx.createRadialGradient(cx,cy,30,cx,cy,160);ag.addColorStop(0,`rgba(${R},${G},${B},${isSpeaking?.15:.06})`);ag.addColorStop(.6,`rgba(${R},${G},${B},${isSpeaking?.05:.02})`);ag.addColorStop(1,'transparent');ctx.fillStyle=ag;ctx.fillRect(0,0,W,H);const layers=[{r:145,w:isSpeaking?6:3,op:.7,spd:1,bulge:isSpeaking?28:4,freq:[2,5,7]},{r:130,w:isSpeaking?4.5:2.2,op:.45,spd:-.75,bulge:isSpeaking?22:3,freq:[3,6,9]},{r:115,w:isSpeaking?3.5:1.6,op:.32,spd:.55,bulge:isSpeaking?16:2,freq:[4,7,11]},{r:100,w:isSpeaking?2.5:1.2,op:.22,spd:-.4,bulge:isSpeaking?12:1.5,freq:[5,8,13]},{r:85,w:isSpeaking?2:1,op:.15,spd:.35,bulge:isSpeaking?8:1,freq:[6,9,15]}];for(const L of layers){ctx.beginPath();const pts=120;for(let i=0;i<=pts;i++){const ang=(i/pts)*Math.PI*2;const f1=Math.sin(ang*L.freq[0]+orbT*L.spd*2.5)*.5;const f2=Math.sin(ang*L.freq[1]-orbT*L.spd*3.5)*.3;const f3=Math.sin(ang*L.freq[2]+orbT*L.spd*1.8)*.2;const breath=Math.sin(orbT*.8)*.15;const bAmt=L.bulge*(f1+f2+f3+breath);const rr=L.r+bAmt;const x=cx+Math.cos(ang)*rr;const y=cy+Math.sin(ang)*rr*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=L.w;ctx.strokeStyle=`rgba(${R},${G},${B},${L.op})`;ctx.stroke();if(L===layers[0]&&isSpeaking){ctx.lineWidth=L.w+8;ctx.strokeStyle=`rgba(${R},${G},${B},.15)`;ctx.stroke();ctx.lineWidth=L.w+18;ctx.strokeStyle=`rgba(${R},${G},${B},.06)`;ctx.stroke();ctx.lineWidth=L.w+30;ctx.strokeStyle=`rgba(${R},${G},${B},.02)`;ctx.stroke()}}const pc=isSpeaking?14:8;for(let i=0;i<pc;i++){const pa=(i/pc)*Math.PI*2+orbT*.5;const pr=105+Math.sin(orbT*2+i*.7)*15;const px=cx+Math.cos(pa)*pr;const py=cy+Math.sin(pa)*pr*.93;const ps=isSpeaking?2+Math.sin(orbT*3+i)*1.5:1;const po=.4+Math.sin(orbT*2+i*1.3)*.4;ctx.beginPath();ctx.arc(px,py,ps,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po})`;ctx.fill();if(isSpeaking){ctx.beginPath();ctx.arc(px,py,ps*3,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po*.15})`;ctx.fill()}}const hl=ctx.createRadialGradient(cx-25,cy-30,5,cx-10,cy-15,55);hl.addColorStop(0,`rgba(${R},${G},${B},.35)`);hl.addColorStop(1,'transparent');ctx.fillStyle=hl;ctx.beginPath();ctx.arc(cx,cy,75,0,Math.PI*2);ctx.fill();if(isSpeaking){for(let i=0;i<3;i++){const as=orbT*1.5+i*2.1;const al=.4+Math.sin(orbT*2+i)*.2;ctx.beginPath();ctx.arc(cx,cy,140+Math.sin(orbT+i)*8,as,as+al);ctx.lineWidth=2;ctx.strokeStyle=`rgba(${R},${G},${B},.5)`;ctx.stroke()}}if(isRecording){ctx.beginPath();const pr2=150+Math.sin(orbT*3)*10;for(let i=0;i<=96;i++){const ang=(i/96)*Math.PI*2;const x=cx+Math.cos(ang)*pr2;const y=cy+Math.sin(ang)*pr2*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,60,60,${.4+Math.sin(orbT*4)*.3})`;ctx.stroke();ctx.lineWidth=8;ctx.strokeStyle=`rgba(255,60,60,${.12+Math.sin(orbT*4)*.08})`;ctx.stroke()}orbAF=requestAnimationFrame(draw)}if(orbAF)cancelAnimationFrame(orbAF);draw()}
+function startOrbAnim(){function draw(){const cv=document.getElementById('orb-canvas');if(!cv){orbAF=requestAnimationFrame(draw);return}const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;ctx.clearRect(0,0,W,H);const a=getAgent(),c=a.color;orbT+=isSpeaking?.12:.015;const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);const ag=ctx.createRadialGradient(cx,cy,40,cx,cy,190);ag.addColorStop(0,`rgba(${R},${G},${B},${isSpeaking?.15:.06})`);ag.addColorStop(.6,`rgba(${R},${G},${B},${isSpeaking?.05:.02})`);ag.addColorStop(1,'transparent');ctx.fillStyle=ag;ctx.fillRect(0,0,W,H);const layers=[{r:172,w:isSpeaking?7:3.5,op:.7,spd:1,bulge:isSpeaking?34:5,freq:[2,5,7]},{r:155,w:isSpeaking?5:2.5,op:.45,spd:-.75,bulge:isSpeaking?26:3.5,freq:[3,6,9]},{r:137,w:isSpeaking?4:1.8,op:.32,spd:.55,bulge:isSpeaking?19:2.5,freq:[4,7,11]},{r:120,w:isSpeaking?3:1.4,op:.22,spd:-.4,bulge:isSpeaking?14:1.8,freq:[5,8,13]},{r:100,w:isSpeaking?2.5:1.1,op:.15,spd:.35,bulge:isSpeaking?10:1.3,freq:[6,9,15]}];for(const L of layers){ctx.beginPath();const pts=120;for(let i=0;i<=pts;i++){const ang=(i/pts)*Math.PI*2;const f1=Math.sin(ang*L.freq[0]+orbT*L.spd*2.5)*.5;const f2=Math.sin(ang*L.freq[1]-orbT*L.spd*3.5)*.3;const f3=Math.sin(ang*L.freq[2]+orbT*L.spd*1.8)*.2;const breath=Math.sin(orbT*.8)*.15;const bAmt=L.bulge*(f1+f2+f3+breath);const rr=L.r+bAmt;const x=cx+Math.cos(ang)*rr;const y=cy+Math.sin(ang)*rr*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=L.w;ctx.strokeStyle=`rgba(${R},${G},${B},${L.op})`;ctx.stroke();if(L===layers[0]&&isSpeaking){ctx.lineWidth=L.w+8;ctx.strokeStyle=`rgba(${R},${G},${B},.15)`;ctx.stroke();ctx.lineWidth=L.w+18;ctx.strokeStyle=`rgba(${R},${G},${B},.06)`;ctx.stroke();ctx.lineWidth=L.w+30;ctx.strokeStyle=`rgba(${R},${G},${B},.02)`;ctx.stroke()}}const pc=isSpeaking?14:8;for(let i=0;i<pc;i++){const pa=(i/pc)*Math.PI*2+orbT*.5;const pr=125+Math.sin(orbT*2+i*.7)*18;const px=cx+Math.cos(pa)*pr;const py=cy+Math.sin(pa)*pr*.93;const ps=isSpeaking?2+Math.sin(orbT*3+i)*1.5:1;const po=.4+Math.sin(orbT*2+i*1.3)*.4;ctx.beginPath();ctx.arc(px,py,ps,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po})`;ctx.fill();if(isSpeaking){ctx.beginPath();ctx.arc(px,py,ps*3,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po*.15})`;ctx.fill()}}const hl=ctx.createRadialGradient(cx-30,cy-36,5,cx-12,cy-18,66);hl.addColorStop(0,`rgba(${R},${G},${B},.35)`);hl.addColorStop(1,'transparent');ctx.fillStyle=hl;ctx.beginPath();ctx.arc(cx,cy,90,0,Math.PI*2);ctx.fill();if(isSpeaking){for(let i=0;i<3;i++){const as=orbT*1.5+i*2.1;const al=.4+Math.sin(orbT*2+i)*.2;ctx.beginPath();ctx.arc(cx,cy,165+Math.sin(orbT+i)*10,as,as+al);ctx.lineWidth=2;ctx.strokeStyle=`rgba(${R},${G},${B},.5)`;ctx.stroke()}}if(isRecording){ctx.beginPath();const pr2=178+Math.sin(orbT*3)*12;for(let i=0;i<=96;i++){const ang=(i/96)*Math.PI*2;const x=cx+Math.cos(ang)*pr2;const y=cy+Math.sin(ang)*pr2*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,60,60,${.4+Math.sin(orbT*4)*.3})`;ctx.stroke();ctx.lineWidth=8;ctx.strokeStyle=`rgba(255,60,60,${.12+Math.sin(orbT*4)*.08})`;ctx.stroke()}orbAF=requestAnimationFrame(draw)}if(orbAF)cancelAnimationFrame(orbAF);draw()}
 function statusText(){if(isCooldownActive())return`Cooldown ${getCooldownRemaining()}s`;if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
-function updateOrb(){const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core'),s=document.getElementById('orb-status');if(!o||!c)return;o.className='orb-outer'+(isSpeaking?' speaking':'');c.className='orb-core'+(isSpeaking?' speaking':'')+(isRecording?' listening':'');if(s){s.textContent=statusText();s.className='orb-label'+(isRecording?' listening':'')+(isSpeaking?' speaking':'')+(loading?' thinking':'')}}
+function updateOrb(){const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core');if(!o||!c)return;o.className='orb-outer'+(isSpeaking?' speaking':'');c.className='orb-core'+(isSpeaking?' speaking':'')+(isRecording?' listening':'')}
 setInterval(()=>{startOrbAnim()},600);
 function calendarKey(d){return `2026-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function monthLabel(i){return new Date(2026,i,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
@@ -428,7 +490,7 @@ function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();r
 function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);save();render()}
 function refreshCalendar(){calendarNotes=JSON.parse(localStorage.getItem(pfx()+'calendar_notes_2026'))||calendarNotes;renderCalendar()}
 function handlePanelSwipeStart(e){const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY}
-function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;if(dx<0&&currentView==='chat')switchView('calendar');if(dx>0&&currentView==='calendar')switchView('chat')}
+function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(dx<0&&i<views.length-1)switchView(views[i+1]);else if(dx>0&&i>0)switchView(views[i-1])}
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render()}
 function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render()}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB()}
@@ -471,27 +533,48 @@ function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<but
 function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}
 function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();scheduleStartupCommands(200)}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200))}
 function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}return 'h_'+Math.abs(h).toString(36)}
 function closeProfileModal(){if(currentProfile&&profiles.find(x=>x.id===currentProfile))document.getElementById('profile-modal').style.display='none'}
 function showProfileModal(){const list=document.getElementById('profile-list');const cb=document.getElementById('profile-close-btn');if(cb)cb.style.display=(currentProfile&&profiles.find(x=>x.id===currentProfile))?'grid':'none';list.innerHTML=profiles.length===0?'<p style="color:var(--dim);font-size:11px;width:100%">No profiles yet. Create one below.</p>':profiles.map(p=>{const locked=lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id];return `<div onclick="${locked?'':`promptPassword('${p.id}')`}" style="cursor:${locked?'not-allowed':'pointer'};display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 18px;border-radius:12px;border:1px solid ${p.id===currentProfile?'var(--ac)44':'var(--border)'};background:${p.id===currentProfile?'var(--ac)08':'var(--input)'};min-width:80px;transition:all .2s;position:relative;${locked?'opacity:.5':''}"><div style="width:44px;height:44px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:20px;border:2px solid ${p.id===currentProfile?'var(--ac)':'var(--border)'}">${locked?'🔒':p.avatar||'👤'}</div><span style="font-size:12px;font-weight:700;color:${p.id===currentProfile?'var(--ac)':'var(--text)'}">${esc(p.name)}</span>${locked?`<span style="font-size:8px;color:#ff5050">Locked</span>`:p.id===currentProfile?'<span style="font-size:8px;color:var(--ac);letter-spacing:.1em">ACTIVE</span>':'<span style="font-size:8px;color:var(--dim)">🔒</span>'}<button onclick="event.stopPropagation();deleteProfileSecure('${p.id}')" style="position:absolute;top:4px;right:4px;width:16px;height:16px;border-radius:4px;background:rgba(255,50,50,.1);border:1px solid rgba(255,50,50,.2);color:#ff5050;cursor:pointer;font-size:10px;display:grid;place-items:center">×</button></div>`}).join('');document.getElementById('profile-modal').style.display='flex'}
 function createProfile(){const name=document.getElementById('new-profile-name').value.trim();const pass=document.getElementById('new-profile-pass').value;if(!name){alert('Enter a name.');return}if(!pass||pass.length<3){alert('Password must be at least 3 characters.');return}const avatars=['👤','👦','👧','🧑','👨','👩','🦸','🧙','🥷','🤓'];const colors=['#1e3a5f','#2d1b4e','#1b3d2f','#4a2020','#3d3520'];const id='p_'+Date.now();profiles.push({id,name,avatar:avatars[profiles.length%avatars.length],color:colors[profiles.length%colors.length],passHash:simpleHash(pass)});localStorage.setItem('jv_profiles',JSON.stringify(profiles));document.getElementById('new-profile-name').value='';document.getElementById('new-profile-pass').value='';switchProfile(id)}
 function promptPassword(id){if(id===currentProfile){document.getElementById('profile-modal').style.display='none';return}const p=profiles.find(x=>x.id===id);if(!p)return;pendingProfileId=id;document.getElementById('pass-profile-info').innerHTML=`<div style="width:50px;height:50px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:24px;margin:0 auto 8px;border:2px solid var(--border)">${p.avatar||'👤'}</div><div style="font-weight:700;font-size:14px;color:var(--text)">${esc(p.name)}</div>`;document.getElementById('pass-input').value='';document.getElementById('pass-error').textContent='';document.getElementById('profile-modal').style.display='none';document.getElementById('pass-modal').style.display='flex';setTimeout(()=>document.getElementById('pass-input').focus(),100)}
 function checkPassword(){const pass=document.getElementById('pass-input').value;const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;if(pass===UNIVERSAL_CODE){failedAttempts[p.id]=0;delete lockoutUntil[p.id];document.getElementById('pass-modal').style.display='none';showResetModal();document.getElementById('reset-code').value=UNIVERSAL_CODE;return}if(lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id]){const s=Math.ceil((lockoutUntil[p.id]-Date.now())/1000);document.getElementById('pass-error').textContent=`Locked ${s}s. Use 6070.`;return}if(simpleHash(pass)===p.passHash){failedAttempts[p.id]=0;document.getElementById('pass-modal').style.display='none';switchProfile(p.id)}else{failedAttempts[p.id]=(failedAttempts[p.id]||0)+1;if(failedAttempts[p.id]>=3){lockoutUntil[p.id]=Date.now()+60000;document.getElementById('pass-error').textContent='Locked 60s. Enter 6070.';document.getElementById('pass-input').value='';setTimeout(()=>{delete lockoutUntil[p.id];failedAttempts[p.id]=0},60000)}else{document.getElementById('pass-error').textContent=`Wrong. ${3-failedAttempts[p.id]} left.`;document.getElementById('pass-input').value=''}}}
-function switchProfile(id){currentProfile=id;localStorage.setItem('jv_current_profile',id);loadProfileData();startupRunLock=false;appOpenStartupTriggered=true;document.getElementById('profile-modal').style.display='none';render();if(!apiKey)showApiKeyModal();else scheduleStartupCommands(250)}
+function switchProfile(id){currentProfile=id;localStorage.setItem('jv_current_profile',id);loadProfileData();startupRunLock=false;appOpenStartupTriggered=true;document.getElementById('profile-modal').style.display='none';render();if(!apiKey){showApiKeyModal()}else{playBootAnimation(()=>scheduleStartupCommands(250))}}
 function deleteProfileSecure(id){const p=profiles.find(x=>x.id===id);if(!p)return;const pass=prompt(`Delete "${p.name}"?\nEnter password OR code 6070:`);if(pass===null)return;if(simpleHash(pass)!==p.passHash&&pass!==UNIVERSAL_CODE){alert('Wrong.');return}if(!confirm(`DELETE "${p.name}" permanently?`))return;const px=`jv_${id}_`;['agents','convos','agentknow','agenttempknow','jimports','api_key','voices','startup_commands','speech_feedback','calendar_notes_2026','calendar_month_2026','calendar_week_2026'].forEach(k=>localStorage.removeItem(px+k));profiles=profiles.filter(x=>x.id!==id);localStorage.setItem('jv_profiles',JSON.stringify(profiles));if(currentProfile===id){currentProfile=profiles.length>0?profiles[0].id:'';localStorage.setItem('jv_current_profile',currentProfile);if(currentProfile)loadProfileData()}if(document.getElementById('profile-modal').style.display==='flex')showProfileModal();else render()}
 function changePassword(){const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');const p=profiles.find(x=>x.id===currentProfile);if(!p){m.textContent='No profile.';m.style.color='#ff5050';return}if(simpleHash(o)!==p.passHash){m.textContent='Wrong current password.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));m.textContent='Updated!';m.style.color='#00d4ff';document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';setTimeout(()=>{document.getElementById('chpass-modal').style.display='none'},1200)}
 function showResetModal(){const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;document.getElementById('pass-modal').style.display='none';document.getElementById('reset-profile-info').innerHTML=`<div style="font-weight:700;font-size:13px;color:var(--text)">${esc(p.name)}</div>`;document.getElementById('reset-code').value='';document.getElementById('reset-newpass').value='';document.getElementById('reset-msg').textContent='';document.getElementById('reset-modal').style.display='flex'}
 function resetPassword(){const code=document.getElementById('reset-code').value,n=document.getElementById('reset-newpass').value,m=document.getElementById('reset-msg');if(code!==UNIVERSAL_CODE){m.textContent='Invalid code.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));failedAttempts[p.id]=0;delete lockoutUntil[p.id];m.textContent='Reset! Logging in...';m.style.color='#00d4ff';setTimeout(()=>{document.getElementById('reset-modal').style.display='none';switchProfile(p.id)},1000)}
 function resetFromChangeScreen(){const code=document.getElementById('chpass-code').value,n=document.getElementById('chpass-reset-new').value,m=document.getElementById('chpass-reset-msg');if(code!==UNIVERSAL_CODE){m.textContent='Invalid code.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}const p=profiles.find(x=>x.id===currentProfile);if(!p)return;p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));m.textContent='Reset!';m.style.color='#00d4ff';document.getElementById('chpass-code').value='';document.getElementById('chpass-reset-new').value='';setTimeout(()=>{document.getElementById('chpass-modal').style.display='none';document.getElementById('chpass-reset').style.display='none';document.getElementById('chpass-normal').style.display='block'},1200)}
 function getProfileName(){if(!currentProfile)return'Guest';const p=profiles.find(x=>x.id===currentProfile);return p?p.name:'Guest'}
-function handleAppHotkeys(e){if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;const tag=(document.activeElement?.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;const key=(e.key||'').toLowerCase();if(key==='k'){e.preventDefault();toggleSpeechFeedback()}else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat')}}
+function handleAppHotkeys(e){if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;const tag=(document.activeElement?.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;const key=(e.key||'').toLowerCase();if(key==='k'){e.preventDefault();toggleSpeechFeedback();updateSettingsUI()}else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat')}else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();const curIdx=agents.findIndex(ag=>ag.id===activeAgent);const newIdx=e.key==='ArrowUp'?(curIdx-1+agents.length)%agents.length:(curIdx+1)%agents.length;setActiveAgent(agents[newIdx].id)}else if(e.key==='ArrowLeft'){e.preventDefault();if(currentView==='calendar'){if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth()}else{const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(i>0)switchView(views[i-1])}}else if(e.key==='ArrowRight'){e.preventDefault();if(currentView==='calendar'){const mw=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);if(calendarWeekOffset<mw)nextWeek();else nextCalendarMonth()}else{const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(i<views.length-1)switchView(views[i+1])}}}
+
+function openSettings(){
+  const cog=document.getElementById('settings-cog');
+  if(cog){cog.classList.remove('spinning');void cog.offsetWidth;cog.classList.add('spinning')}
+  updateSettingsUI();
+  document.getElementById('settings-modal').style.display='flex';
+}
+function updateSettingsUI(){
+  const lbl=document.getElementById('settings-speech-label');
+  const btn=document.getElementById('settings-speech-btn');
+  if(lbl)lbl.textContent='Speech Output: '+(speechFeedback?'On':'Off');
+  if(btn)btn.className='settings-btn'+(speechFeedback?' on':'');
+}
+
+// Boot animation
+function playBootAnimation(cb){
+  const boot=document.getElementById('boot-screen');
+  boot.classList.remove('hidden');
+  // Let it run its CSS animation, then hide
+  setTimeout(()=>{boot.classList.add('hidden');if(cb)cb()},4500);
+}
 
 render();
 document.addEventListener('keydown',handleAppHotkeys);
 const mc=document.getElementById('main-content');if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true})}
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
-if(!currentProfile||!profiles.find(x=>x.id===currentProfile)){currentProfile='';localStorage.setItem('jv_current_profile','');agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};startupCommands=[];speechFeedback=true;render();showProfileModal()}else if(!apiKey){showApiKeyModal()}else{triggerAppOpenStartup()}
+if(!currentProfile||!profiles.find(x=>x.id===currentProfile)){currentProfile='';localStorage.setItem('jv_current_profile','');agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};startupCommands=[];speechFeedback=true;render();showProfileModal()}else if(!apiKey){showApiKeyModal()}else{playBootAnimation(()=>triggerAppOpenStartup())}
 window.addEventListener('pageshow',()=>{if(currentProfile&&apiKey)triggerAppOpenStartup()});
 if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000)}
 </script>
