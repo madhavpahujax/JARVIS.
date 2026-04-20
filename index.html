@@ -921,7 +921,26 @@ async function runDiagnostics(){
 }
 
 function playBootAnimation(callback){
-  if(!bootAnimEnabled){if(callback)callback();return;}
+  if(!bootAnimEnabled){
+    // Even without animation, still run diagnostics and speak
+    if(speechFeedback){
+      setTimeout(async()=>{
+        let voices=speechSynthesis.getVoices();
+        let attempts=0;
+        while(!voices.length&&attempts<20){await new Promise(r=>setTimeout(r,150));voices=speechSynthesis.getVoices();attempts++;}
+        speechSynthesis.cancel();
+        const faults=await runDiagnostics();
+        const msg=faults.length===0?'All systems online, Sir.':faults.length===1?`Systems online, Sir, except ${faults[0]}.`:`Systems online, Sir, except ${faults.slice(0,-1).join(', ')}, and ${faults[faults.length-1]}.`;
+        const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
+        const u=new SpeechSynthesisUtterance(msg);
+        u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+        const bv=findBestVoice(preset);if(bv)u.voice=bv;
+        u.onend=()=>{if(callback)callback();};u.onerror=()=>{if(callback)callback();};
+        speechSynthesis.speak(u);
+      },300);
+    }else{if(callback)callback();}
+    return;
+  }
   const screen=document.getElementById('boot-screen'),canvas=document.getElementById('boot-canvas');
   screen.classList.remove('hidden');
   // Prime speech engine while we still have gesture context
@@ -961,34 +980,37 @@ function playBootAnimation(callback){
         screen.style.transition='opacity 2.5s ease';screen.style.opacity='0';
         setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
       };
-      setTimeout(()=>{
+      setTimeout(async()=>{
         if(speechFeedback){
-          const doSpeak=async(attempts=0)=>{
-            const voices=speechSynthesis.getVoices();
-            if(!voices.length&&attempts<20){setTimeout(()=>doSpeak(attempts+1),150);return;}
-            speechSynthesis.cancel();
-            // Run live diagnostics
-            const faults=await runDiagnostics();
-            let msg;
-            if(faults.length===0){
-              msg='All systems online, Sir.';
-            }else if(faults.length===1){
-              msg=`Systems online, Sir, except ${faults[0]}.`;
-            }else{
-              const last=faults[faults.length-1];
-              const rest=faults.slice(0,-1);
-              msg=`Systems online, Sir, except ${rest.join(', ')}, and ${last}.`;
-            }
-            setTimeout(()=>{
-              const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
-              const u=new SpeechSynthesisUtterance(msg);
-              u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
-              const bv=findBestVoice(preset);if(bv)u.voice=bv;
-              u.onend=()=>setTimeout(afterSpeak,300);
-              u.onerror=()=>afterSpeak();
-              speechSynthesis.speak(u);
-            },50);
-          };doSpeak();
+          // Wait for voices to load
+          let voices=speechSynthesis.getVoices();
+          let attempts=0;
+          while(!voices.length&&attempts<20){
+            await new Promise(r=>setTimeout(r,150));
+            voices=speechSynthesis.getVoices();
+            attempts++;
+          }
+          speechSynthesis.cancel();
+          // Run live diagnostics
+          const faults=await runDiagnostics();
+          let msg;
+          if(faults.length===0){
+            msg='All systems online, Sir.';
+          }else if(faults.length===1){
+            msg=`Systems online, Sir, except ${faults[0]}.`;
+          }else{
+            const last=faults[faults.length-1];
+            const rest=faults.slice(0,-1);
+            msg=`Systems online, Sir, except ${rest.join(', ')}, and ${last}.`;
+          }
+          await new Promise(r=>setTimeout(r,50));
+          const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
+          const u=new SpeechSynthesisUtterance(msg);
+          u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+          const bv=findBestVoice(preset);if(bv)u.voice=bv;
+          u.onend=()=>setTimeout(afterSpeak,300);
+          u.onerror=()=>afterSpeak();
+          speechSynthesis.speak(u);
         }else{afterSpeak();}
       },1000);
     }
