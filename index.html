@@ -162,7 +162,14 @@ a{color:var(--ac)}
 .swipe-hint{font-size:10px;color:var(--dim);letter-spacing:.06em;text-align:center;padding-top:4px}
 #composer-wrap{padding:0 12px 12px;z-index:20;flex-shrink:0}
 #composer-wrap .inp-box{box-shadow:0 8px 20px rgba(0,0,0,.3)}
-/* Settings */
+/* Smart save prompt */
+#smart-save{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:500;background:rgba(11,17,32,.95);backdrop-filter:blur(16px);border:1px solid var(--ac)44;border-radius:14px;padding:14px 16px;min-width:300px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .25s;display:none}
+#smart-save.show{display:block}
+#smart-save .ss-title{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--ac);letter-spacing:.12em;margin-bottom:8px}
+#smart-save .ss-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);margin-bottom:12px;line-height:1.5;max-height:60px;overflow:hidden;text-overflow:ellipsis}
+#smart-save .ss-btns{display:flex;gap:6px;flex-wrap:wrap}
+#smart-save .ss-btn{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;flex-shrink:0}
+#smart-save .ss-dismiss{padding:6px 10px;border-radius:8px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);margin-left:auto}
 .settings-item{width:100%;padding:14px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;text-align:left;display:flex;align-items:center;gap:12px;background:var(--input);border:1px solid var(--border);color:var(--text);margin-bottom:8px;transition:all .15s}
 .settings-item:hover{border-color:var(--ac)33;background:var(--ac)05}
 .settings-item .s-ico{font-size:18px;width:24px;text-align:center}
@@ -172,9 +179,9 @@ a{color:var(--ac)}
 .shortcut-row:last-child{border-bottom:none}
 .shortcut-key{font-family:'Orbitron',sans-serif;font-size:10px;padding:3px 8px;background:var(--input);border:1px solid var(--border);border-radius:5px;color:var(--ac)}
 .shortcut-desc{font-size:12px;color:var(--dim)}
+/* Smart Save Card */
 @media(max-width:768px){
-  #composer-wrap{padding:0 8px 8px}
-  .cal-day{grid-template-columns:72px 1fr}
+  #composer-wrap{padding:0 8px 8px}  .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
   #sidebar.closed{width:0;min-width:0}
   .bub{max-width:88%!important;font-size:12px}
@@ -246,6 +253,19 @@ a{color:var(--ac)}
       <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7"><span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span><select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select></div>
       <div class="inp-box" id="input-box"><textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea><button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button><button class="snd" id="send-btn" onclick="sendMessage()">Send</button></div>
     </div>
+  </div>
+</div>
+
+<!-- Smart Save Prompt -->
+<div id="smart-save">
+  <div class="ss-title">💾 SAVE THIS INFO?</div>
+  <div class="ss-text" id="ss-text"></div>
+  <div class="ss-btns">
+    <button class="ss-btn" id="ss-mem" onclick="smartSaveTo('memory')" style="background:var(--ac)10;border-color:var(--ac)44;color:var(--ac)">🧠 Memory</button>
+    <button class="ss-btn" id="ss-tmp" onclick="smartSaveTo('temp')" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4);color:#f59e0b">⚡ Temp (24h)</button>
+    <button class="ss-btn" id="ss-cal" onclick="smartSaveTo('calendar')" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.4);color:#a855f7">📅 Calendar</button>
+    <button class="ss-btn" id="ss-cmd" onclick="smartSaveTo('command')" style="background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.3);color:#00ff88">⚡ Login Cmd</button>
+    <button class="ss-dismiss" onclick="dismissSmartSave()">✕</button>
   </div>
 </div>
 
@@ -685,11 +705,100 @@ async function sendMessage(){
   try{
     const reply=await generateReplyForAgent(activeAgent,contents);
     conversations[activeAgent].push({role:'assistant',content:reply});
+    checkForSaveableContent(text,reply);
     if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return;}
   }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."});}
   voiceMode=false;loading=false;save();render();
 }
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';});
+// ── SMART SAVE ──
+let smartSaveData={text:'',type:'',date:''};
+let smartSaveDismissTimer=null;
+
+function dismissSmartSave(){
+  document.getElementById('smart-save').classList.remove('show');
+  if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
+}
+
+function checkForSaveableContent(userMsg,aiReply){
+  const u=userMsg.toLowerCase();
+  // Check if user explicitly asked to save
+  const explicitSave=/\b(save|remember|store|note|keep|log|add to|put in)\b/i.test(u);
+  // Check for personal facts in user message
+  const personalFacts=/\b(my|i am|i'm|i have|i go|i play|i like|i love|i study|i live|i work|i attend|i hate|i want|i need|my name|my age|my school|my team|my class|my birthday|my phone|my email)\b/i.test(u);
+  // Check for dates/events in user message
+  const hasDate=/\b(\d{1,2}(st|nd|rd|th)?[\s\-\/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})|\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week|on the \d))\b/i.test(u);
+  // Check if user asked to run something on startup
+  const loginCmdPattern=/\b(every time|on start|on login|when i open|remind me|always|each time|daily)\b/i.test(u);
+
+  if(!explicitSave&&!personalFacts&&!hasDate&&!loginCmdPattern)return;
+
+  // Extract what to save — prefer a short version of the user message
+  let textToSave=userMsg.length<120?userMsg:userMsg.slice(0,117)+'...';
+
+  // Figure out the best default suggestion
+  let suggestedType='memory';
+  if(loginCmdPattern)suggestedType='command';
+  else if(hasDate)suggestedType='calendar';
+  else if(personalFacts||explicitSave)suggestedType='memory';
+
+  // Extract a date if present for calendar
+  let dateStr='';
+  const dateMatch=userMsg.match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}[\s\-\/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s\-\/]?\d{0,4})\b/i);
+  if(dateMatch)dateStr=dateMatch[0];
+
+  smartSaveData={text:textToSave,type:suggestedType,date:dateStr};
+
+  // Show the card
+  document.getElementById('ss-text').textContent=textToSave;
+
+  // Highlight suggested button
+  ['ss-mem','ss-tmp','ss-cal','ss-cmd'].forEach(id=>{
+    document.getElementById(id).style.opacity='1';
+    document.getElementById(id).style.transform='';
+  });
+  const suggestMap={memory:'ss-mem',temp:'ss-tmp',calendar:'ss-cal',command:'ss-cmd'};
+  const sugBtn=document.getElementById(suggestMap[suggestedType]);
+  if(sugBtn){sugBtn.style.opacity='1';sugBtn.style.transform='scale(1.05)';}
+
+  document.getElementById('smart-save').classList.add('show');
+  // Auto-dismiss after 12 seconds
+  if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
+  smartSaveDismissTimer=setTimeout(dismissSmartSave,12000);
+}
+
+function smartSaveTo(type){
+  const text=smartSaveData.text;
+  if(!text){dismissSmartSave();return;}
+  if(type==='memory'){
+    if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];
+    agentKnowledge[activeAgent].push(text);
+    save();render();
+  }else if(type==='temp'){
+    if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];
+    agentTempKnowledge[activeAgent].push({text,created:Date.now()});
+    save();render();
+  }else if(type==='calendar'){
+    // Try to use extracted date or today
+    let key=smartSaveData.date||new Date().toISOString().slice(0,10);
+    // Normalise to YYYY-MM-DD if possible
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(key)){
+      // Default to today
+      key=new Date().toISOString().slice(0,10);
+    }
+    calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
+    save();render();
+  }else if(type==='command'){
+    startupCommands.push({id:'sc-'+Date.now(),agentId:activeAgent,text,enabled:true});
+    save();render();
+  }
+  dismissSmartSave();
+  // Brief confirmation in chat
+  const confirm=document.createElement('div');
+  confirm.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ac)18;border:1px solid var(--ac)44;color:var(--ac);font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.1em;padding:8px 18px;border-radius:8px;z-index:600;animation:fadeUp .2s';
+  confirm.textContent='✓ SAVED';document.body.appendChild(confirm);
+  setTimeout(()=>confirm.remove(),1800);
+}
 
 // ── STARTUP COMMANDS ──
 function addStartupCommand(){const input=document.getElementById('startup-input');const text=input.value.trim();if(!text)return;const agentId=document.getElementById('startup-agent').value||'jarvis-core';startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});input.value='';save();render();}
