@@ -139,7 +139,7 @@ a{color:var(--ac)}
 #boot-screen{position:fixed;inset:0;background:#020409;z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
 #boot-screen.hidden{display:none!important}
 #boot-canvas{width:380px;height:380px}
-#boot-banner{position:absolute;bottom:22%;width:auto;padding:14px 40px;background:rgba(0,212,255,.06);border:1px solid var(--ac)33;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.35em;color:var(--ac);text-align:center;transform:scaleX(0);opacity:0;animation:bootBannerIn .6s ease-out forwards;animation-delay:2.8s}
+#boot-banner{position:absolute;bottom:22%;width:auto;padding:14px 40px;background:rgba(0,212,255,.06);border:1px solid var(--ac)33;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.35em;color:var(--ac);text-align:center;transform:scaleX(0);opacity:0;animation:bootBannerIn .6s ease-out forwards;animation-delay:3.4s}
 #boot-banner .sub{font-size:9px;letter-spacing:.18em;color:var(--dim);margin-top:5px}
 
 /* ── SHORTCUT TABLE ── */
@@ -206,7 +206,6 @@ a{color:var(--ac)}
 <!-- Boot screen -->
 <div id="boot-screen" class="hidden">
   <canvas id="boot-canvas" width="380" height="380"></canvas>
-  <div id="boot-banner">SYSTEMS ONLINE<div class="sub">J.A.R.V.I.S. MULTI-AGENT SYSTEM</div></div>
 </div>
 <!-- Global orb — visible behind all panels -->
 <div id="global-orb"><div class="orb-wrap" onclick="toggleVoice()" style="pointer-events:auto"><div class="orb-box" id="global-orb-box"></div></div></div>
@@ -567,17 +566,17 @@ function playBootAnimation(callback){
       }
     }
     if(elapsed<duration){af=requestAnimationFrame(drawBoot)}else{
-      // Fade out
-      screen.style.animation='bootFade .7s ease forwards';
-      // Speak "systems online"
-      if(speechFeedback){
-        const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
-        const u=new SpeechSynthesisUtterance('Systems online, Sir.');
-        u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
-        const bv=findBestVoice(preset);if(bv)u.voice=bv;
-        speechSynthesis.speak(u);
-      }
-      setTimeout(()=>{screen.classList.add('hidden');screen.style.animation='';if(callback)callback()},1000);
+      setTimeout(()=>{
+        if(speechFeedback){
+          const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
+          const u=new SpeechSynthesisUtterance('Systems online, Sir.');
+          u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+          const bv=findBestVoice(preset);if(bv)u.voice=bv;
+          speechSynthesis.speak(u);
+        }
+        screen.style.animation='bootFade .7s ease forwards';
+        setTimeout(()=>{screen.classList.add('hidden');screen.style.animation='';if(callback)callback()},800);
+      },1000);
     }
   }
   drawBoot();
