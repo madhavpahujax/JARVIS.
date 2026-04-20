@@ -269,45 +269,53 @@ a{color:var(--ac)}
 </div>
 <div class="ov" id="create-modal" style="display:none" onclick="closeCreateModal()"><div class="md" onclick="event.stopPropagation()"><h2>New Agent</h2><label>NAME</label><input id="ca-name" placeholder="e.g. Music Guru"/><label>ICON</label><div class="ig" id="ca-icons"></div><label>COLOUR</label><div class="cg" id="ca-colors"></div><label>DESCRIPTION</label><input id="ca-desc" placeholder="What does this agent do?"/><label>INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave..."></textarea><div class="md-act"><button class="md-cancel" onclick="closeCreateModal()">Cancel</button><button class="md-go" id="ca-deploy" onclick="deployAgent()">Deploy</button></div></div></div>
 <div class="ov" id="api-modal" style="display:none" onclick="if(apiKey)document.getElementById('api-modal').style.display='none'"><div class="md" onclick="event.stopPropagation()"><h2>Connect AI</h2><p style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:16px;line-height:1.6;text-align:center">Get a free Gemini API key at<br><a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p><label>API KEY</label><input id="api-key-input" placeholder="AIza..." style="font-size:11px" onkeydown="if(event.key==='Enter')saveApiKey()"/><p style="color:var(--dim);font-size:9px;margin-top:-8px;margin-bottom:14px;opacity:.6">Stored only on your device.</p><div class="md-act"><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="saveApiKey()">Activate</button></div></div></div>
-<div class="ov" id="profile-modal" style="display:none"><div class="md" style="max-width:400px;text-align:center" onclick="event.stopPropagation()">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div></div><h2 style="margin-bottom:0">J.A.R.V.I.S. Login</h2><button id="profile-close-btn" onclick="closeProfileModal()" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
-  <!-- Login form -->
-  <div id="fb-login-form">
-    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Sign in to sync your data across all devices.</p>
+<div class="ov" id="profile-modal" style="display:none"><div class="md" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
+
+  <!-- MAIN screen — two big buttons -->
+  <div id="fb-main-form">
+    <div style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:800;color:var(--ac);letter-spacing:.15em;margin-bottom:6px">J.A.R.V.I.S.</div>
+    <p style="color:var(--dim);font-size:11px;margin-bottom:28px">Your data syncs across all devices.</p>
+    <button onclick="showFbLogin()" style="width:100%;padding:14px;border-radius:10px;background:rgba(0,212,255,.12);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em;margin-bottom:12px">🔵 SIGN IN</button>
+    <button onclick="showFbRegister()" style="width:100%;padding:14px;border-radius:10px;background:rgba(245,158,11,.12);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em">🟡 CREATE ACCOUNT</button>
+  </div>
+
+  <!-- SIGN IN form -->
+  <div id="fb-login-form" style="display:none">
+    <h2 style="margin-bottom:18px">Sign In</h2>
     <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
     <input id="fb-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-pass').focus()"/>
     <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
     <input id="fb-pass" type="password" placeholder="Password" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbLogin()"/>
-    <p id="fb-error" style="color:#ff5050;font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
+    <p id="fb-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
+    <button onclick="fbLogin()" style="width:100%;padding:11px;border-radius:8px;background:rgba(0,212,255,.12);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Sign In</button>
     <div style="display:flex;gap:8px">
-      <button onclick="fbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Sign In</button>
-      <button onclick="showFbRegister()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Create Account</button>
+      <button onclick="showFbMain()" style="flex:1;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back</button>
+      <button onclick="showFbReset()" style="flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px">Forgot password?</button>
     </div>
-    <button onclick="showFbReset()" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:11px;text-decoration:underline">Forgot password?</button>
   </div>
-  <!-- Reset password form -->
-  <div id="fb-reset-form" style="display:none">
-    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your email and we'll send you a reset link.</p>
-    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
-    <input id="fb-reset-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbSendReset()"/>
-    <p id="fb-reset-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
-    <div style="display:flex;gap:8px">
-      <button onclick="fbSendReset()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Send Reset Email</button>
-      <button onclick="showFbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Back</button>
-    </div>
-  <!-- Register form -->
+
+  <!-- CREATE ACCOUNT form -->
   <div id="fb-register-form" style="display:none">
-    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Create a new account. Your data will sync across all devices.</p>
+    <h2 style="margin-bottom:18px">Create Account</h2>
     <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
     <input id="fb-reg-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-reg-pass').focus()"/>
     <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
     <input id="fb-reg-pass" type="password" placeholder="Min 6 characters" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbRegister()"/>
-    <p id="fb-reg-error" style="color:#ff5050;font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
-    <div style="display:flex;gap:8px">
-      <button onclick="fbRegister()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Create Account</button>
-      <button onclick="showFbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Back to Login</button>
-    </div>
+    <p id="fb-reg-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
+    <button onclick="fbRegister()" style="width:100%;padding:11px;border-radius:8px;background:rgba(245,158,11,.12);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Create Account</button>
+    <button onclick="showFbMain()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back</button>
   </div>
+
+  <!-- FORGOT PASSWORD form -->
+  <div id="fb-reset-form" style="display:none">
+    <h2 style="margin-bottom:12px">Reset Password</h2>
+    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your email — we'll send a reset link.</p>
+    <input id="fb-reset-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbSendReset()"/>
+    <p id="fb-reset-msg" style="font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
+    <button onclick="fbSendReset()" style="width:100%;padding:11px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Send Reset Email</button>
+    <button onclick="showFbLogin()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back to Sign In</button>
+  </div>
+
 </div></div>
 <div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
 <!-- Settings Modal -->
@@ -611,38 +619,87 @@ async function runStartupCommands(){
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}function closeCreateModal(){document.getElementById('create-modal').style.display='none'}function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200))}
 // ── FIREBASE AUTH FUNCTIONS ──
-function showFbLogin(){document.getElementById('fb-login-form').style.display='block';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-error').textContent=''}
-function showFbRegister(){document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='block';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-reg-error').textContent=''}
-function showFbReset(){document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='block';document.getElementById('fb-reset-msg').textContent='';document.getElementById('fb-reset-msg').style.color='var(--dim)'}
+function showFbMain(){
+  document.getElementById('fb-main-form').style.display='block';
+  document.getElementById('fb-login-form').style.display='none';
+  document.getElementById('fb-register-form').style.display='none';
+  document.getElementById('fb-reset-form').style.display='none';
+}
+function showFbLogin(){
+  document.getElementById('fb-main-form').style.display='none';
+  document.getElementById('fb-login-form').style.display='block';
+  document.getElementById('fb-register-form').style.display='none';
+  document.getElementById('fb-reset-form').style.display='none';
+  document.getElementById('fb-error').textContent='';
+  setTimeout(()=>document.getElementById('fb-email').focus(),100);
+}
+function showFbRegister(){
+  document.getElementById('fb-main-form').style.display='none';
+  document.getElementById('fb-login-form').style.display='none';
+  document.getElementById('fb-register-form').style.display='block';
+  document.getElementById('fb-reset-form').style.display='none';
+  document.getElementById('fb-reg-error').textContent='';
+  setTimeout(()=>document.getElementById('fb-reg-email').focus(),100);
+}
+function showFbReset(){
+  document.getElementById('fb-main-form').style.display='none';
+  document.getElementById('fb-login-form').style.display='none';
+  document.getElementById('fb-register-form').style.display='none';
+  document.getElementById('fb-reset-form').style.display='block';
+  document.getElementById('fb-reset-msg').textContent='';
+  document.getElementById('fb-reset-msg').style.color='var(--dim)';
+}
 async function fbSendReset(){
   const email=document.getElementById('fb-reset-email').value.trim();
   const msg=document.getElementById('fb-reset-msg');
-  if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return}
-  msg.textContent='Sending...';msg.style.color='var(--dim)';
+  if(!email){msg.textContent='Please enter your email address.';msg.style.color='#ff5050';return}
+  msg.textContent='Sending reset email...';msg.style.color='var(--dim)';
   try{
     await auth.sendPasswordResetEmail(email);
-    msg.textContent='Reset email sent! Check your inbox.';msg.style.color='#00d4ff';
-    setTimeout(()=>showFbLogin(),3000);
+    msg.textContent='✓ Reset email sent! Check your inbox then come back to sign in.';
+    msg.style.color='#00d4ff';
+    setTimeout(()=>showFbLogin(),4000);
   }catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050'}
 }
-function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email.','auth/wrong-password':'Wrong password.','auth/email-already-in-use':'Email already registered.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try again later.'};return m[code]||'Something went wrong. Try again.'}
+function fbErrMsg(code){
+  const m={
+    'auth/user-not-found':'No account found with that email. Did you mean to create one?',
+    'auth/wrong-password':'Incorrect password. Try again or use Forgot Password.',
+    'auth/invalid-credential':'Wrong email or password. Check and try again.',
+    'auth/email-already-in-use':'An account with this email already exists. Try signing in instead.',
+    'auth/weak-password':'Password is too short — must be at least 6 characters.',
+    'auth/invalid-email':'That doesn\'t look like a valid email address.',
+    'auth/too-many-requests':'Too many failed attempts. Wait a few minutes and try again.',
+    'auth/network-request-failed':'No internet connection. Check your network and retry.',
+    'auth/user-disabled':'This account has been disabled. Contact support.',
+    'auth/operation-not-allowed':'Email/password sign-in is not enabled. Contact support.',
+  };
+  return m[code]||`Something went wrong (${code}). Check your connection and try again.`;
+}
 async function fbLogin(){
   const email=document.getElementById('fb-email').value.trim();
   const pass=document.getElementById('fb-pass').value;
   const err=document.getElementById('fb-error');
-  if(!email||!pass){err.textContent='Enter email and password.';return}
-  err.textContent='Signing in...';
-  try{await auth.signInWithEmailAndPassword(email,pass)}
-  catch(e){err.textContent=fbErrMsg(e.code)}
+  if(!email){err.textContent='Please enter your email address.';return}
+  if(!pass){err.textContent='Please enter your password.';return}
+  err.textContent='Signing in...';err.style.color='var(--dim)';
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+    // onAuthStateChanged handles the rest
+  }catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050'}
 }
 async function fbRegister(){
   const email=document.getElementById('fb-reg-email').value.trim();
   const pass=document.getElementById('fb-reg-pass').value;
   const err=document.getElementById('fb-reg-error');
-  if(!email||!pass){err.textContent='Enter email and password.';return}
-  err.textContent='Creating account...';
-  try{await auth.createUserWithEmailAndPassword(email,pass)}
-  catch(e){err.textContent=fbErrMsg(e.code)}
+  if(!email){err.textContent='Please enter an email address.';return}
+  if(!pass){err.textContent='Please enter a password.';return}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters.';return}
+  err.textContent='Creating account...';err.style.color='var(--dim)';
+  try{
+    await auth.createUserWithEmailAndPassword(email,pass);
+    // onAuthStateChanged handles the rest
+  }catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050'}
 }
 async function fbLogout(){
   if(fbUnsub){fbUnsub();fbUnsub=null}
@@ -652,8 +709,7 @@ async function fbLogout(){
 }
 function closeProfileModal(){if(fbUser)document.getElementById('profile-modal').style.display='none'}
 function showProfileModal(){
-  showFbLogin();
-  document.getElementById('profile-close-btn').style.display=fbUser?'grid':'none';
+  showFbMain();
   document.getElementById('profile-modal').style.display='flex';
 }
 function getProfileName(){return fbUser?fbUser.email.split('@')[0]:'Guest'}
