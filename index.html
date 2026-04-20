@@ -322,7 +322,89 @@ function cleanSpeechText(t){return(t||'').replace(/```[\s\S]*?```/g,' ').replace
 function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
 function normalizeStartupCommands(){startupCommands=(startupCommands||[]).map(cmd=>({id:cmd.id||('sc-'+Date.now()+Math.random().toString(36).slice(2,7)),agentId:agents.find(a=>a.id===cmd.agentId)?.id||'jarvis-core',text:(cmd.text||'').trim(),enabled:cmd.enabled!==false})).filter(cmd=>cmd.text)}
 function buildMemoryContext(agentId){const myK=getKnowledge(agentId),myT=getTempKnowledge(agentId),isJ=agentId==='jarvis-core';let k='';if(myK.length>0)k+=`\n\nPrimary Memory:\n${myK.map((x,i)=>`[${i+1}] ${x}`).join('\n')}`;if(myT.length>0)k+=`\n\nTemporary Memory (24h):\n${myT.map((x,i)=>`[T${i+1}] ${x.text}`).join('\n')}`;if(isJ){let n='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),agT=getTempKnowledge(ag.id);if(agK.length||agT.length){n+=`\n\nSub-agent: ${ag.name}`;if(agK.length)n+=`\nMemory:\n${agK.map((x,i)=>`[${ag.name}-${i+1}] ${x}${isImportedToJarvis(ag.id,i)?' [SHARED]':''}`).join('\n')}`;if(agT.length)n+=`\nTemp:\n${agT.map((x,i)=>`[${ag.name}-T${i+1}] ${x.text}`).join('\n')}`}});if(n)k+=`\n\nSub-agent Network:${n}`}const calEntries=Object.entries(calendarNotes).filter(([_,v])=>v&&v.trim()).sort(([a],[b])=>a.localeCompare(b));if(calEntries.length>0){const today=new Date().toISOString().slice(0,10);const up=calEntries.filter(([d])=>d>=today).slice(0,14);const past=calEntries.filter(([d])=>d<today).slice(-7);let c='\n\nCalendar (2026):';if(up.length)c+=`\nUpcoming:\n${up.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;if(past.length)c+=`\nRecent:\n${past.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;k+=c}return k}
-function buildSystemPrompt(agentId){const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];const jd=agentId==='jarvis-core'?'\n\nYou are the main J.A.R.V.I.S. agent and central coordinator. You access your own memory plus the full sub-agent memory network and calendar.':'\n\nYou are a specialist sub-agent under J.A.R.V.I.S. Use your own memory and calendar.';return agent.systemPrompt+jd+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks. If unsure, use English.'}
+const JARVIS_UI_KNOWLEDGE=`
+
+## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v1.8)
+You are a Progressive Web App (PWA) built for the user's phone and desktop browser. You run entirely in the browser — no servers, all data stored locally on the device.
+
+### AGENTS
+- You have 5 default agents: J.A.R.V.I.S. (you — main coordinator, cyan), Pitch Intel (football analysis, green ⚽), Transfer Wire (football news, orange 📰), Scholar (study assistant, purple 📚), Campus (school organiser, amber 🏫).
+- Users can create CUSTOM agents: tap "+ New Agent" in the sidebar, pick an icon, colour, and write custom instructions.
+- Switch agents by tapping their name in the sidebar, or press ↑ / ↓ arrow keys on keyboard.
+- J.A.R.V.I.S. is the MAIN agent and sees memory from all sub-agents. Sub-agents only see their own memory.
+
+### VIEWS (3 panels, swipe or use buttons)
+1. **Chat** — main conversation with the active agent. Tap the orb or mic to speak.
+2. **Memory** — store permanent notes (Primary Memory) or short-term notes (Secondary Memory, auto-deletes after 24 hours). Also manage Login Commands here.
+3. **Calendar** — weekly notepad for 2026. Navigate months with Prev/Next buttons or ← → arrow keys. All agents can see calendar entries in their AI context.
+- Switch views: tap Chat / Memory / Calendar buttons in the header, swipe left/right, press M to cycle, or ← → arrow keys.
+
+### VOICE
+- Tap the glowing orb or the 🎤 mic button to speak. After 1.5 seconds of silence, it auto-sends.
+- JARVIS reads replies aloud automatically when Speech is ON.
+- 4 voice presets: Friday (female, high-pitched), Arjun (male, deep — JARVIS default), Nova (female, smooth), Titan (male, commanding).
+- Change voice: open ⚙ Settings → Voice Preset dropdown.
+- Toggle speech on/off: press K shortcut or go to ⚙ Settings → Speech.
+- Tap 🔊 button on any message to replay it. Tap "⏹ Stop" to stop speaking.
+
+### MEMORY SYSTEM
+- **Primary Memory**: permanent. Add items in the Memory view. Sub-agents can share items to JARVIS using the "→ Share" button.
+- **Secondary Memory**: temporary, auto-deletes after 24 hours. Good for today's notes.
+- **Login Commands**: messages that auto-run every time you log in. Set the agent and the message. E.g. "Give me today's football news" on Transfer Wire. Manage in Memory view.
+
+### SETTINGS (⚙ cog button, top-right of header)
+- **Speech**: toggle voice output on/off (shortcut: K)
+- **Boot Animation**: toggle the cinematic startup animation on/off
+- **Voice Preset**: change JARVIS's voice
+- **Change Profile**: switch to another user profile
+- **API Key**: update your Gemini API key
+- **Change PIN**: change your profile password
+
+### KEYBOARD SHORTCUTS
+- K — toggle speech on/off
+- H — open/close sidebar
+- M — cycle through views (Chat → Memory → Calendar)
+- ↑ / ↓ — switch between agents
+- ← / → — switch views, or navigate weeks/months in calendar
+
+### PROFILES & SECURITY
+- Multiple user profiles supported on one device. Each has its own password, memory, agents, and settings.
+- Universal reset code is available if you forget your password (ask the user's administrator).
+- 3 wrong password attempts triggers a 60-second lockout.
+- To create a profile: open profile screen, type name, press Enter to move to password, press Enter to create.
+- To delete a profile: tap × on the profile card, enter password to confirm.
+
+### BOOT ANIMATION
+- A cinematic animation plays when you log in or enter your API key. Rings spin and accelerate into perfect circles, then JARVIS speaks "Systems online, Sir."
+- Can be disabled in ⚙ Settings → Boot Animation.
+
+### COOLDOWN
+- There is a 12-second cooldown between messages to avoid API overuse. A circular timer badge appears in the sidebar showing the countdown.
+
+### CALENDAR
+- Notes are per-day for the year 2026. Navigate weeks with ↑/↓ Week buttons or ← → keys. Navigate months with Prev/Next buttons.
+- All agents can see your upcoming 14 days and past 7 days of notes in their AI context automatically.
+
+### INSTALL AS APP (PWA)
+- On Chrome/Edge: tap the install icon in the address bar or browser menu → "Install app".
+- On iPhone/Safari: tap Share → "Add to Home Screen".
+- Once installed, runs like a native app with no browser UI.
+
+### CLEARING DATA
+- "Clear" button in header: clears the current chat only. Memory and calendar are preserved.
+- Deleting a profile removes all its data permanently.
+
+When guiding the user, be specific about button names, locations, and shortcuts. Speak like a helpful butler — concise, precise, and never condescending.`;
+
+function buildSystemPrompt(agentId){
+  const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
+  const isJarvis=agentId==='jarvis-core';
+  const role=isJarvis
+    ?'\n\nYou are the main J.A.R.V.I.S. agent and central coordinator. You have full knowledge of this app\'s features and UI — guide the user confidently if they ask how to use anything.'
+    :'\n\nYou are a specialist sub-agent under J.A.R.V.I.S. Use your own memory and calendar.';
+  const uiKnowledge=isJarvis?JARVIS_UI_KNOWLEDGE:'';
+  return agent.systemPrompt+role+uiKnowledge+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks. If unsure, use English.';
+}
 function render(){const a=getAgent(),msgs=getMessages();normalizeStartupCommands();document.documentElement.style.setProperty('--ac',a.color);document.getElementById('agent-count').textContent=agents.length;document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();document.getElementById('agent-cards').innerHTML=agents.map(ag=>{const isMain=ag.id==='jarvis-core',isSub=!isMain;return `${isSub&&agents.indexOf(ag)===1?'<div style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.15em;padding:10px 8px 4px;border-top:1px solid var(--border);margin-top:6px">SUB-AGENTS</div>':''}<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}${isMain?';border-width:1.5px':''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}${isMain?' <span style="font-size:8px;opacity:.5;letter-spacing:.05em">MAIN</span>':''}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`}).join('');document.getElementById('h-icon').textContent=a.icon;document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;document.getElementById('h-desc').textContent=a.description;['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'')});['chat','knowledge','calendar'].forEach(v=>{const p=document.getElementById(v+'-view');if(!p)return;p.classList.remove('active','hidden-left','hidden-right');if(v===currentView)p.classList.add('active');else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))p.classList.add('hidden-left');else p.classList.add('hidden-right')});const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';syncCooldownState();updateCooldownUI();const ca=document.getElementById('chat'),bgBox=document.getElementById('global-orb-box');bgBox.innerHTML=renderOrb(a.color);if(msgs.length===0){ca.innerHTML=''}else{let h='';h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;ca.innerHTML=h;ca.scrollTop=ca.scrollHeight}setTimeout(()=>{startOrbAnim();updateOrb()},60);const isJarvis=activeAgent==='jarvis-core',knowledge=getKnowledge(activeAgent),tempKnowledge=getTempKnowledge(activeAgent);document.getElementById('k-title').style.color=a.color;document.getElementById('k-title').textContent=isJarvis?'JARVIS Primary Memory':`${a.name} — Primary Memory`;const kab=document.getElementById('k-add-btn');kab.style.borderColor=`${a.color}44`;kab.style.color=a.color;let kHtml='';if(knowledge.length===0){kHtml=`<p style="color:var(--dim);font-size:11px">${isJarvis?'No data stored yet.':'No data for this agent yet.'}</p>`}else{kHtml=knowledge.map((item,i)=>{const imp=!isJarvis&&isImportedToJarvis(activeAgent,i);return `<div class="kp-item" style="${imp?'border-color:var(--ac)25;background:var(--ac)05':''}"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}${imp?'<span style="display:block;font-size:9px;color:var(--ac);margin-top:2px;font-weight:700">✓ Shared with JARVIS</span>':''}</span>${!isJarvis?`<button onclick="toggleJarvisImport('${activeAgent}',${i})" style="padding:2px 6px;border-radius:5px;background:${imp?'var(--ac)15':'var(--input)'};border:1px solid ${imp?'var(--ac)33':'var(--border)'};color:${imp?'var(--ac)':'var(--dim)'};cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">${imp?'✓ Shared':'→ Share'}</button>`:''}<button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`}).join('')}document.getElementById('k-items').innerHTML=kHtml;if(isJarvis){let impH='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),imp=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));if(imp.length>0){impH+=`<div style="margin-top:8px;padding:8px 10px;background:var(--input);border:1px solid var(--border);border-radius:8px"><div style="font-size:10px;font-weight:700;color:${ag.color};margin-bottom:4px">${ag.icon} ${ag.name}</div>`;imp.forEach(item=>{impH+=`<div style="font-size:11px;color:var(--dim);padding:2px 0;line-height:1.4">• ${esc(item)}</div>`});impH+=`</div>`}});if(impH)document.getElementById('k-items').innerHTML+=`<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--ac);letter-spacing:.08em;margin-bottom:8px">📥 FROM SUB-AGENTS</div>${impH}</div>`}cleanExpiredTemp();const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Auto-deletes after 24h.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');const saEl=document.getElementById('startup-agent');saEl.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');if(!saEl.value||!agents.find(ag=>ag.id===saEl.value))saEl.value='jarvis-core';const sab=document.getElementById('startup-add-btn');sab.style.borderColor=`${a.color}44`;sab.style.color=a.color;document.getElementById('startup-items').innerHTML=startupCommands.length===0?`<p style="color:var(--dim);font-size:11px">No login commands yet.</p>`:startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');renderCalendar()}
 function renderOrb(c){return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`}
 let orbAF=null,orbT=0;
