@@ -762,12 +762,16 @@ function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const
 function handleAppHotkeys(e){
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
   const tag=(document.activeElement?.tagName||'').toLowerCase();
-  if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;
+  const inInput=tag==='input'||tag==='select'||document.activeElement?.isContentEditable;
+  const inTextarea=tag==='textarea';
   const key=(e.key||'').toLowerCase();
-  if(key==='k'){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI();}
-  else if(key==='h'){e.preventDefault();toggleSidebar();}
-  else if(key==='s'){e.preventDefault();openSettings();}
-  else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');}
+  // S, H, K work even with textarea focused (but not regular inputs)
+  if(key==='s'&&!inInput){e.preventDefault();openSettings();return;}
+  if(key==='h'&&!inInput){e.preventDefault();toggleSidebar();return;}
+  if(key==='k'&&!inInput){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI();return;}
+  // All other shortcuts blocked when any input is focused
+  if(inInput||inTextarea)return;
+  if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');}
   else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();const idx=agents.findIndex(ag=>ag.id===activeAgent);const next=e.key==='ArrowUp'?(idx-1+agents.length)%agents.length:(idx+1)%agents.length;setActiveAgent(agents[next].id);}
   else if(e.key==='ArrowLeft'){e.preventDefault();if(currentView==='calendar'){if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth();}else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i>0)switchView(v[i-1]);}}
   else if(e.key==='ArrowRight'){e.preventDefault();if(currentView==='calendar'){const mw=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);if(calendarWeekOffset<mw)nextWeek();else nextCalendarMonth();}else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i<v.length-1)switchView(v[i+1]);}}
