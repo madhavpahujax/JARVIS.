@@ -12,6 +12,7 @@
 <link rel="icon" href="icon-192.png"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -31,12 +32,15 @@ a{color:var(--ac)}
 @keyframes glow{0%,100%{box-shadow:0 0 25px var(--ac)22,0 0 50px var(--ac)0a}50%{box-shadow:0 0 45px var(--ac)44,0 0 90px var(--ac)18}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes bootSpin{0%{transform:rotate(0deg)}100%{transform:rotate(1080deg)}}
-@keyframes bootScale{0%{transform:scale(0);opacity:0}30%{transform:scale(1.2);opacity:1}50%{transform:scale(.95)}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
-@keyframes bootGlow{0%,100%{box-shadow:0 0 40px var(--ac)44,0 0 80px var(--ac)18}50%{box-shadow:0 0 80px var(--ac)77,0 0 140px var(--ac)33}}
-@keyframes bootBannerIn{0%{transform:scaleX(0);opacity:0}60%{transform:scaleX(1.05);opacity:1}100%{transform:scaleX(1);opacity:1}}
-@keyframes bootFade{0%{opacity:1}80%{opacity:1}100%{opacity:0}}
-/* ── GLOBAL ORB LAYER ── */
+@keyframes bootScale{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes bootFade{0%{opacity:1}100%{opacity:0}}
+@keyframes cogSpin{0%{transform:rotate(0deg)}100%{transform:rotate(180deg)}}
+/* GLOBAL ORB */
 #global-orb{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
+/* BOOT SCREEN */
+#boot-screen{position:fixed;inset:0;background:#020409;z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+#boot-screen.hidden{display:none!important}
+/* APP */
 #app{display:flex;height:100dvh;width:100vw;background:transparent;position:relative;z-index:1}
 #sidebar{width:280px;min-width:280px;background:rgba(11,17,32,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s,min-width .25s;overflow:hidden;z-index:50}
 #sidebar.closed{width:0;min-width:0}
@@ -62,68 +66,61 @@ a{color:var(--ac)}
 .sb-cooldown-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .sb-cooldown strong{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.04em;color:#f59e0b}
 .sb-cooldown span{margin-top:3px;font-size:7px;font-weight:700;letter-spacing:.12em;color:#d3a44b}
-.sb-foot{padding:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.sb-foot{padding:10px;border-top:1px solid var(--border)}
 .sb-btn{width:100%;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center;transition:all .2s}
 .sb-add{background:transparent;border:1px dashed var(--ac)30;color:var(--ac)}
-.sb-key{background:transparent;border:1px solid var(--border);color:var(--dim);font-size:11px}
 #hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(11,17,32,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:52px;position:relative;z-index:5}
 .hdr-menu{background:none;border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;padding:5px 9px;font-size:15px;flex-shrink:0}
 .hdr-info{flex:1;min-width:0;overflow:hidden}
 .hdr-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hdr-desc{font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-actions{display:flex;gap:5px;align-items:center;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:55%}
+.hdr-actions{display:flex;gap:5px;align-items:center;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .hdr-actions::-webkit-scrollbar{display:none}
 .hbtn{padding:5px 10px;border-radius:7px;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap;flex-shrink:0;transition:all .15s}
 .hbtn.on{border-color:var(--ac)44;color:var(--ac);background:var(--ac)0a}
 .hsel{padding:4px 6px;border-radius:7px;font-size:10px;font-weight:700;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;outline:none;flex-shrink:0}
+.cog-btn{width:34px;height:34px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:17px;flex-shrink:0;transition:all .2s}
+.cog-btn:hover{border-color:var(--ac)44;color:var(--ac)}
+.cog-ico{display:inline-block}
+.cog-btn.spin .cog-ico{animation:cogSpin .5s ease-out forwards}
 .spk{display:inline-flex;align-items:center;gap:3px;margin-left:8px;padding:2px 7px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;border:1px solid var(--ac)25;background:var(--ac)08;color:var(--ac);vertical-align:middle}
-.spk:active{opacity:.6}
 .dots{display:flex;gap:5px;padding:10px 14px;margin-bottom:12px;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);border-radius:12px;width:fit-content}
 .dots span{width:6px;height:6px;border-radius:50%;animation:dots 1.2s ease-in-out infinite}
 .dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
 .stop-btn{display:block;margin:6px auto;padding:6px 18px;border-radius:8px;background:rgba(255,50,50,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,50,50,.4);color:#ff5050;cursor:pointer;font-weight:700;font-size:11px;letter-spacing:.06em}
 #inp{padding:8px 14px 14px;position:relative;z-index:3}
-#voice-bar{transition:opacity .2s}
-#voice-bar:hover{opacity:1!important}
 .inp-box{display:flex;gap:8px;align-items:flex-end;background:rgba(14,22,40,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:6px 6px 6px 14px;transition:border-color .2s}
 .inp-box:focus-within{border-color:var(--ac)33}
-.inp-box.locked{border-color:rgba(245,158,11,.32);background:rgba(18,23,34,.88)}
+.inp-box.locked{border-color:rgba(245,158,11,.32)}
 .inp-box textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;resize:none;line-height:1.5;max-height:100px}
 .inp-box.locked textarea{color:var(--dim)}
-.inp-box textarea[readonly]{cursor:not-allowed}
 .mic{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--border);font-size:16px;cursor:pointer;transition:all .2s;display:grid;place-items:center;flex-shrink:0}
 .mic.rec{background:rgba(255,60,60,.15);border-color:#ff3c3c;animation:micPulse .9s ease-in-out infinite}
 .mic:disabled,.snd:disabled{opacity:.45;cursor:not-allowed}
 .snd{padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--card);color:var(--dim);flex-shrink:0}
 .orb-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
 .orb-box{position:relative;width:380px;height:380px}
-.orb-box:active{transform:scale(.96)}
 .orb-outer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;transition:all .4s}
 .orb-outer.speaking{animation:glow .5s ease-in-out infinite}
 .orb-core{position:absolute;top:50%;left:50%;width:75px;height:75px;border-radius:50%;transform:translate(-50%,-50%);animation:breathe 4s ease-in-out infinite;transition:all .3s}
 .orb-core.speaking{animation:speakPulse .32s ease-in-out infinite;width:90px;height:90px}
 .orb-core.listening{animation:breathe 1.1s ease-in-out infinite;width:85px;height:85px}
-.orb-label{text-align:center;margin-top:12px;font-family:'Orbitron',sans-serif;font-weight:600;font-size:10px;letter-spacing:.22em;text-transform:uppercase}
-.orb-label.listening{color:#ff3c3c;animation:blink .9s ease-in-out infinite}
-.orb-label.speaking{color:var(--ac)}
-.orb-label.thinking{color:#f0a030;animation:blink .7s ease-in-out infinite}
 #chat{flex:1;overflow-y:auto;padding:16px 16px 8px}
 .msg{display:flex;margin-bottom:12px;animation:fadeUp .25s}
 .msg.u{justify-content:flex-end}.msg.a{justify-content:flex-start}
 .bub{max-width:80%;padding:10px 14px;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',monospace;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .msg.u .bub{background:rgba(30,40,60,.65);border:1px solid rgba(100,120,150,.2);border-radius:14px 14px 3px 14px;color:var(--text)}
 .msg.a .bub{background:rgba(0,0,0,.35);border:1px solid var(--ac)25;border-radius:14px 14px 14px 3px;color:var(--text);box-shadow:0 0 20px var(--ac)10}
-.kp{padding:16px;background:transparent}.kp-title{font-weight:700;font-size:14px;letter-spacing:.08em;margin-bottom:12px}
+.kp{padding:16px;background:transparent}
+.kp-title{font-weight:700;font-size:14px;letter-spacing:.08em;margin-bottom:12px}
 .kp-row{display:flex;gap:6px;margin-bottom:12px}
-.kp-in{flex:1;padding:9px 12px;background:rgba(14,22,40,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none}.kp-in:focus{border-color:var(--ac)33}
-.kp-add{padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;border:1px solid;background:transparent;white-space:nowrap;backdrop-filter:blur(8px)}
-.kp-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.kp-in{flex:1;padding:9px 12px;background:rgba(14,22,40,.6);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none}
+.kp-in:focus{border-color:var(--ac)33}
+.kp-add{padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;border:1px solid;background:transparent;white-space:nowrap}
+.kp-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(14,22,40,.55);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
 .kp-idx{font-size:9px;margin-top:2px;font-family:'Orbitron',sans-serif;font-weight:600}
 .kp-txt{flex:1;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5}
 .kp-del{background:none;border:none;color:rgba(255,50,50,.45);cursor:pointer;font-size:13px;padding:0 2px}
-.toggle-chip{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap;transition:all .15s}
-.toggle-chip.on{border-color:var(--ac)44;color:var(--ac);background:var(--ac)0a}
-.toggle-chip .keyhint{display:inline-block;margin-left:6px;padding:1px 4px;border-radius:999px;border:1px solid currentColor;font-size:8px;line-height:1;opacity:.7;vertical-align:middle}
 .kp-mini-btn{padding:6px 10px;border-radius:7px;cursor:pointer;font-weight:700;font-size:10px;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap}
 .kp-mini-btn.on{border-color:var(--ac)33;color:var(--ac);background:var(--ac)0a}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(12px);animation:fadeIn .2s}
@@ -136,32 +133,6 @@ a{color:var(--ac)}
 .ig,.cg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .ib{width:36px;height:36px;border-radius:8px;font-size:18px;background:transparent;border:1px solid var(--border);cursor:pointer;display:grid;place-items:center}.ib.on{background:var(--input);border-color:var(--ac)33}
 .cb{width:28px;height:28px;border-radius:50%;border:2px solid #333;cursor:pointer}.cb.on{border:2.5px solid white}
-@keyframes cogSpin{0%{transform:rotate(0deg)}100%{transform:rotate(180deg)}}
-
-/* ── BOOT SCREEN ── */
-#boot-screen{position:fixed;inset:0;background:#020409;z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-#boot-screen.hidden{display:none!important}
-#boot-canvas{width:380px;height:380px}
-#boot-banner{position:absolute;bottom:22%;width:auto;padding:14px 40px;background:rgba(0,212,255,.06);border:1px solid var(--ac)33;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.35em;color:var(--ac);text-align:center;transform:scaleX(0);opacity:0;animation:bootBannerIn .6s ease-out forwards;animation-delay:3.4s}
-#boot-banner .sub{font-size:9px;letter-spacing:.18em;color:var(--dim);margin-top:5px}
-
-/* ── SHORTCUT TABLE ── */
-.shortcut-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
-.shortcut-row:last-child{border-bottom:none}
-.shortcut-key{font-family:'Orbitron',sans-serif;font-size:10px;padding:3px 8px;background:var(--input);border:1px solid var(--border);border-radius:5px;color:var(--ac);letter-spacing:.05em}
-.shortcut-desc{font-size:12px;color:var(--dim)}
-
-.cog-btn{width:34px;height:34px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:17px;flex-shrink:0;transition:all .2s}
-.cog-btn:hover{border-color:var(--ac)44;color:var(--ac)}
-.cog-btn.open{color:var(--ac);border-color:var(--ac)44;background:var(--ac)0a}
-.cog-btn.open .cog-ico{animation:cogSpin .5s ease-out forwards}
-.cog-ico{display:inline-block;transition:transform .3s}
-.settings-item{width:100%;padding:14px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;text-align:left;display:flex;align-items:center;gap:12px;background:var(--input);border:1px solid var(--border);color:var(--text);margin-bottom:8px;transition:all .15s}
-.settings-item:hover{border-color:var(--ac)33;background:var(--ac)05}
-.settings-item .s-ico{font-size:18px;width:24px;text-align:center}
-.settings-item .s-hint{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:.05em}
-.settings-item.active{border-color:var(--ac)44;background:var(--ac)08;color:var(--ac)}
-
 .md-act{display:flex;gap:10px;margin-top:20px}
 .md-act button{flex:1;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px}
 .md-cancel{background:var(--input);border:1px solid var(--border);color:var(--dim)}
@@ -175,51 +146,58 @@ a{color:var(--ac)}
 #chat{padding-bottom:16px}
 #knowledge-view{padding-bottom:16px;background:transparent}
 #calendar-view{padding:14px 14px 16px;overflow:auto;background:transparent}
-.calendar-shell{max-width:780px;margin:0 auto;background:rgba(11,17,32,.55)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.calendar-shell{max-width:780px;margin:0 auto;background:rgba(11,17,32,.55)!important;backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .cal-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .cal-title{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:.08em;color:var(--ac)}
 .cal-actions{display:flex;gap:6px;flex-wrap:wrap}
 .cal-btn{padding:7px 11px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);font-size:11px;font-weight:700;cursor:pointer}
 .cal-btn.primary{color:var(--ac);border-color:var(--ac)33;background:var(--ac)0d}
-.cal-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-.cal-dow{font-size:10px;color:var(--dim);text-align:center;letter-spacing:.1em;font-weight:700}
 .cal-days{display:flex;flex-direction:column;gap:8px}
-.cal-day{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:stretch;background:rgba(14,22,40,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;padding:8px}
+.cal-day{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:stretch;background:rgba(14,22,40,.55);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;padding:8px}
 .cal-day-meta{display:flex;flex-direction:column;justify-content:center;align-items:center;border-right:1px solid var(--border);padding-right:6px}
 .cal-day-date{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--ac)}
 .cal-day-name{font-size:11px;color:var(--dim);letter-spacing:.08em;font-weight:700}
-.cal-note{width:100%;min-height:62px;background:rgba(5,8,15,.5);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical;outline:none}.cal-note:focus{border-color:var(--ac)33}
+.cal-note{width:100%;min-height:62px;background:rgba(5,8,15,.5);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;font-family:'IBM Plex Mono',monospace;resize:vertical;outline:none}
+.cal-note:focus{border-color:var(--ac)33}
 .swipe-hint{font-size:10px;color:var(--dim);letter-spacing:.06em;text-align:center;padding-top:4px}
-#composer-wrap{padding:0 12px 12px;z-index:20;pointer-events:auto;flex-shrink:0}
+#composer-wrap{padding:0 12px 12px;z-index:20;flex-shrink:0}
 #composer-wrap .inp-box{box-shadow:0 8px 20px rgba(0,0,0,.3)}
+/* Settings */
+.settings-item{width:100%;padding:14px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;text-align:left;display:flex;align-items:center;gap:12px;background:var(--input);border:1px solid var(--border);color:var(--text);margin-bottom:8px;transition:all .15s}
+.settings-item:hover{border-color:var(--ac)33;background:var(--ac)05}
+.settings-item .s-ico{font-size:18px;width:24px;text-align:center}
+.settings-item .s-hint{margin-left:auto;font-size:10px;color:var(--dim)}
+.settings-item.active{border-color:var(--ac)44;background:var(--ac)08;color:var(--ac)}
+.shortcut-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.shortcut-row:last-child{border-bottom:none}
+.shortcut-key{font-family:'Orbitron',sans-serif;font-size:10px;padding:3px 8px;background:var(--input);border:1px solid var(--border);border-radius:5px;color:var(--ac)}
+.shortcut-desc{font-size:12px;color:var(--dim)}
 @media(max-width:768px){
   #composer-wrap{padding:0 8px 8px}
   .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
   #sidebar.closed{width:0;min-width:0}
   .bub{max-width:88%!important;font-size:12px}
-  .hdr-name{font-size:12px}
   .hdr-desc{display:none}
-  .orb-box{width:160px;height:160px}
+  .orb-box{width:220px;height:220px}
 }
 </style>
 </head>
 <body>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister())});if('caches' in window){caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)))}}</script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(x=>x.unregister()));if('caches'in window)caches.keys().then(k=>k.forEach(x=>caches.delete(x)))}</script>
+
 <!-- Boot screen -->
-<div id="boot-screen" class="hidden">
-  <canvas id="boot-canvas" width="380" height="380"></canvas>
-</div>
-<!-- Global orb — visible behind all panels -->
+<div id="boot-screen" class="hidden"><canvas id="boot-canvas" width="380" height="380"></canvas></div>
+
+<!-- Global orb -->
 <div id="global-orb"><div class="orb-wrap" onclick="toggleVoice()" style="pointer-events:auto"><div class="orb-box" id="global-orb-box"></div></div></div>
+
 <div id="app">
   <div id="sidebar">
-    <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">v1.0 IRON</small></div></div></div>
+    <div class="sb-head"><div class="sb-logo"><div class="sb-logo-mark">⚡</div><div><h1>J.A.R.V.I.S.</h1><small id="sb-profile-name">—</small></div></div></div>
     <div class="sb-agents"><div class="sb-label">AGENTS <span id="agent-count">5</span></div><div id="agent-cards"></div></div>
     <div class="sb-cooldown-wrap"><div id="cooldown-badge" class="sb-cooldown hidden" style="--cooldown-angle:0deg"><div class="sb-cooldown-inner"><strong id="cooldown-seconds">12</strong><span>WAIT</span></div></div></div>
-    <div class="sb-foot">
-      <button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button>
-    </div>
+    <div class="sb-foot"><button class="sb-btn sb-add" onclick="openCreateModal()">+ New Agent</button></div>
   </div>
   <div id="main">
     <div id="hdr">
@@ -236,88 +214,82 @@ a{color:var(--ac)}
       </div>
     </div>
     <div id="main-content">
-    <div id="chat-view" class="panel active">
-      <div id="chat" style="position:relative;z-index:2"></div>
-    </div>
-    <div id="knowledge-view" class="panel hidden-right">
-      <div class="kp">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#00d4ff;flex-shrink:0"></div><div class="kp-title" id="k-title" style="margin-bottom:0">Primary Memory</div></div>
-        <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Permanent — stored forever until you delete it.</p>
-        <div class="kp-row"><input class="kp-in" id="k-input" placeholder="Store permanent info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k-add-btn" onclick="let v=document.getElementById('k-input');if(v.value.trim()){addKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
-        <div id="k-items"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:20px;margin-bottom:6px"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #f59e0b;flex-shrink:0"></div><div class="kp-title" style="margin-bottom:0;color:#f59e0b">Secondary Memory</div><span style="font-size:9px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.06em">⚠ TEMPORARY</span></div>
-        <p style="color:#f59e0b;font-size:10px;margin-bottom:10px;opacity:.7">⚠ Auto-deletes after 24 hours. Use for short-term notes.</p>
-        <div class="kp-row"><input class="kp-in" id="k2-input" placeholder="Store temporary info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addTempKnowledge(this.value.trim());this.value='';}" /><button class="kp-add" id="k2-add-btn" onclick="let v=document.getElementById('k2-input');if(v.value.trim()){addTempKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
-        <div id="k2-items"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:22px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0"></div><div class="kp-title" style="margin-bottom:0">Login Commands</div></div>
-        <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Run these automatically whenever this profile logs in.</p>
-        <div class="kp-row"><select class="hsel" id="startup-agent" style="min-width:120px"></select><input class="kp-in" id="startup-input" placeholder="e.g. Give me the latest football news" onkeydown="if(event.key==='Enter'&&this.value.trim()){addStartupCommand();}" /><button class="kp-add" id="startup-add-btn" onclick="addStartupCommand()">+ Add</button></div>
-        <div id="startup-items"></div>
+      <div id="chat-view" class="panel active">
+        <div id="chat" style="position:relative;z-index:2"></div>
+      </div>
+      <div id="knowledge-view" class="panel hidden-right">
+        <div class="kp">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#00d4ff;flex-shrink:0"></div><div class="kp-title" id="k-title" style="margin-bottom:0">Primary Memory</div></div>
+          <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Permanent — stored forever until you delete it.</p>
+          <div class="kp-row"><input class="kp-in" id="k-input" placeholder="Store permanent info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addKnowledge(this.value.trim());this.value='';}"/><button class="kp-add" id="k-add-btn" onclick="let v=document.getElementById('k-input');if(v.value.trim()){addKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
+          <div id="k-items"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:20px;margin-bottom:6px"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid #f59e0b;flex-shrink:0"></div><div class="kp-title" style="margin-bottom:0;color:#f59e0b">Secondary Memory</div><span style="font-size:9px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.06em">⚠ TEMPORARY</span></div>
+          <p style="color:#f59e0b;font-size:10px;margin-bottom:10px;opacity:.7">⚠ Auto-deletes after 24 hours.</p>
+          <div class="kp-row"><input class="kp-in" id="k2-input" placeholder="Store temporary info..." onkeydown="if(event.key==='Enter'&&this.value.trim()){addTempKnowledge(this.value.trim());this.value='';}"/><button class="kp-add" id="k2-add-btn" onclick="let v=document.getElementById('k2-input');if(v.value.trim()){addTempKnowledge(v.value.trim());v.value='';}">+ Add</button></div>
+          <div id="k2-items"></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:22px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0"></div><div class="kp-title" style="margin-bottom:0">Login Commands</div></div>
+          <p style="color:var(--dim);font-size:10px;margin-bottom:10px;opacity:.7">Run automatically on login.</p>
+          <div class="kp-row"><select class="hsel" id="startup-agent" style="min-width:120px"></select><input class="kp-in" id="startup-input" placeholder="e.g. Give me the latest football news" onkeydown="if(event.key==='Enter'&&this.value.trim()){addStartupCommand();}"/><button class="kp-add" id="startup-add-btn" onclick="addStartupCommand()">+ Add</button></div>
+          <div id="startup-items"></div>
+        </div>
+      </div>
+      <div id="calendar-view" class="panel hidden-right">
+        <div class="calendar-shell">
+          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">← Prev</button><button class="cal-btn" onclick="nextCalendarMonth()">Next →</button><button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button></div></div>
+          <div class="cal-days" id="calendar-days"></div>
+          <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
+          <div class="swipe-hint">Swipe ← → to switch views · Arrow keys: ↑↓ agents · ← → views/weeks</div>
+        </div>
       </div>
     </div>
-    <div id="calendar-view" class="panel hidden-right">
-      <div class="calendar-shell">
-        <div class="cal-top"><div class="cal-title" id="cal-month-label">2026 — January</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">← Prev</button><button class="cal-btn" onclick="nextCalendarMonth()">Next →</button><button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button></div></div>
-        <div class="cal-days" id="calendar-days"></div>
-        <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
-        <div class="swipe-hint">Swipe ← → to switch views. Arrow keys: ↑↓ agents, ← → weeks/months.</div>
-      </div>
+    <div id="composer-wrap">
+      <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7"><span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span><select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select></div>
+      <div class="inp-box" id="input-box"><textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea><button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button><button class="snd" id="send-btn" onclick="sendMessage()">Send</button></div>
     </div>
-    </div>
-    <div id="composer-wrap"><div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7"><span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span><select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select></div><div class="inp-box" id="input-box"><textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea><button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button><button class="snd" id="send-btn" onclick="sendMessage()">Send</button></div></div>
   </div>
 </div>
+
+<!-- Modals -->
 <div class="ov" id="create-modal" style="display:none" onclick="closeCreateModal()"><div class="md" onclick="event.stopPropagation()"><h2>New Agent</h2><label>NAME</label><input id="ca-name" placeholder="e.g. Music Guru"/><label>ICON</label><div class="ig" id="ca-icons"></div><label>COLOUR</label><div class="cg" id="ca-colors"></div><label>DESCRIPTION</label><input id="ca-desc" placeholder="What does this agent do?"/><label>INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave..."></textarea><div class="md-act"><button class="md-cancel" onclick="closeCreateModal()">Cancel</button><button class="md-go" id="ca-deploy" onclick="deployAgent()">Deploy</button></div></div></div>
+
 <div class="ov" id="api-modal" style="display:none" onclick="if(apiKey)document.getElementById('api-modal').style.display='none'"><div class="md" onclick="event.stopPropagation()"><h2>Connect AI</h2><p style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:16px;line-height:1.6;text-align:center">Get a free Gemini API key at<br><a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p><label>API KEY</label><input id="api-key-input" placeholder="AIza..." style="font-size:11px" onkeydown="if(event.key==='Enter')saveApiKey()"/><p style="color:var(--dim);font-size:9px;margin-top:-8px;margin-bottom:14px;opacity:.6">Stored only on your device.</p><div class="md-act"><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="saveApiKey()">Activate</button></div></div></div>
-<div class="ov" id="profile-modal" style="display:none"><div class="md" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
 
-  <!-- MAIN screen — two big buttons -->
+<!-- Login Modal -->
+<div class="ov" id="profile-modal" style="display:none" onclick="if(fbUser)document.getElementById('profile-modal').style.display='none'"><div class="md" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
   <div id="fb-main-form">
-    <div style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:800;color:var(--ac);letter-spacing:.15em;margin-bottom:6px">J.A.R.V.I.S.</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:var(--ac);letter-spacing:.15em;margin-bottom:6px">J.A.R.V.I.S.</div>
     <p style="color:var(--dim);font-size:11px;margin-bottom:28px">Your data syncs across all devices.</p>
-    <button onclick="showFbLogin()" style="width:100%;padding:14px;border-radius:10px;background:rgba(0,212,255,.12);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em;margin-bottom:12px">🔵 SIGN IN</button>
-    <button onclick="showFbRegister()" style="width:100%;padding:14px;border-radius:10px;background:rgba(245,158,11,.12);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em">🟡 CREATE ACCOUNT</button>
+    <button onclick="showFbLogin()" style="width:100%;padding:14px;border-radius:10px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em;margin-bottom:12px">🔵 SIGN IN</button>
+    <button onclick="showFbRegister()" style="width:100%;padding:14px;border-radius:10px;background:rgba(245,158,11,.1);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em">🟡 CREATE ACCOUNT</button>
   </div>
-
-  <!-- SIGN IN form -->
   <div id="fb-login-form" style="display:none">
     <h2 style="margin-bottom:18px">Sign In</h2>
-    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
-    <input id="fb-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-pass').focus()"/>
-    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
-    <input id="fb-pass" type="password" placeholder="Password" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbLogin()"/>
-    <p id="fb-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
-    <button onclick="fbLogin()" style="width:100%;padding:11px;border-radius:8px;background:rgba(0,212,255,.12);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Sign In</button>
-    <div style="display:flex;gap:8px">
-      <button onclick="showFbMain()" style="flex:1;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back</button>
-      <button onclick="showFbReset()" style="flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px">Forgot password?</button>
-    </div>
+    <label>EMAIL</label><input id="fb-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('fb-pass').focus()"/>
+    <label>PASSWORD</label><input id="fb-pass" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')fbLogin()"/>
+    <p id="fb-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;margin-top:-8px;font-family:'IBM Plex Mono',monospace"></p>
+    <button onclick="fbLogin()" style="width:100%;padding:11px;border-radius:8px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Sign In</button>
+    <div style="display:flex;gap:8px"><button onclick="showFbMain()" style="flex:1;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px;font-weight:700">← Back</button><button onclick="showFbReset()" style="flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px">Forgot password?</button></div>
   </div>
-
-  <!-- CREATE ACCOUNT form -->
   <div id="fb-register-form" style="display:none">
     <h2 style="margin-bottom:18px">Create Account</h2>
-    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
-    <input id="fb-reg-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-reg-pass').focus()"/>
-    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
-    <input id="fb-reg-pass" type="password" placeholder="Min 6 characters" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbRegister()"/>
-    <p id="fb-reg-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
-    <button onclick="fbRegister()" style="width:100%;padding:11px;border-radius:8px;background:rgba(245,158,11,.12);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Create Account</button>
+    <label>EMAIL</label><input id="fb-reg-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('fb-reg-pass').focus()"/>
+    <label>PASSWORD</label><input id="fb-reg-pass" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')fbRegister()"/>
+    <p id="fb-reg-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;margin-top:-8px;font-family:'IBM Plex Mono',monospace"></p>
+    <button onclick="fbRegister()" style="width:100%;padding:11px;border-radius:8px;background:rgba(245,158,11,.1);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Create Account</button>
     <button onclick="showFbMain()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back</button>
   </div>
-
-  <!-- FORGOT PASSWORD form -->
   <div id="fb-reset-form" style="display:none">
     <h2 style="margin-bottom:12px">Reset Password</h2>
     <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your email — we'll send a reset link.</p>
-    <input id="fb-reset-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbSendReset()"/>
+    <label>EMAIL</label><input id="fb-reset-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')fbSendReset()"/>
     <p id="fb-reset-msg" style="font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
     <button onclick="fbSendReset()" style="width:100%;padding:11px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Send Reset Email</button>
     <button onclick="showFbLogin()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back to Sign In</button>
   </div>
-
 </div></div>
-<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
+
+<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left;margin-top:-8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
+
 <!-- Settings Modal -->
 <div class="ov" id="settings-modal" style="display:none" onclick="document.getElementById('settings-modal').style.display='none'"><div class="md" style="max-width:420px" onclick="event.stopPropagation()">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 style="margin-bottom:0">⚙ Settings</h2><button onclick="document.getElementById('settings-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
@@ -326,7 +298,7 @@ a{color:var(--ac)}
   <div style="margin-bottom:8px"><label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:6px;padding-left:4px">VOICE PRESET</label><select class="hsel" id="s-voice" onchange="setAgentVoice(activeAgent,this.value);render()" style="width:100%;padding:10px 12px;font-size:12px;border-radius:10px"></select></div>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';showApiKeyModal()"><span class="s-ico">🔑</span>API Key<span class="s-hint">→</span></button>
-  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex';document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';document.getElementById('chpass-msg').textContent=''"><span class="s-ico">🔒</span>Change Password<span class="s-hint">→</span></button>
+  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex'"><span class="s-ico">🔒</span>Change Password<span class="s-hint">→</span></button>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';fbLogout()"><span class="s-ico">🔄</span>Switch / Sign Out<span class="s-hint">→</span></button>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
   <div style="color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:10px;padding-left:4px">KEYBOARD SHORTCUTS</div>
@@ -337,54 +309,54 @@ a{color:var(--ac)}
   <div class="shortcut-row"><span class="shortcut-desc">Switch view / calendar nav</span><span class="shortcut-key">← →</span></div>
 </div></div>
 
+<!-- Changelog -->
 <div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'"><div class="md" style="max-width:460px" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">Changelog</h2><button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
-<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.9</div><div style="color:var(--dim)">• Firebase cloud sync — data across all devices<br>• Email/password login via Firebase Auth<br>• Real-time Firestore sync<br>• Sign out from Settings</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Settings popup: speech, voice, profile, API, PIN<br>• Arrow keys: ↑↓ agents, ←→ views/weeks/months<br>• H shortcut to open/close sidebar<br>• Dynamic message bar adapts to sidebar<br>• Boot animation, global orb, translucent panels</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar no longer blocks sidebar buttons<br>• All agents access calendar notes in AI context<br>• Clickable version badge with changelog</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on profile login<br>• Speech on/off toggle (K shortcut)<br>• Swipe between chat and calendar<br>• Cooldown timer between messages</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#a855f7;letter-spacing:.08em;margin-bottom:4px">v1.4</div><div style="color:var(--dim)">• 3D canvas orb with organic bulging rings<br>• Translucent chat with backdrop blur<br>• Orbiting particles and energy arcs<br>• 320px orb behind messages</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#00ff88;letter-spacing:.08em;margin-bottom:4px">v1.3</div><div style="color:var(--dim)">• Per-agent memory with share-to-JARVIS<br>• Password profiles with universal reset (6070)<br>• Primary + secondary (24h) memory<br>• Main/sub-agent hierarchy</div></div>
-<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#ff6b35;letter-spacing:.08em;margin-bottom:4px">v1.1</div><div style="color:var(--dim)">• Profile system with passwords<br>• Professional UI overhaul<br>• 4 voice presets (Friday, Arjun, Nova, Titan)<br>• Clear chat button</div></div>
-<div style="padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.08em;margin-bottom:4px">v1.0 IRON</div><div style="color:var(--dim)">• Initial release — 5 agents, voice I/O, TTS<br>• Custom agents, knowledge base, Google Gemini<br>• Internet access, multilingual, PWA install</div></div>
+<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.9</div><div style="color:var(--dim)">• Firebase cloud sync — data across all devices<br>• Email/password login via Firebase Auth<br>• Real-time Firestore sync<br>• Switch / Sign Out in Settings</div></div>
+<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Boot animation — rings spin on login<br>• Global 380px orb behind all panels<br>• Arrow keys ↑↓ agents · ← → views<br>• H shortcut for sidebar · K for speech<br>• JARVIS knows its own features</div></div>
+<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar adapts to sidebar<br>• All agents access calendar in AI context<br>• Clickable version badge with changelog</div></div>
+<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on login<br>• Speech toggle (K shortcut)<br>• Cooldown timer between messages</div></div>
+<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#a855f7;letter-spacing:.08em;margin-bottom:4px">v1.4</div><div style="color:var(--dim)">• 3D canvas orb · translucent panels<br>• Orbiting particles and energy arcs</div></div>
+<div style="padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.08em;margin-bottom:4px">v1.0 IRON</div><div style="color:var(--dim)">• Initial release — 5 agents, voice I/O<br>• Custom agents, Gemini AI, internet, PWA</div></div>
 </div></div></div>
 
 <script>
-// ── FIREBASE (globals loaded via CDN in head) ──
-const firebaseConfig={apiKey:"AIzaSyCwUop5XlyY7RHc3k94CrJ2ggo4jjP-4_w",authDomain:"jarvis-3c690.firebaseapp.com",projectId:"jarvis-3c690",storageBucket:"jarvis-3c690.firebasestorage.app",messagingSenderId:"599274910238",appId:"1:599274910238:web:69bdc4cc4eed1201b3f40f"};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
+// ── FIREBASE ──
+firebase.initializeApp({apiKey:"AIzaSyCwUop5XlyY7RHc3k94CrJ2ggo4jjP-4_w",authDomain:"jarvis-3c690.firebaseapp.com",projectId:"jarvis-3c690",storageBucket:"jarvis-3c690.firebasestorage.app",messagingSenderId:"599274910238",appId:"1:599274910238:web:69bdc4cc4eed1201b3f40f"});
+const auth=firebase.auth(),db=firebase.firestore();
 let fbUser=null,fbUnsub=null;
 
-const DEFAULT_AGENTS=[{id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},{id:"football-analyst",name:"Pitch Intel",icon:"⚽",color:"#00ff88",description:"Football analysis — tactics, stats, live scores.",systemPrompt:"You are Pitch Intel inside J.A.R.V.I.S. Fully capable AI, specialty is football — tactics, stats, predictions, live scores. Internet access for real-time data. Help with anything asked."},{id:"football-news",name:"Transfer Wire",icon:"📰",color:"#ff6b35",description:"Football news — transfers, results, breaking stories.",systemPrompt:"You are Transfer Wire inside J.A.R.V.I.S. Fully capable AI, specialty is football news — transfers, results, injuries, breaking news. Internet access for latest info. Help with anything asked."},{id:"study-assistant",name:"Scholar",icon:"📚",color:"#a855f7",description:"Study assistant — homework, revision, research.",systemPrompt:"You are Scholar inside J.A.R.V.I.S. Fully capable AI, specialty is education — notes, revision, homework, exams, research. Internet access. Be encouraging. Help with anything asked."},{id:"school-manager",name:"Campus",icon:"🏫",color:"#f59e0b",description:"School organiser — timetable, assignments, deadlines.",systemPrompt:"You are Campus inside J.A.R.V.I.S. Fully capable AI, specialty is school organisation — timetables, assignments, deadlines. Internet access. Be proactive. Help with anything asked."}];
-const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];const UNIVERSAL_CODE='6070';
-let currentProfile='',apiKey='';
-let agents=[...DEFAULT_AGENTS],conversations={};
+// ── CONSTANTS ──
+const DEFAULT_AGENTS=[{id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING. You have internet access via Google Search. Be concise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},{id:"football-analyst",name:"Pitch Intel",icon:"⚽",color:"#00ff88",description:"Football analysis — tactics, stats, live scores.",systemPrompt:"You are Pitch Intel inside J.A.R.V.I.S. Specialty: football — tactics, stats, predictions, live scores. Internet access. Help with anything."},{id:"football-news",name:"Transfer Wire",icon:"📰",color:"#ff6b35",description:"Football news — transfers, results, breaking stories.",systemPrompt:"You are Transfer Wire inside J.A.R.V.I.S. Specialty: football news — transfers, results, injuries. Internet access. Help with anything."},{id:"study-assistant",name:"Scholar",icon:"📚",color:"#a855f7",description:"Study assistant — homework, revision, research.",systemPrompt:"You are Scholar inside J.A.R.V.I.S. Specialty: education — notes, revision, homework, exams. Internet access. Be encouraging."},{id:"school-manager",name:"Campus",icon:"🏫",color:"#f59e0b",description:"School organiser — timetable, assignments, deadlines.",systemPrompt:"You are Campus inside J.A.R.V.I.S. Specialty: school organisation — timetables, assignments, deadlines. Be proactive."}];
+const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];
+const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
+const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];
+const VOICE_PRESETS=[{id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},{id:'arjun',label:'Arjun',gender:'male',pitch:0.6,rate:0.9,keywords:['Male','David','Daniel','James','Google UK English Male','Alex','Fred']},{id:'nova',label:'Nova',gender:'female',pitch:1.1,rate:1.0,keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen']},{id:'titan',label:'Titan',gender:'male',pitch:0.85,rate:0.95,keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas']}];
+
+// ── STATE ──
+let agents=[...DEFAULT_AGENTS],conversations={},apiKey='';
+let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
+let agentVoices={},activeAgent='jarvis-core';
+let startupCommands=[],speechFeedback=true,bootAnimEnabled=true;
+let calendarNotes={},calendarMonth=0,calendarWeekOffset=0;
 let currentView='chat',loading=false,sidebarOpen=true;
 let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
-let agentVoices={},activeAgent='jarvis-core';
-let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
-let startupCommands=[],speechFeedback=true,bootAnimEnabled=true;
 let cooldownEnd=0,cooldownInterval=null;
 let startupRunLock=false,startupRunTimer=null,appOpenStartupTriggered=false;
-let calendarMonth=0,calendarWeekOffset=0,calendarNotes={};
 let touchStartX=0,touchStartY=0;
+let orbAF=null,orbT=0;
 
-// ── FIRESTORE SAVE / LOAD ──
-function getDataPayload(){
-  return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset};
-}
+// ── FIREBASE SAVE / LOAD ──
+function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset};}
 async function save(){
   if(!fbUser)return;
-  try{await db.collection('users').doc(fbUser.uid).collection('data').doc('main').set(getDataPayload())}
-  catch(e){console.warn('Firestore save failed:',e)}
+  try{await db.collection('users').doc(fbUser.uid).collection('data').doc('main').set(getDataPayload());}
+  catch(e){console.warn('Save error:',e);}
 }
 function applyData(d){
   if(!d)return;
-  agents=d.agents||[...DEFAULT_AGENTS];
-  if(!agents.length)agents=[...DEFAULT_AGENTS];
+  agents=d.agents&&d.agents.length?d.agents:[...DEFAULT_AGENTS];
   conversations=d.conversations||{};
   agentKnowledge=d.agentKnowledge||{};
   agentTempKnowledge=d.agentTempKnowledge||{};
@@ -399,183 +371,309 @@ function applyData(d){
   calendarWeekOffset=d.calendarWeekOffset||0;
   activeAgent=agents[0]?.id||'jarvis-core';
   currentView='chat';loading=false;
-  try{cleanExpiredTemp()}catch(e){}
+  try{cleanExpiredTemp();}catch(e){}
 }
-function subscribeToData(){
-  if(fbUnsub)fbUnsub();
-  if(!fbUser)return;
-  fbUnsub=db.collection('users').doc(fbUser.uid).collection('data').doc('main').onSnapshot(snap=>{
-    if(snap.exists){applyData(snap.data());render()}
-  });
+
+// ── FIREBASE AUTH UI ──
+function showFbMain(){document.getElementById('fb-main-form').style.display='block';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='none';}
+function showFbLogin(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='block';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-error').textContent='';setTimeout(()=>{const e=document.getElementById('fb-email');if(e)e.focus();},100);}
+function showFbRegister(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='block';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-reg-error').textContent='';setTimeout(()=>{const e=document.getElementById('fb-reg-email');if(e)e.focus();},100);}
+function showFbReset(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='block';document.getElementById('fb-reset-msg').textContent='';}
+function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email. Try creating one.','auth/wrong-password':'Incorrect password. Try again.','auth/invalid-credential':'Wrong email or password.','auth/email-already-in-use':'Email already registered. Sign in instead.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Wait a moment.','auth/network-request-failed':'No internet connection.'};return m[code]||`Error: ${code}`;}
+async function fbLogin(){const email=document.getElementById('fb-email').value.trim(),pass=document.getElementById('fb-pass').value,err=document.getElementById('fb-error');if(!email){err.textContent='Enter your email.';return;}if(!pass){err.textContent='Enter your password.';return;}err.textContent='Signing in...';err.style.color='var(--dim)';try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
+async function fbRegister(){const email=document.getElementById('fb-reg-email').value.trim(),pass=document.getElementById('fb-reg-pass').value,err=document.getElementById('fb-reg-error');if(!email){err.textContent='Enter an email.';return;}if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}err.textContent='Creating account...';err.style.color='var(--dim)';try{await auth.createUserWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
+async function fbLogout(){if(fbUnsub){fbUnsub();fbUnsub=null;}await auth.signOut();}
+async function fbSendReset(){const email=document.getElementById('fb-reset-email').value.trim(),msg=document.getElementById('fb-reset-msg');if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return;}msg.textContent='Sending...';msg.style.color='var(--dim)';try{await auth.sendPasswordResetEmail(email);msg.textContent='✓ Check your inbox!';msg.style.color='#00d4ff';setTimeout(()=>showFbLogin(),3000);}catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050';}}
+function showProfileModal(){showFbMain();document.getElementById('profile-modal').style.display='flex';}
+function closeProfileModal(){if(fbUser)document.getElementById('profile-modal').style.display='none';}
+function getProfileName(){return fbUser?fbUser.email.split('@')[0]:'—';}
+async function changePassword(){const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');if(!fbUser){m.textContent='Not logged in.';m.style.color='#ff5050';return;}if(!n||n.length<6){m.textContent='Min 6 chars.';m.style.color='#ff5050';return;}m.textContent='Updating...';m.style.color='var(--dim)';try{const cred=firebase.auth.EmailAuthProvider.credential(fbUser.email,o);await fbUser.reauthenticateWithCredential(cred);await fbUser.updatePassword(n);m.textContent='Updated!';m.style.color='#00d4ff';setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);}catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050';}}
+
+// ── HELPERS ──
+function getKnowledge(a){return agentKnowledge[a||activeAgent]||[];}
+function getTempKnowledge(a){return agentTempKnowledge[a||activeAgent]||[];}
+function isImportedToJarvis(a,i){return !!(jarvisImports[a]&&jarvisImports[a][i]);}
+function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAULT_AGENTS[0];}
+function getMessages(){return conversations[activeAgent]||[];}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');}
+function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday');}
+function setAgentVoice(id,v){agentVoices[id]=v;save();}
+function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000));}
+function isCooldownActive(){return getCooldownRemaining()>0;}
+
+function syncCooldownState(){
+  const ca=isCooldownActive(),cr=getCooldownRemaining();
+  const input=document.getElementById('msg-input'),sb=document.getElementById('send-btn'),mic=document.getElementById('mic-btn'),box=document.getElementById('input-box');
+  if(input){if(!isRecording)input.placeholder=ca?`Wait ${cr}s...`:`Ask ${getAgent().name} anything...`;input.readOnly=ca;}
+  if(sb){sb.disabled=ca||loading;sb.textContent=ca?`${cr}s`:'Send';}
+  if(mic)mic.disabled=ca;
+  if(box)box.classList.toggle('locked',ca);
 }
-function saveApiKeyForProfile(){save()}
-function getKnowledge(a){return agentKnowledge[a||activeAgent]||[]}
-function getTempKnowledge(a){return agentTempKnowledge[a||activeAgent]||[]}
-function isImportedToJarvis(a,i){return !!(jarvisImports[a]&&jarvisImports[a][i])}
-const VOICE_PRESETS=[{id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},{id:'arjun',label:'Arjun',gender:'male',pitch:0.6,rate:0.9,keywords:['Male','David','Daniel','James','Google UK English Male','Alex','Fred']},{id:'nova',label:'Nova',gender:'female',pitch:1.1,rate:1.0,keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen']},{id:'titan',label:'Titan',gender:'male',pitch:0.85,rate:0.95,keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas']}];
-function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday')}function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem(pfx()+'voices',JSON.stringify(agentVoices))}function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAULT_AGENTS[0]}function getMessages(){return conversations[activeAgent]||[]}function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
-function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000))}function isCooldownActive(){return getCooldownRemaining()>0}
-function syncCooldownState(){const ca=isCooldownActive(),cr=getCooldownRemaining();const input=document.getElementById('msg-input'),sb=document.getElementById('send-btn'),mic=document.getElementById('mic-btn'),box=document.getElementById('input-box');if(input){if(!isRecording)input.placeholder=ca?`Wait ${cr}s...`:`Ask ${getAgent().name} anything...`;input.readOnly=ca}if(sb){sb.disabled=ca||loading;sb.textContent=ca?`${cr}s`:'Send'}if(mic)mic.disabled=ca;if(box)box.classList.toggle('locked',ca)}
-function updateCooldownUI(){const b=document.getElementById('cooldown-badge'),s=document.getElementById('cooldown-seconds');if(!b||!s)return;const r=getCooldownRemaining();if(r>0){b.classList.remove('hidden');s.textContent=`${r}`;b.style.setProperty('--cooldown-angle',`${Math.max(0,Math.min(360,(r/12)*360))}deg`)}else{b.classList.add('hidden');b.style.setProperty('--cooldown-angle','0deg')}}
-function startCooldown(s=12){cooldownEnd=Date.now()+(s*1000);if(cooldownInterval)clearInterval(cooldownInterval);cooldownInterval=setInterval(()=>{syncCooldownState();updateCooldownUI();updateOrb();if(!isCooldownActive()){clearInterval(cooldownInterval);cooldownInterval=null;render()}},250);syncCooldownState();updateCooldownUI();updateOrb()}
-function cleanSpeechText(t){return(t||'').replace(/```[\s\S]*?```/g,' ').replace(/`([^`]+)`/g,' $1 ').replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ').replace(/https?:\/\/\S+/gi,' ').replace(/[\*_#>~|]+/g,' ').replace(/[•▪◦■□]+/g,' ').replace(/\[(.*?)\]/g,' $1 ').replace(/!/g,'.').replace(/[;:]+/g,', ').replace(/\s*\n+\s*/g,'. ').replace(/\s{2,}/g,' ').replace(/\.{2,}/g,'.').replace(/,{2,}/g,',').trim()}
-function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.'}
-function normalizeStartupCommands(){startupCommands=(startupCommands||[]).map(cmd=>({id:cmd.id||('sc-'+Date.now()+Math.random().toString(36).slice(2,7)),agentId:agents.find(a=>a.id===cmd.agentId)?.id||'jarvis-core',text:(cmd.text||'').trim(),enabled:cmd.enabled!==false})).filter(cmd=>cmd.text)}
-function buildMemoryContext(agentId){const myK=getKnowledge(agentId),myT=getTempKnowledge(agentId),isJ=agentId==='jarvis-core';let k='';if(myK.length>0)k+=`\n\nPrimary Memory:\n${myK.map((x,i)=>`[${i+1}] ${x}`).join('\n')}`;if(myT.length>0)k+=`\n\nTemporary Memory (24h):\n${myT.map((x,i)=>`[T${i+1}] ${x.text}`).join('\n')}`;if(isJ){let n='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),agT=getTempKnowledge(ag.id);if(agK.length||agT.length){n+=`\n\nSub-agent: ${ag.name}`;if(agK.length)n+=`\nMemory:\n${agK.map((x,i)=>`[${ag.name}-${i+1}] ${x}${isImportedToJarvis(ag.id,i)?' [SHARED]':''}`).join('\n')}`;if(agT.length)n+=`\nTemp:\n${agT.map((x,i)=>`[${ag.name}-T${i+1}] ${x.text}`).join('\n')}`}});if(n)k+=`\n\nSub-agent Network:${n}`}const calEntries=Object.entries(calendarNotes).filter(([_,v])=>v&&v.trim()).sort(([a],[b])=>a.localeCompare(b));if(calEntries.length>0){const today=new Date().toISOString().slice(0,10);const up=calEntries.filter(([d])=>d>=today).slice(0,14);const past=calEntries.filter(([d])=>d<today).slice(-7);let c='\n\nCalendar (2026):';if(up.length)c+=`\nUpcoming:\n${up.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;if(past.length)c+=`\nRecent:\n${past.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;k+=c}return k}
+function updateCooldownUI(){
+  const b=document.getElementById('cooldown-badge'),s=document.getElementById('cooldown-seconds');
+  if(!b||!s)return;
+  const r=getCooldownRemaining();
+  if(r>0){b.classList.remove('hidden');s.textContent=`${r}`;b.style.setProperty('--cooldown-angle',`${(r/12)*360}deg`);}
+  else{b.classList.add('hidden');b.style.setProperty('--cooldown-angle','0deg');}
+}
+function startCooldown(s=12){
+  cooldownEnd=Date.now()+(s*1000);
+  if(cooldownInterval)clearInterval(cooldownInterval);
+  cooldownInterval=setInterval(()=>{syncCooldownState();updateCooldownUI();updateOrb();if(!isCooldownActive()){clearInterval(cooldownInterval);cooldownInterval=null;render();}},250);
+  syncCooldownState();updateCooldownUI();updateOrb();
+}
+
+function cleanSpeechText(t){return(t||'').replace(/```[\s\S]*?```/g,' ').replace(/`([^`]+)`/g,' $1 ').replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ').replace(/https?:\/\/\S+/gi,' ').replace(/[\*_#>~|]+/g,' ').replace(/[•▪◦■□]+/g,' ').replace(/\[(.*?)\]/g,' $1 ').replace(/!/g,'.').replace(/[;:]+/g,', ').replace(/\s*\n+\s*/g,'. ').replace(/\s{2,}/g,' ').replace(/\.{2,}/g,'.').replace(/,{2,}/g,',').trim();}
+function getStartupAgentName(id){const ag=agents.find(x=>x.id===id);return ag?ag.name:'J.A.R.V.I.S.';}
+function normalizeStartupCommands(){startupCommands=(startupCommands||[]).map(cmd=>({id:cmd.id||('sc-'+Date.now()+Math.random().toString(36).slice(2,7)),agentId:agents.find(a=>a.id===cmd.agentId)?.id||'jarvis-core',text:(cmd.text||'').trim(),enabled:cmd.enabled!==false})).filter(cmd=>cmd.text);}
+function cleanExpiredTemp(){const day=24*60*60*1000;for(const agId in agentTempKnowledge){agentTempKnowledge[agId]=agentTempKnowledge[agId].filter(item=>Date.now()-item.created<day);}save();}
+function timeLeft(created){const ms=(created+24*60*60*1000)-Date.now();if(ms<=0)return'Expired';const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h>0?`${h}h ${m}m left`:`${m}m left`;}
+function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render();}
+function toggleSpeechFeedback(){if(isSpeaking){stopSpeaking();speechFeedback=false;}else{speechFeedback=!speechFeedback;}save();render();}
+function toggleBootAnim(){bootAnimEnabled=!bootAnimEnabled;save();}
+
+// ── MEMORY ──
+function buildMemoryContext(agentId){
+  const myK=getKnowledge(agentId),myT=getTempKnowledge(agentId),isJ=agentId==='jarvis-core';
+  let k='';
+  if(myK.length>0)k+=`\n\nPrimary Memory:\n${myK.map((x,i)=>`[${i+1}] ${x}`).join('\n')}`;
+  if(myT.length>0)k+=`\n\nTemporary Memory (24h):\n${myT.map((x,i)=>`[T${i+1}] ${x.text}`).join('\n')}`;
+  if(isJ){let n='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),agT=getTempKnowledge(ag.id);if(agK.length||agT.length){n+=`\n\nSub-agent: ${ag.name}`;if(agK.length)n+=`\nMemory:\n${agK.map((x,i)=>`[${ag.name}-${i+1}] ${x}${isImportedToJarvis(ag.id,i)?' [SHARED]':''}`).join('\n')}`;if(agT.length)n+=`\nTemp:\n${agT.map((x,i)=>`[${ag.name}-T${i+1}] ${x.text}`).join('\n')}`;}});if(n)k+=`\n\nSub-agent Network:${n}`;}
+  const calEntries=Object.entries(calendarNotes).filter(([_,v])=>v&&v.trim()).sort(([a],[b])=>a.localeCompare(b));
+  if(calEntries.length>0){const today=new Date().toISOString().slice(0,10);const up=calEntries.filter(([d])=>d>=today).slice(0,14);const past=calEntries.filter(([d])=>d<today).slice(-7);let c='\n\nCalendar (2026):';if(up.length)c+=`\nUpcoming:\n${up.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;if(past.length)c+=`\nRecent:\n${past.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;k+=c;}
+  return k;
+}
+
 const JARVIS_UI_KNOWLEDGE=`
 
 ## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v1.9)
-You are a Progressive Web App (PWA) built for the user's phone and desktop browser. You run entirely in the browser — no servers, all data stored locally on the device.
+You run in the browser as a PWA. Cloud sync via Firebase.
 
 ### AGENTS
-- You have 5 default agents: J.A.R.V.I.S. (you — main coordinator, cyan), Pitch Intel (football analysis, green ⚽), Transfer Wire (football news, orange 📰), Scholar (study assistant, purple 📚), Campus (school organiser, amber 🏫).
-- Users can create CUSTOM agents: tap "+ New Agent" in the sidebar, pick an icon, colour, and write custom instructions.
-- Switch agents by tapping their name in the sidebar, or press ↑ / ↓ arrow keys on keyboard.
-- J.A.R.V.I.S. is the MAIN agent and sees memory from all sub-agents. Sub-agents only see their own memory.
+5 default agents: J.A.R.V.I.S. (main, cyan), Pitch Intel (football, green), Transfer Wire (news, orange), Scholar (study, purple), Campus (school, amber). Switch with sidebar or ↑↓ arrow keys. JARVIS sees all sub-agent memory.
 
-### VIEWS (3 panels, swipe or use buttons)
-1. **Chat** — main conversation with the active agent. Tap the orb or mic to speak.
-2. **Memory** — store permanent notes (Primary Memory) or short-term notes (Secondary Memory, auto-deletes after 24 hours). Also manage Login Commands here.
-3. **Calendar** — weekly notepad for 2026. Navigate months with Prev/Next buttons or ← → arrow keys. All agents can see calendar entries in their AI context.
-- Switch views: tap Chat / Memory / Calendar buttons in the header, swipe left/right, press M to cycle, or ← → arrow keys.
+### VIEWS
+Chat · Memory · Calendar — switch by tapping header buttons, swiping, pressing M, or ← → arrows.
 
 ### VOICE
-- Tap the glowing orb or the 🎤 mic button to speak. After 1.5 seconds of silence, it auto-sends.
-- JARVIS reads replies aloud automatically when Speech is ON.
-- 4 voice presets: Friday (female, high-pitched), Arjun (male, deep — JARVIS default), Nova (female, smooth), Titan (male, commanding).
-- Change voice: open ⚙ Settings → Voice Preset dropdown.
-- Toggle speech on/off: press K shortcut or go to ⚙ Settings → Speech.
-- Tap 🔊 button on any message to replay it. Tap "⏹ Stop" to stop speaking.
+Tap orb or mic to speak. 4 presets: Friday, Arjun, Nova, Titan. Toggle speech with K. Change voice in ⚙ Settings.
 
-### MEMORY SYSTEM
-- **Primary Memory**: permanent. Add items in the Memory view. Sub-agents can share items to JARVIS using the "→ Share" button.
-- **Secondary Memory**: temporary, auto-deletes after 24 hours. Good for today's notes.
-- **Login Commands**: messages that auto-run every time you log in. Set the agent and the message. E.g. "Give me today's football news" on Transfer Wire. Manage in Memory view.
+### MEMORY
+Primary (permanent) · Secondary (24h auto-delete) · Login Commands (auto-run on login).
 
-### SETTINGS (⚙ cog button, top-right of header)
-- **Speech**: toggle voice output on/off (shortcut: K)
-- **Boot Animation**: toggle the cinematic startup animation on/off
-- **Voice Preset**: change JARVIS's voice
-- **Change Profile**: switch to another user profile
-- **API Key**: update your Gemini API key
-- **Change PIN**: change your profile password
+### SETTINGS (⚙ top right)
+Speech, Boot Animation, Voice Preset, API Key, Change Password, Switch/Sign Out.
 
-### KEYBOARD SHORTCUTS
-- K — toggle speech on/off
-- H — open/close sidebar
-- M — cycle through views (Chat → Memory → Calendar)
-- ↑ / ↓ — switch between agents
-- ← / → — switch views, or navigate weeks/months in calendar
+### SHORTCUTS
+K=speech · H=sidebar · M=cycle views · ↑↓=switch agent · ←→=views/calendar nav.
 
-### PROFILES & SECURITY
-- Multiple user profiles supported on one device. Each has its own password, memory, agents, and settings.
-- Universal reset code is available if you forget your password (ask the user's administrator).
-- 3 wrong password attempts triggers a 60-second lockout.
-- To create a profile: open profile screen, type name, press Enter to move to password, press Enter to create.
-- To delete a profile: tap × on the profile card, enter password to confirm.
-
-### BOOT ANIMATION
-- A cinematic animation plays when you log in or enter your API key. Rings spin and accelerate into perfect circles, then JARVIS speaks "Systems online, Sir."
-- Can be disabled in ⚙ Settings → Boot Animation.
-
-### COOLDOWN
-- There is a 12-second cooldown between messages to avoid API overuse. A circular timer badge appears in the sidebar showing the countdown.
-
-### CALENDAR
-- Notes are per-day for the year 2026. Navigate weeks with ↑/↓ Week buttons or ← → keys. Navigate months with Prev/Next buttons.
-- All agents can see your upcoming 14 days and past 7 days of notes in their AI context automatically.
-
-### INSTALL AS APP (PWA)
-- On Chrome/Edge: tap the install icon in the address bar or browser menu → "Install app".
-- On iPhone/Safari: tap Share → "Add to Home Screen".
-- Once installed, runs like a native app with no browser UI.
-
-### CLEARING DATA
-- "Clear" button in header: clears the current chat only. Memory and calendar are preserved.
-- Deleting a profile removes all its data permanently.
-
-When guiding the user, be specific about button names, locations, and shortcuts. Speak like a helpful butler — concise, precise, and never condescending.`;
+### ACCOUNT
+Firebase email/password. Forgot password sends email reset. Change password in ⚙ Settings.`;
 
 function buildSystemPrompt(agentId){
   const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
   const isJarvis=agentId==='jarvis-core';
-  const role=isJarvis
-    ?'\n\nYou are the main J.A.R.V.I.S. agent and central coordinator. You have full knowledge of this app\'s features and UI — guide the user confidently if they ask how to use anything.'
-    :'\n\nYou are a specialist sub-agent under J.A.R.V.I.S. Use your own memory and calendar.';
-  const uiKnowledge=isJarvis?JARVIS_UI_KNOWLEDGE:'';
-  return agent.systemPrompt+role+uiKnowledge+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks. If unsure, use English.';
+  const role=isJarvis?'\n\nYou are the main J.A.R.V.I.S. agent. You have full knowledge of this app\'s features — guide the user confidently if they ask.':'\n\nYou are a specialist sub-agent under J.A.R.V.I.S.';
+  return agent.systemPrompt+role+(isJarvis?JARVIS_UI_KNOWLEDGE:'')+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks.';
 }
-function render(){const a=getAgent(),msgs=getMessages();normalizeStartupCommands();document.documentElement.style.setProperty('--ac',a.color);document.getElementById('agent-count').textContent=agents.length;document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();document.getElementById('agent-cards').innerHTML=agents.map(ag=>{const isMain=ag.id==='jarvis-core',isSub=!isMain;return `${isSub&&agents.indexOf(ag)===1?'<div style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.15em;padding:10px 8px 4px;border-top:1px solid var(--border);margin-top:6px">SUB-AGENTS</div>':''}<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}${isMain?';border-width:1.5px':''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}${isMain?' <span style="font-size:8px;opacity:.5;letter-spacing:.05em">MAIN</span>':''}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`}).join('');document.getElementById('h-icon').textContent=a.icon;document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;document.getElementById('h-desc').textContent=a.description;['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'')});['chat','knowledge','calendar'].forEach(v=>{const p=document.getElementById(v+'-view');if(!p)return;p.classList.remove('active','hidden-left','hidden-right');if(v===currentView)p.classList.add('active');else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))p.classList.add('hidden-left');else p.classList.add('hidden-right')});const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';syncCooldownState();updateCooldownUI();const ca=document.getElementById('chat'),bgBox=document.getElementById('global-orb-box');bgBox.innerHTML=renderOrb(a.color);if(msgs.length===0){ca.innerHTML=''}else{let h='';h+=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;ca.innerHTML=h;ca.scrollTop=ca.scrollHeight}setTimeout(()=>{startOrbAnim();updateOrb()},60);const isJarvis=activeAgent==='jarvis-core',knowledge=getKnowledge(activeAgent),tempKnowledge=getTempKnowledge(activeAgent);document.getElementById('k-title').style.color=a.color;document.getElementById('k-title').textContent=isJarvis?'JARVIS Primary Memory':`${a.name} — Primary Memory`;const kab=document.getElementById('k-add-btn');kab.style.borderColor=`${a.color}44`;kab.style.color=a.color;let kHtml='';if(knowledge.length===0){kHtml=`<p style="color:var(--dim);font-size:11px">${isJarvis?'No data stored yet.':'No data for this agent yet.'}</p>`}else{kHtml=knowledge.map((item,i)=>{const imp=!isJarvis&&isImportedToJarvis(activeAgent,i);return `<div class="kp-item" style="${imp?'border-color:var(--ac)25;background:var(--ac)05':''}"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}${imp?'<span style="display:block;font-size:9px;color:var(--ac);margin-top:2px;font-weight:700">✓ Shared with JARVIS</span>':''}</span>${!isJarvis?`<button onclick="toggleJarvisImport('${activeAgent}',${i})" style="padding:2px 6px;border-radius:5px;background:${imp?'var(--ac)15':'var(--input)'};border:1px solid ${imp?'var(--ac)33':'var(--border)'};color:${imp?'var(--ac)':'var(--dim)'};cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">${imp?'✓ Shared':'→ Share'}</button>`:''}<button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`}).join('')}document.getElementById('k-items').innerHTML=kHtml;if(isJarvis){let impH='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),imp=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));if(imp.length>0){impH+=`<div style="margin-top:8px;padding:8px 10px;background:var(--input);border:1px solid var(--border);border-radius:8px"><div style="font-size:10px;font-weight:700;color:${ag.color};margin-bottom:4px">${ag.icon} ${ag.name}</div>`;imp.forEach(item=>{impH+=`<div style="font-size:11px;color:var(--dim);padding:2px 0;line-height:1.4">• ${esc(item)}</div>`});impH+=`</div>`}});if(impH)document.getElementById('k-items').innerHTML+=`<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--ac);letter-spacing:.08em;margin-bottom:8px">📥 FROM SUB-AGENTS</div>${impH}</div>`}cleanExpiredTemp();const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data. Auto-deletes after 24h.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7;font-family:'Orbitron',sans-serif;letter-spacing:.05em">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');const saEl=document.getElementById('startup-agent');saEl.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');if(!saEl.value||!agents.find(ag=>ag.id===saEl.value))saEl.value='jarvis-core';const sab=document.getElementById('startup-add-btn');sab.style.borderColor=`${a.color}44`;sab.style.color=a.color;document.getElementById('startup-items').innerHTML=startupCommands.length===0?`<p style="color:var(--dim);font-size:11px">No login commands yet.</p>`:startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px;letter-spacing:.05em;font-family:'Orbitron',sans-serif">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');renderCalendar()}
-function renderOrb(c){return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`}
-let orbAF=null,orbT=0;
-function startOrbAnim(){function draw(){const cv=document.getElementById('orb-canvas');if(!cv){orbAF=requestAnimationFrame(draw);return}const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;ctx.clearRect(0,0,W,H);const a=getAgent(),c=a.color;orbT+=isSpeaking?.12:.015;const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);const ag=ctx.createRadialGradient(cx,cy,40,cx,cy,190);ag.addColorStop(0,`rgba(${R},${G},${B},${isSpeaking?.15:.06})`);ag.addColorStop(.6,`rgba(${R},${G},${B},${isSpeaking?.05:.02})`);ag.addColorStop(1,'transparent');ctx.fillStyle=ag;ctx.fillRect(0,0,W,H);const layers=[{r:172,w:isSpeaking?7:3.5,op:.7,spd:1,bulge:isSpeaking?32:5,freq:[2,5,7]},{r:154,w:isSpeaking?5:2.5,op:.45,spd:-.75,bulge:isSpeaking?25:3.5,freq:[3,6,9]},{r:136,w:isSpeaking?4:1.8,op:.32,spd:.55,bulge:isSpeaking?18:2.5,freq:[4,7,11]},{r:118,w:isSpeaking?3:1.3,op:.22,spd:-.4,bulge:isSpeaking?14:2,freq:[5,8,13]},{r:100,w:isSpeaking?2.5:1,op:.15,spd:.35,bulge:isSpeaking?10:1.5,freq:[6,9,15]}];for(const L of layers){ctx.beginPath();const pts=120;for(let i=0;i<=pts;i++){const ang=(i/pts)*Math.PI*2;const f1=Math.sin(ang*L.freq[0]+orbT*L.spd*2.5)*.5;const f2=Math.sin(ang*L.freq[1]-orbT*L.spd*3.5)*.3;const f3=Math.sin(ang*L.freq[2]+orbT*L.spd*1.8)*.2;const breath=Math.sin(orbT*.8)*.15;const bAmt=L.bulge*(f1+f2+f3+breath);const rr=L.r+bAmt;const x=cx+Math.cos(ang)*rr;const y=cy+Math.sin(ang)*rr*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=L.w;ctx.strokeStyle=`rgba(${R},${G},${B},${L.op})`;ctx.stroke();if(L===layers[0]&&isSpeaking){ctx.lineWidth=L.w+8;ctx.strokeStyle=`rgba(${R},${G},${B},.15)`;ctx.stroke();ctx.lineWidth=L.w+18;ctx.strokeStyle=`rgba(${R},${G},${B},.06)`;ctx.stroke();ctx.lineWidth=L.w+30;ctx.strokeStyle=`rgba(${R},${G},${B},.02)`;ctx.stroke()}}const pc=isSpeaking?14:8;for(let i=0;i<pc;i++){const pa=(i/pc)*Math.PI*2+orbT*.5;const pr=125+Math.sin(orbT*2+i*.7)*18;const px=cx+Math.cos(pa)*pr;const py=cy+Math.sin(pa)*pr*.93;const ps=isSpeaking?2.5+Math.sin(orbT*3+i)*1.5:1.2;const po=.4+Math.sin(orbT*2+i*1.3)*.4;ctx.beginPath();ctx.arc(px,py,ps,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po})`;ctx.fill();if(isSpeaking){ctx.beginPath();ctx.arc(px,py,ps*3,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${po*.15})`;ctx.fill()}}const hl=ctx.createRadialGradient(cx-30,cy-35,5,cx-12,cy-18,65);hl.addColorStop(0,`rgba(${R},${G},${B},.35)`);hl.addColorStop(1,'transparent');ctx.fillStyle=hl;ctx.beginPath();ctx.arc(cx,cy,88,0,Math.PI*2);ctx.fill();if(isSpeaking){for(let i=0;i<3;i++){const as=orbT*1.5+i*2.1;const al=.4+Math.sin(orbT*2+i)*.2;ctx.beginPath();ctx.arc(cx,cy,165+Math.sin(orbT+i)*10,as,as+al);ctx.lineWidth=2;ctx.strokeStyle=`rgba(${R},${G},${B},.5)`;ctx.stroke()}}if(isRecording){ctx.beginPath();const pr2=178+Math.sin(orbT*3)*12;for(let i=0;i<=96;i++){const ang=(i/96)*Math.PI*2;const x=cx+Math.cos(ang)*pr2;const y=cy+Math.sin(ang)*pr2*.93;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,60,60,${.4+Math.sin(orbT*4)*.3})`;ctx.stroke();ctx.lineWidth=8;ctx.strokeStyle=`rgba(255,60,60,${.12+Math.sin(orbT*4)*.08})`;ctx.stroke()}orbAF=requestAnimationFrame(draw)}if(orbAF)cancelAnimationFrame(orbAF);draw()}
-function statusText(){if(isCooldownActive())return`Cooldown ${getCooldownRemaining()}s`;if(isRecording)return'Listening…';if(loading)return'Thinking…';if(isSpeaking)return'Speaking — tap to stop';return'Ready'}
-function updateOrb(){const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core');if(!o||!c)return;o.className='orb-outer'+(isSpeaking?' speaking':'');c.className='orb-core'+(isSpeaking?' speaking':'')+(isRecording?' listening':'')}
-setInterval(()=>{startOrbAnim()},600);
-function calendarKey(d){return `2026-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}function monthLabel(i){return new Date(2026,i,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}function daysInMonth(i){return new Date(2026,i+1,0).getDate()}
-function renderCalendar(){const l=document.getElementById('cal-month-label'),c=document.getElementById('calendar-days');if(!l||!c)return;calendarMonth=Math.max(0,Math.min(11,calendarMonth));const td=daysInMonth(calendarMonth);const mw=Math.max(0,Math.ceil(td/7)-1);calendarWeekOffset=Math.max(0,Math.min(mw,calendarWeekOffset));l.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');const s=calendarWeekOffset*7+1,e=Math.min(td,s+6);let h='';for(let d=s;d<=e;d++){const dt=new Date(2026,calendarMonth,d);const k=calendarKey(dt);h+=`<div class="cal-day"><div class="cal-day-meta"><div class="cal-day-date">${d}</div><div class="cal-day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div></div><textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea></div>`}c.innerHTML=h}
-function updateCalendarNote(k,v){calendarNotes[k]=v;save()}function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;save();render()}}function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;save();render()}}function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();render()}function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);save();render()}function refreshCalendar(){calendarNotes=JSON.parse(localStorage.getItem(pfx()+'calendar_notes_2026'))||calendarNotes;renderCalendar()}
-function handlePanelSwipeStart(e){const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY}function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(dx<0&&i<views.length-1)switchView(views[i+1]);else if(dx>0&&i>0)switchView(views[i-1])}
-function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render()}function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render()}function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB()}function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed'}function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render()}
-function addKnowledge(t){if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];agentKnowledge[activeAgent].push(t);save();render()}function deleteKnowledge(i){if(agentKnowledge[activeAgent])agentKnowledge[activeAgent].splice(i,1);save();render()}function addTempKnowledge(t){if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];agentTempKnowledge[activeAgent].push({text:t,created:Date.now()});save();render()}function deleteTempKnowledge(i){if(agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent].splice(i,1);save();render()}function toggleJarvisImport(agId,idx){if(!jarvisImports[agId])jarvisImports[agId]={};if(jarvisImports[agId][idx])delete jarvisImports[agId][idx];else jarvisImports[agId][idx]=true;save();render()}
-function cleanExpiredTemp(){const day=24*60*60*1000;for(const agId in agentTempKnowledge){agentTempKnowledge[agId]=agentTempKnowledge[agId].filter(item=>Date.now()-item.created<day)}save()}function timeLeft(created){const ms=(created+24*60*60*1000)-Date.now();if(ms<=0)return'Expired';const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h>0?`${h}h ${m}m left`:`${m}m left`}function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}function toggleSpeechFeedback(){if(isSpeaking){stopSpeaking();speechFeedback=false}else{speechFeedback=!speechFeedback}save();render()}
-function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m}return ev[0]||voices[0]}
+
+// ── RENDER ──
+function render(){
+  const a=getAgent(),msgs=getMessages();
+  normalizeStartupCommands();
+  document.documentElement.style.setProperty('--ac',a.color);
+  document.getElementById('agent-count').textContent=agents.length;
+  document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
+  document.getElementById('agent-cards').innerHTML=agents.map((ag,idx)=>{
+    const isMain=ag.id==='jarvis-core',isSub=!isMain;
+    return `${isSub&&idx===1?'<div style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.15em;padding:10px 8px 4px;border-top:1px solid var(--border);margin-top:6px">SUB-AGENTS</div>':''}<div class="ag ${ag.id===activeAgent?'on':''}" onclick="setActiveAgent('${ag.id}')" style="${ag.id===activeAgent?'--ac:'+ag.color:''}${isMain?';border-width:1.5px':''}"><div class="ag-ico">${ag.icon}</div><div style="flex:1;min-width:0"><div class="ag-name">${ag.name}${isMain?' <span style="font-size:8px;opacity:.5">MAIN</span>':''}</div><div class="ag-desc">${ag.description}</div></div>${!ag.locked?`<button class="del ${ag.id===activeAgent?'yes':''}" onclick="event.stopPropagation();deleteAgent('${ag.id}')">×</button>`:''}</div>`;
+  }).join('');
+  document.getElementById('h-icon').textContent=a.icon;
+  document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
+  document.getElementById('h-desc').textContent=a.description;
+  ['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'');});
+  ['chat','knowledge','calendar'].forEach(v=>{
+    const p=document.getElementById(v+'-view');if(!p)return;
+    p.classList.remove('active','hidden-left','hidden-right');
+    if(v===currentView)p.classList.add('active');
+    else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))p.classList.add('hidden-left');
+    else p.classList.add('hidden-right');
+  });
+  const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
+  vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
+  const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
+  sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
+  syncCooldownState();updateCooldownUI();
+  const ca=document.getElementById('chat'),bgBox=document.getElementById('global-orb-box');
+  bgBox.innerHTML=renderOrb(a.color);
+  if(msgs.length===0){ca.innerHTML='';}
+  else{
+    let h=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
+    if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
+    if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;
+    ca.innerHTML=h;ca.scrollTop=ca.scrollHeight;
+  }
+  setTimeout(()=>{startOrbAnim();updateOrb();},60);
+  // Memory view
+  const isJarvis=activeAgent==='jarvis-core',knowledge=getKnowledge(activeAgent),tempKnowledge=getTempKnowledge(activeAgent);
+  document.getElementById('k-title').style.color=a.color;
+  document.getElementById('k-title').textContent=isJarvis?'JARVIS Primary Memory':`${a.name} — Primary Memory`;
+  const kab=document.getElementById('k-add-btn');kab.style.borderColor=`${a.color}44`;kab.style.color=a.color;
+  let kHtml=knowledge.length===0?`<p style="color:var(--dim);font-size:11px">No data stored yet.</p>`:knowledge.map((item,i)=>{
+    const imp=!isJarvis&&isImportedToJarvis(activeAgent,i);
+    return `<div class="kp-item" style="${imp?'border-color:var(--ac)25;background:var(--ac)05':''}"><span class="kp-idx" style="color:${a.color}">${i+1}</span><span class="kp-txt">${esc(item)}${imp?'<span style="display:block;font-size:9px;color:var(--ac);margin-top:2px;font-weight:700">✓ Shared with JARVIS</span>':''}</span>${!isJarvis?`<button onclick="toggleJarvisImport('${activeAgent}',${i})" style="padding:2px 6px;border-radius:5px;background:${imp?'var(--ac)15':'var(--input)'};border:1px solid ${imp?'var(--ac)33':'var(--border)'};color:${imp?'var(--ac)':'var(--dim)'};cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">${imp?'✓ Shared':'→ Share'}</button>`:''}<button class="kp-del" onclick="deleteKnowledge(${i})">×</button></div>`;
+  }).join('');
+  document.getElementById('k-items').innerHTML=kHtml;
+  if(isJarvis){let impH='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),imp=agK.filter((_,i)=>isImportedToJarvis(ag.id,i));if(imp.length>0){impH+=`<div style="margin-top:8px;padding:8px 10px;background:var(--input);border:1px solid var(--border);border-radius:8px"><div style="font-size:10px;font-weight:700;color:${ag.color};margin-bottom:4px">${ag.icon} ${ag.name}</div>`;imp.forEach(item=>{impH+=`<div style="font-size:11px;color:var(--dim);padding:2px 0">• ${esc(item)}</div>`;});impH+=`</div>`;}});if(impH)document.getElementById('k-items').innerHTML+=`<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--ac);margin-bottom:8px">📥 FROM SUB-AGENTS</div>${impH}</div>`;}
+  cleanExpiredTemp();
+  const k2ab=document.getElementById('k2-add-btn');k2ab.style.borderColor='rgba(245,158,11,.4)';k2ab.style.color='#f59e0b';
+  document.getElementById('k2-items').innerHTML=tempKnowledge.length===0?`<p style="color:#f59e0b;font-size:11px;opacity:.6">No temporary data.</p>`:tempKnowledge.map((item,i)=>`<div class="kp-item" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.03)"><span style="font-size:11px;flex-shrink:0">⚠️</span><div style="flex:1;min-width:0"><span class="kp-txt" style="display:block">${esc(item.text)}</span><span style="font-size:9px;color:#f59e0b;opacity:.7">⏱ ${timeLeft(item.created)}</span></div><button class="kp-del" onclick="deleteTempKnowledge(${i})">×</button></div>`).join('');
+  const saEl=document.getElementById('startup-agent');
+  saEl.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');
+  if(!saEl.value||!agents.find(ag=>ag.id===saEl.value))saEl.value='jarvis-core';
+  const sab=document.getElementById('startup-add-btn');sab.style.borderColor=`${a.color}44`;sab.style.color=a.color;
+  document.getElementById('startup-items').innerHTML=startupCommands.length===0?`<p style="color:var(--dim);font-size:11px">No login commands yet.</p>`:startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
+  renderCalendar();
+}
+
+// ── ORB ──
+function renderOrb(c){return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`;}
+function startOrbAnim(){
+  function draw(){
+    const cv=document.getElementById('orb-canvas');if(!cv){orbAF=requestAnimationFrame(draw);return;}
+    const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+    ctx.clearRect(0,0,W,H);
+    const a=getAgent(),c=a.color;
+    orbT+=isSpeaking?.12:.015;
+    const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
+    const ag=ctx.createRadialGradient(cx,cy,40,cx,cy,190);
+    ag.addColorStop(0,`rgba(${R},${G},${B},${isSpeaking?.15:.06})`);ag.addColorStop(.6,`rgba(${R},${G},${B},${isSpeaking?.05:.02})`);ag.addColorStop(1,'transparent');
+    ctx.fillStyle=ag;ctx.fillRect(0,0,W,H);
+    const layers=[{r:172,w:isSpeaking?7:3.5,op:.7,spd:1,bulge:isSpeaking?32:5,freq:[2,5,7]},{r:154,w:isSpeaking?5:2.5,op:.45,spd:-.75,bulge:isSpeaking?25:3.5,freq:[3,6,9]},{r:136,w:isSpeaking?4:1.8,op:.32,spd:.55,bulge:isSpeaking?18:2.5,freq:[4,7,11]},{r:118,w:isSpeaking?3:1.3,op:.22,spd:-.4,bulge:isSpeaking?14:2,freq:[5,8,13]},{r:100,w:isSpeaking?2.5:1,op:.15,spd:.35,bulge:isSpeaking?10:1.5,freq:[6,9,15]}];
+    for(const L of layers){
+      ctx.beginPath();
+      for(let i=0;i<=120;i++){const ang=(i/120)*Math.PI*2;const f1=Math.sin(ang*L.freq[0]+orbT*L.spd*2.5)*.5;const f2=Math.sin(ang*L.freq[1]-orbT*L.spd*3.5)*.3;const f3=Math.sin(ang*L.freq[2]+orbT*L.spd*1.8)*.2;const breath=Math.sin(orbT*.8)*.15;const bAmt=L.bulge*(f1+f2+f3+breath);const rr=L.r+bAmt;ctx.lineTo(cx+Math.cos(ang)*rr,cy+Math.sin(ang)*rr*.93);}
+      ctx.closePath();ctx.lineWidth=L.w;ctx.strokeStyle=`rgba(${R},${G},${B},${L.op})`;ctx.stroke();
+      if(L===layers[0]&&isSpeaking){ctx.lineWidth=L.w+8;ctx.strokeStyle=`rgba(${R},${G},${B},.15)`;ctx.stroke();}
+    }
+    for(let i=0;i<(isSpeaking?14:8);i++){const pa=(i/(isSpeaking?14:8))*Math.PI*2+orbT*.5;const pr=125+Math.sin(orbT*2+i*.7)*18;ctx.beginPath();ctx.arc(cx+Math.cos(pa)*pr,cy+Math.sin(pa)*pr*.93,isSpeaking?2.5:1.2,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${.4+Math.sin(orbT*2+i*1.3)*.4})`;ctx.fill();}
+    const hl=ctx.createRadialGradient(cx-30,cy-35,5,cx-12,cy-18,65);hl.addColorStop(0,`rgba(${R},${G},${B},.35)`);hl.addColorStop(1,'transparent');ctx.fillStyle=hl;ctx.beginPath();ctx.arc(cx,cy,88,0,Math.PI*2);ctx.fill();
+    if(isRecording){ctx.beginPath();const pr2=178+Math.sin(orbT*3)*12;for(let i=0;i<=96;i++){const ang=(i/96)*Math.PI*2;ctx.lineTo(cx+Math.cos(ang)*pr2,cy+Math.sin(ang)*pr2*.93);}ctx.closePath();ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,60,60,${.4+Math.sin(orbT*4)*.3})`;ctx.stroke();}
+    orbAF=requestAnimationFrame(draw);
+  }
+  if(orbAF)cancelAnimationFrame(orbAF);draw();
+}
+function updateOrb(){const o=document.getElementById('orb-outer'),c=document.getElementById('orb-core');if(!o||!c)return;o.className='orb-outer'+(isSpeaking?' speaking':'');c.className='orb-core'+(isSpeaking?' speaking':'')+(isRecording?' listening':'');}
+setInterval(()=>startOrbAnim(),600);
+
+// ── CALENDAR ──
+function calendarKey(d){return `2026-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function monthLabel(i){return new Date(2026,i,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});}
+function daysInMonth(i){return new Date(2026,i+1,0).getDate();}
+function renderCalendar(){
+  const l=document.getElementById('cal-month-label'),c=document.getElementById('calendar-days');if(!l||!c)return;
+  calendarMonth=Math.max(0,Math.min(11,calendarMonth));
+  const td=daysInMonth(calendarMonth),mw=Math.max(0,Math.ceil(td/7)-1);
+  calendarWeekOffset=Math.max(0,Math.min(mw,calendarWeekOffset));
+  l.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');
+  const s=calendarWeekOffset*7+1,e=Math.min(td,s+6);let h='';
+  for(let d=s;d<=e;d++){const dt=new Date(2026,calendarMonth,d);const k=calendarKey(dt);h+=`<div class="cal-day"><div class="cal-day-meta"><div class="cal-day-date">${d}</div><div class="cal-day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div></div><textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea></div>`;}
+  c.innerHTML=h;
+}
+function updateCalendarNote(k,v){calendarNotes[k]=v;save();}
+function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;save();render();}}
+function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;save();render();}}
+function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();render();}
+function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);save();render();}
+function refreshCalendar(){renderCalendar();}
+
+// ── SPEECH ──
+function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render();}
+function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m;}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f;}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m;}return ev[0]||voices[0];}
 function speakAnim(text){
   if(!speechFeedback)return;
-  const spoken=cleanSpeechText(text);
-  if(!spoken)return;
-  // Ensure voices are loaded
+  const spoken=cleanSpeechText(text);if(!spoken)return;
   let voices=speechSynthesis.getVoices();
-  if(!voices.length){
-    // Voices not loaded yet — wait and retry
-    setTimeout(()=>speakAnim(text),200);
-    return;
-  }
-  speechSynthesis.cancel();
-  isSpeaking=true;render();
+  if(!voices.length){setTimeout(()=>speakAnim(text),200);return;}
+  speechSynthesis.cancel();isSpeaking=true;render();
   const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
   const u=new SpeechSynthesisUtterance(spoken);
   const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
   u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
   u.rate=preset.rate;u.pitch=preset.pitch;
   const lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
-  if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0]}else{const bv=findBestVoice(preset);if(bv)u.voice=bv}
-  u.onend=()=>{isSpeaking=false;updateOrb();render()};
-  u.onerror=()=>{isSpeaking=false;updateOrb();render()};
+  if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0];}else{const bv=findBestVoice(preset);if(bv)u.voice=bv;}
+  u.onend=()=>{isSpeaking=false;updateOrb();render();};u.onerror=()=>{isSpeaking=false;updateOrb();render();};
   speechSynthesis.speak(u);
 }
-speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
-function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false}recognition=new SR();try{recognition.lang=''}catch(e){recognition.lang='en-US'}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop()},1500)};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage()}else{stopRec()}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec()};return true}
-function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb()}
-async function tryModel(m,sys,c){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});const d=await r.json();if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('429')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg}}return{ok:false,retry:true,error:'Unknown'}}
-async function generateReplyForAgent(agentId,contents){const sys=buildSystemPrompt(agentId);let reply='',success=false;for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break}if(!r.retry){reply=`Error: ${r.error}`;break}}if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";return reply}
-async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading||isCooldownActive())return;if(!apiKey){showApiKeyModal();return}if(currentView!=='chat')switchView('chat');if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;startCooldown(12);save();render();const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{const reply=await generateReplyForAgent(activeAgent,contents);conversations[activeAgent].push({role:'assistant',content:reply});if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
-document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
-function addStartupCommand(){const input=document.getElementById('startup-input');const text=input.value.trim();if(!text)return;const agentId=document.getElementById('startup-agent').value||'jarvis-core';startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});input.value='';save();render()}function moveStartupCommand(i,dir){const n=i+dir;if(i<0||i>=startupCommands.length||n<0||n>=startupCommands.length)return;const item=startupCommands[i];startupCommands.splice(i,1);startupCommands.splice(n,0,item);save();render()}function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render()}function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render()}function editStartupCommand(i){const cmd=startupCommands[i];if(!cmd)return;const next=prompt('Edit:',cmd.text);if(next===null)return;const clean=next.trim();if(!clean){deleteStartupCommand(i);return}cmd.text=clean;save();render()}
-// Speech helper that returns a promise — resolves when speech finishes
 function speakAnimAsync(text,forAgentId){
   return new Promise(resolve=>{
-    if(!speechFeedback){resolve();return}
-    const spoken=cleanSpeechText(text);
-    if(!spoken){resolve();return}
-    speechSynthesis.cancel();
-    isSpeaking=true;render();
-    const voiceId=forAgentId?getAgentVoice(forAgentId):getAgentVoice(activeAgent);
-    const preset=VOICE_PRESETS.find(p=>p.id===voiceId)||VOICE_PRESETS[0];
-    const u=new SpeechSynthesisUtterance(spoken);
-    const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
-    u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
-    u.rate=preset.rate;u.pitch=preset.pitch;
-    const voices=speechSynthesis.getVoices(),lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
-    if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0]}else{const bv=findBestVoice(preset);if(bv)u.voice=bv}
-    u.onend=()=>{isSpeaking=false;updateOrb();render();resolve()};
-    u.onerror=()=>{isSpeaking=false;updateOrb();render();resolve()};
-    speechSynthesis.speak(u);
-    // Safety timeout — resolve after 60s even if speech hangs
-    setTimeout(()=>{if(isSpeaking){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}resolve()},60000);
+    if(!speechFeedback){resolve();return;}
+    const spoken=cleanSpeechText(text);if(!spoken){resolve();return;}
+    const doSpeak=()=>{
+      const voices=speechSynthesis.getVoices();
+      if(!voices.length){setTimeout(doSpeak,150);return;}
+      speechSynthesis.cancel();isSpeaking=true;render();
+      const voiceId=forAgentId?getAgentVoice(forAgentId):getAgentVoice(activeAgent);
+      const preset=VOICE_PRESETS.find(p=>p.id===voiceId)||VOICE_PRESETS[0];
+      const u=new SpeechSynthesisUtterance(spoken);
+      u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+      const voices2=speechSynthesis.getVoices();
+      const bv=findBestVoice(preset);if(bv)u.voice=bv;
+      u.onend=()=>{isSpeaking=false;updateOrb();render();resolve();};
+      u.onerror=()=>{isSpeaking=false;updateOrb();render();resolve();};
+      speechSynthesis.speak(u);
+      setTimeout(()=>{if(isSpeaking){speechSynthesis.cancel();isSpeaking=false;updateOrb();render();}resolve();},60000);
+    };doSpeak();
   });
 }
+speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
 
+// ── VOICE INPUT ──
+function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false;}recognition=new SR();try{recognition.lang='';}catch(e){recognition.lang='en-US';}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript;}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop();},1500);};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage();}else{stopRec();}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec();};return true;}
+function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return;}if(isRecording){recognition.stop();return;}startRec();}
+function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start();}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start();}catch(e2){}},200);}}
+function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb();}
+
+// ── AI ──
+async function tryModel(m,sys,c){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});
+  const d=await r.json();
+  if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};
+  if(d.error){const msg=d.error.message||'';if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('quota')||msg.includes('not found')||msg.includes('not supported'))return{ok:false,retry:true,error:msg};return{ok:false,retry:false,error:msg};}
+  return{ok:false,retry:true,error:'Unknown'};
+}
+async function generateReplyForAgent(agentId,contents){
+  const sys=buildSystemPrompt(agentId);let reply='',success=false;
+  for(const model of MODELS){const r=await tryModel(model,sys,contents);if(r.ok){reply=r.reply;success=true;break;}if(!r.retry){reply=`Error: ${r.error}`;break;}}
+  if(!success&&!reply)reply="All models busy, Sir. Try again shortly.";
+  return reply;
+}
+async function sendMessage(){
+  const input=document.getElementById('msg-input'),text=input.value.trim();
+  if(!text||loading||isCooldownActive())return;
+  if(!apiKey){showApiKeyModal();return;}
+  if(currentView!=='chat')switchView('chat');
+  if(!conversations[activeAgent])conversations[activeAgent]=[];
+  conversations[activeAgent].push({role:'user',content:text});
+  input.value='';loading=true;startCooldown(12);save();render();
+  const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  try{
+    const reply=await generateReplyForAgent(activeAgent,contents);
+    conversations[activeAgent].push({role:'assistant',content:reply});
+    if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return;}
+  }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."});}
+  voiceMode=false;loading=false;save();render();
+}
+document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';});
+
+// ── STARTUP COMMANDS ──
+function addStartupCommand(){const input=document.getElementById('startup-input');const text=input.value.trim();if(!text)return;const agentId=document.getElementById('startup-agent').value||'jarvis-core';startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});input.value='';save();render();}
+function moveStartupCommand(i,dir){const n=i+dir;if(i<0||i>=startupCommands.length||n<0||n>=startupCommands.length)return;const item=startupCommands[i];startupCommands.splice(i,1);startupCommands.splice(n,0,item);save();render();}
+function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render();}
+function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render();}
+function editStartupCommand(i){const cmd=startupCommands[i];if(!cmd)return;const next=prompt('Edit:',cmd.text);if(next===null)return;const clean=next.trim();if(!clean){deleteStartupCommand(i);return;}cmd.text=clean;save();render();}
 async function runStartupCommand(command){
   if(!apiKey)return false;
   const cmd=typeof command==='number'?startupCommands[command]:command;
@@ -584,280 +682,117 @@ async function runStartupCommand(command){
   if(!conversations[agentId])conversations[agentId]=[];
   conversations[agentId].push({role:'user',content:`[Login Command] ${cmd.text}`});
   const contents=conversations[agentId].slice(-12).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
-  let reply='';
-  try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}
+  let reply='';try{reply=await generateReplyForAgent(agentId,contents);}catch(e){reply='Connection disrupted.';}
   conversations[agentId].push({role:'assistant',content:reply});
-  save();
-  // Switch to the agent that ran the command so user sees the reply
-  activeAgent=agentId;
-  currentView='chat';
-  render();
-  // Speak the reply and WAIT for it to finish before returning
-  if(speechFeedback&&reply&&!reply.startsWith('Error:')){
-    await new Promise(r=>setTimeout(r,400));
-    await speakAnimAsync(reply,agentId);
-    await new Promise(r=>setTimeout(r,300));
-  }
+  save();activeAgent=agentId;currentView='chat';render();
+  if(speechFeedback&&reply&&!reply.startsWith('Error:')){await new Promise(r=>setTimeout(r,400));await speakAnimAsync(reply,agentId);await new Promise(r=>setTimeout(r,300));}
   return true;
 }
-async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
+async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return;}await runStartupCommand(i);render();}
 async function runStartupCommands(){
-  if(startupRunLock)return;
-  normalizeStartupCommands();
+  if(startupRunLock)return;normalizeStartupCommands();
   if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;
   startupRunLock=true;
-  for(const cmd of startupCommands){
-    if(cmd.enabled){
-      await runStartupCommand(cmd);
-    }
-  }
-  startupRunLock=false;
-  // Return to JARVIS after all commands
-  activeAgent='jarvis-core';
-  render();
-}function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands()},delay)}function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400)}
-function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}function closeCreateModal(){document.getElementById('create-modal').style.display='none'}function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
-function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200))}
-// ── FIREBASE AUTH FUNCTIONS ──
-function showFbMain(){
-  document.getElementById('fb-main-form').style.display='block';
-  document.getElementById('fb-login-form').style.display='none';
-  document.getElementById('fb-register-form').style.display='none';
-  document.getElementById('fb-reset-form').style.display='none';
+  for(const cmd of startupCommands){if(cmd.enabled)await runStartupCommand(cmd);}
+  startupRunLock=false;activeAgent='jarvis-core';render();
 }
-function showFbLogin(){
-  document.getElementById('fb-main-form').style.display='none';
-  document.getElementById('fb-login-form').style.display='block';
-  document.getElementById('fb-register-form').style.display='none';
-  document.getElementById('fb-reset-form').style.display='none';
-  document.getElementById('fb-error').textContent='';
-  setTimeout(()=>document.getElementById('fb-email').focus(),100);
-}
-function showFbRegister(){
-  document.getElementById('fb-main-form').style.display='none';
-  document.getElementById('fb-login-form').style.display='none';
-  document.getElementById('fb-register-form').style.display='block';
-  document.getElementById('fb-reset-form').style.display='none';
-  document.getElementById('fb-reg-error').textContent='';
-  setTimeout(()=>document.getElementById('fb-reg-email').focus(),100);
-}
-function showFbReset(){
-  document.getElementById('fb-main-form').style.display='none';
-  document.getElementById('fb-login-form').style.display='none';
-  document.getElementById('fb-register-form').style.display='none';
-  document.getElementById('fb-reset-form').style.display='block';
-  document.getElementById('fb-reset-msg').textContent='';
-  document.getElementById('fb-reset-msg').style.color='var(--dim)';
-}
-async function fbSendReset(){
-  const email=document.getElementById('fb-reset-email').value.trim();
-  const msg=document.getElementById('fb-reset-msg');
-  if(!email){msg.textContent='Please enter your email address.';msg.style.color='#ff5050';return}
-  msg.textContent='Sending reset email...';msg.style.color='var(--dim)';
-  try{
-    await auth.sendPasswordResetEmail(email);
-    msg.textContent='✓ Reset email sent! Check your inbox then come back to sign in.';
-    msg.style.color='#00d4ff';
-    setTimeout(()=>showFbLogin(),4000);
-  }catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050'}
-}
-function fbErrMsg(code){
-  const m={
-    'auth/user-not-found':'No account found with that email. Did you mean to create one?',
-    'auth/wrong-password':'Incorrect password. Try again or use Forgot Password.',
-    'auth/invalid-credential':'Wrong email or password. Check and try again.',
-    'auth/email-already-in-use':'An account with this email already exists. Try signing in instead.',
-    'auth/weak-password':'Password is too short — must be at least 6 characters.',
-    'auth/invalid-email':'That doesn\'t look like a valid email address.',
-    'auth/too-many-requests':'Too many failed attempts. Wait a few minutes and try again.',
-    'auth/network-request-failed':'No internet connection. Check your network and retry.',
-    'auth/user-disabled':'This account has been disabled. Contact support.',
-    'auth/operation-not-allowed':'Email/password sign-in is not enabled. Contact support.',
-  };
-  return m[code]||`Something went wrong (${code}). Check your connection and try again.`;
-}
-async function fbLogin(){
-  const email=document.getElementById('fb-email').value.trim();
-  const pass=document.getElementById('fb-pass').value;
-  const err=document.getElementById('fb-error');
-  if(!email){err.textContent='Please enter your email address.';return}
-  if(!pass){err.textContent='Please enter your password.';return}
-  err.textContent='Signing in...';err.style.color='var(--dim)';
-  try{
-    await auth.signInWithEmailAndPassword(email,pass);
-    // onAuthStateChanged handles the rest
-  }catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050'}
-}
-async function fbRegister(){
-  const email=document.getElementById('fb-reg-email').value.trim();
-  const pass=document.getElementById('fb-reg-pass').value;
-  const err=document.getElementById('fb-reg-error');
-  if(!email){err.textContent='Please enter an email address.';return}
-  if(!pass){err.textContent='Please enter a password.';return}
-  if(pass.length<6){err.textContent='Password must be at least 6 characters.';return}
-  err.textContent='Creating account...';err.style.color='var(--dim)';
-  try{
-    await auth.createUserWithEmailAndPassword(email,pass);
-    // onAuthStateChanged handles the rest
-  }catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050'}
-}
-async function fbLogout(){
-  if(fbUnsub){fbUnsub();fbUnsub=null}
-  await auth.signOut();
-  fbUser=null;agents=[...DEFAULT_AGENTS];conversations={};agentKnowledge={};agentTempKnowledge={};jarvisImports={};apiKey='';startupCommands=[];speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
-  render();showProfileModal();
-}
-function closeProfileModal(){if(fbUser)document.getElementById('profile-modal').style.display='none'}
-function showProfileModal(){
-  showFbMain();
-  document.getElementById('profile-modal').style.display='flex';
-}
-function getProfileName(){return fbUser?fbUser.email.split('@')[0]:'Guest'}
+function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands();},delay);}
+function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400);}
 
-// Change password via Firebase
-async function changePassword(){
-  const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');
-  if(!fbUser){m.textContent='Not logged in.';m.style.color='#ff5050';return}
-  if(!n||n.length<6){m.textContent='Min 6 chars.';m.style.color='#ff5050';return}
-  m.textContent='Updating...';m.style.color='var(--dim)';
-  try{
-    const cred=firebase.auth.EmailAuthProvider.credential(fbUser.email,o);
-    await fbUser.reauthenticateWithCredential(cred);
-    await fbUser.updatePassword(n);
-    m.textContent='Password updated!';m.style.color='#00d4ff';
-    document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';
-    setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);
-  }catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050'}
-}
-// Stub these out — no longer needed
-function simpleHash(s){return s}function createProfile(){}function promptPassword(){}function checkPassword(){}function showResetModal(){}
-function getProfileName(){if(!currentProfile)return'Guest';const p=profiles.find(x=>x.id===currentProfile);return p?p.name:'Guest'}
+// ── AGENT MANAGEMENT ──
+function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render();}
+function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render();}
+function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB();}
+function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed';}
+function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render();}
+function addKnowledge(t){if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];agentKnowledge[activeAgent].push(t);save();render();}
+function deleteKnowledge(i){if(agentKnowledge[activeAgent])agentKnowledge[activeAgent].splice(i,1);save();render();}
+function addTempKnowledge(t){if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];agentTempKnowledge[activeAgent].push({text:t,created:Date.now()});save();render();}
+function deleteTempKnowledge(i){if(agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent].splice(i,1);save();render();}
+function toggleJarvisImport(agId,idx){if(!jarvisImports[agId])jarvisImports[agId]={};if(jarvisImports[agId][idx])delete jarvisImports[agId][idx];else jarvisImports[agId][idx]=true;save();render();}
 
-// ── v1.8 NEW: Arrow key navigation ──
-// ── Settings ──
-function openSettings(){
-  const cog=document.getElementById('settings-cog');
-  cog.classList.remove('open');void cog.offsetWidth;cog.classList.add('open');
-  refreshSettingsUI();
-  document.getElementById('settings-modal').style.display='flex';
-  setTimeout(()=>cog.classList.remove('open'),600);
-}
+// ── CREATE AGENT ──
+let caIcon="🤖",caColor="#00d4ff";
+function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex';}
+function closeCreateModal(){document.getElementById('create-modal').style.display='none';}
+function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD();}
+function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor;}
+function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return;}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render();}
+
+// ── API KEY ──
+function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||'';document.getElementById('api-modal').style.display='flex';}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;save();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200));}
+
+// ── SETTINGS ──
+function openSettings(){const cog=document.getElementById('settings-cog');cog.classList.remove('spin');void cog.offsetWidth;cog.classList.add('spin');refreshSettingsUI();document.getElementById('settings-modal').style.display='flex';setTimeout(()=>cog.classList.remove('spin'),600);}
 function refreshSettingsUI(){
   const btn=document.getElementById('s-speech'),lbl=document.getElementById('s-speech-label');
-  if(lbl)lbl.textContent='Speech: '+(speechFeedback?'On':'Off');
-  if(btn)btn.className='settings-item'+(speechFeedback?' active':'');
+  if(lbl)lbl.textContent='Speech: '+(speechFeedback?'On':'Off');if(btn)btn.className='settings-item'+(speechFeedback?' active':'');
   const bBtn=document.getElementById('s-boot'),bLbl=document.getElementById('s-boot-label');
-  if(bLbl)bLbl.textContent='Boot Animation: '+(bootAnimEnabled?'On':'Off');
-  if(bBtn)bBtn.className='settings-item'+(bootAnimEnabled?' active':'');
+  if(bLbl)bLbl.textContent='Boot Animation: '+(bootAnimEnabled?'On':'Off');if(bBtn)bBtn.className='settings-item'+(bootAnimEnabled?' active':'');
   const vSel=document.getElementById('s-voice');
-  if(vSel){const cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('')}
+  if(vSel){const cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');}
 }
-function toggleBootAnim(){bootAnimEnabled=!bootAnimEnabled;localStorage.setItem(pfx()+'boot_anim',JSON.stringify(bootAnimEnabled))}
+
+// ── SWIPE & KEYBOARD ──
+function handlePanelSwipeStart(e){const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY;}
+function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(dx<0&&i<views.length-1)switchView(views[i+1]);else if(dx>0&&i>0)switchView(views[i-1]);}
+function handleAppHotkeys(e){
+  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
+  const tag=(document.activeElement?.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;
+  const key=(e.key||'').toLowerCase();
+  if(key==='k'){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI();}
+  else if(key==='h'){e.preventDefault();toggleSidebar();}
+  else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');}
+  else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();const idx=agents.findIndex(ag=>ag.id===activeAgent);const next=e.key==='ArrowUp'?(idx-1+agents.length)%agents.length:(idx+1)%agents.length;setActiveAgent(agents[next].id);}
+  else if(e.key==='ArrowLeft'){e.preventDefault();if(currentView==='calendar'){if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth();}else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i>0)switchView(v[i-1]);}}
+  else if(e.key==='ArrowRight'){e.preventDefault();if(currentView==='calendar'){const mw=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);if(calendarWeekOffset<mw)nextWeek();else nextCalendarMonth();}else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i<v.length-1)switchView(v[i+1]);}}
+}
 
 // ── BOOT ANIMATION ──
 function playBootAnimation(callback){
-  if(!bootAnimEnabled){if(callback)callback();return}
-  const screen=document.getElementById('boot-screen');
-  const canvas=document.getElementById('boot-canvas');
+  if(!bootAnimEnabled){if(callback)callback();return;}
+  const screen=document.getElementById('boot-screen'),canvas=document.getElementById('boot-canvas');
   screen.classList.remove('hidden');
-  // Prime the speech engine NOW while we still have the user gesture context
-  if(speechFeedback){
-    const primer=new SpeechSynthesisUtterance(' ');
-    primer.volume=0;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(primer);
-  }
+  // Prime speech engine while we still have gesture context
+  if(speechFeedback){const primer=new SpeechSynthesisUtterance(' ');primer.volume=0;speechSynthesis.cancel();speechSynthesis.speak(primer);}
   const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
-  const startT=Date.now();
-  const duration=2700; // +0.3s
-  let af;
+  const startT=Date.now(),duration=2700;let af;
   function drawBoot(){
-    const elapsed=Date.now()-startT;
-    const progress=Math.min(1,elapsed/duration);
+    const elapsed=Date.now()-startT,progress=Math.min(1,elapsed/duration);
     ctx.clearRect(0,0,W,H);
     const a=getAgent(),c=a.color||'#00d4ff';
     const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
-    // Scale-in
     const scale=progress<.18?progress/.18:1;
-    // Cubic ease-IN — accelerates through the whole animation
     const easeIn=Math.pow(progress,3);
-    const rot=easeIn*Math.PI*20; // 10 full spins, fastest at end
-    // Bulge fades to 0 in the last 25% → perfect circles at the end
+    const rot=easeIn*Math.PI*20;
     const bulgeFade=progress<.75?1:1-((progress-.75)/.25);
-    ctx.save();
-    ctx.translate(cx,cy);
-    ctx.scale(scale,scale);
-    ctx.rotate(rot);
-    ctx.translate(-cx,-cy);
-    // Intense ambient glow
+    ctx.save();ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.rotate(rot);ctx.translate(-cx,-cy);
     const grd=ctx.createRadialGradient(cx,cy,20,cx,cy,200);
-    grd.addColorStop(0,`rgba(${R},${G},${B},${.3+progress*.2})`);
-    grd.addColorStop(.5,`rgba(${R},${G},${B},.08)`);
-    grd.addColorStop(1,'transparent');
+    grd.addColorStop(0,`rgba(${R},${G},${B},${.3+progress*.2})`);grd.addColorStop(.5,`rgba(${R},${G},${B},.08)`);grd.addColorStop(1,'transparent');
     ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
-    // 3 thick rings — bulgeFade lerps them from wavy to perfect circle
-    const rings=[170,140,110];
-    const widths=[10,7,5];
-    const opacities=[.85,.55,.38];
-    rings.forEach((r,ri)=>{
+    [[170,10,.85],[140,7,.55],[110,5,.38]].forEach(([r,w,op],ri)=>{
       ctx.beginPath();
-      for(let i=0;i<=120;i++){
-        const ang=(i/120)*Math.PI*2;
-        const rawBulge=Math.sin(ang*3+elapsed*.015)*8+Math.sin(ang*5-elapsed*.011)*4;
-        const bulge=rawBulge*bulgeFade; // smoothly goes to 0
-        const rr=r+bulge;
-        const x=cx+Math.cos(ang)*rr;
-        const y=cy+Math.sin(ang)*rr*.93;
-        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-      }
-      ctx.closePath();
-      ctx.lineWidth=widths[ri]*(1+progress*.3);
-      ctx.strokeStyle=`rgba(${R},${G},${B},${opacities[ri]*scale})`;
-      ctx.stroke();
-      ctx.lineWidth=widths[ri]*2.5;
-      ctx.strokeStyle=`rgba(${R},${G},${B},${opacities[ri]*scale*.25})`;
-      ctx.stroke();
-      ctx.lineWidth=widths[ri]*4.5;
-      ctx.strokeStyle=`rgba(${R},${G},${B},${opacities[ri]*scale*.08})`;
-      ctx.stroke();
+      for(let i=0;i<=120;i++){const ang=(i/120)*Math.PI*2;const bulge=(Math.sin(ang*3+elapsed*.015)*8+Math.sin(ang*5-elapsed*.011)*4)*bulgeFade;ctx.lineTo(cx+Math.cos(ang)*(r+bulge),cy+Math.sin(ang)*(r+bulge)*.93);}
+      ctx.closePath();ctx.lineWidth=w*(1+progress*.3);ctx.strokeStyle=`rgba(${R},${G},${B},${op*scale})`;ctx.stroke();
+      ctx.lineWidth=w*2.5;ctx.strokeStyle=`rgba(${R},${G},${B},${op*scale*.25})`;ctx.stroke();
     });
-    // Bright pulsing core
     const corePulse=1+Math.sin(elapsed*.02)*.2;
     const coreGrd=ctx.createRadialGradient(cx-15,cy-20,5,cx,cy,70*corePulse);
-    coreGrd.addColorStop(0,`rgba(${R},${G},${B},.9)`);
-    coreGrd.addColorStop(.4,`rgba(${R},${G},${B},.5)`);
-    coreGrd.addColorStop(1,'transparent');
+    coreGrd.addColorStop(0,`rgba(${R},${G},${B},.9)`);coreGrd.addColorStop(1,'transparent');
     ctx.fillStyle=coreGrd;ctx.beginPath();ctx.arc(cx,cy,70*corePulse,0,Math.PI*2);ctx.fill();
     ctx.restore();
-    // Fast-orbiting particles
-    for(let i=0;i<8;i++){
-      const pa=(i/8)*Math.PI*2+elapsed*.012;
-      const pr=130+Math.sin(elapsed*.008+i)*18;
-      const px=cx+Math.cos(pa+rot*.3)*pr*scale;
-      const py=cy+Math.sin(pa+rot*.3)*pr*.93*scale;
-      ctx.beginPath();ctx.arc(px,py,2.5*scale,0,Math.PI*2);
-      ctx.fillStyle=`rgba(${R},${G},${B},${.7*scale})`;ctx.fill();
-      ctx.beginPath();ctx.arc(px,py,7*scale,0,Math.PI*2);
-      ctx.fillStyle=`rgba(${R},${G},${B},${.15*scale})`;ctx.fill();
-    }
-    // Energy arcs
-    if(progress>.3&&progress<.85){
-      for(let i=0;i<4;i++){
-        const arcAng=rot*.5+i*Math.PI*.5;
-        ctx.beginPath();
-        ctx.arc(cx,cy,185+progress*20,arcAng,arcAng+.6);
-        ctx.lineWidth=3;
-        ctx.strokeStyle=`rgba(${R},${G},${B},${.5*(1-progress)})`;
-        ctx.stroke();
-      }
-    }
-    if(elapsed<duration){af=requestAnimationFrame(drawBoot)}else{
+    for(let i=0;i<8;i++){const pa=(i/8)*Math.PI*2+elapsed*.012;const pr=130+Math.sin(elapsed*.008+i)*18;ctx.beginPath();ctx.arc(cx+Math.cos(pa+rot*.3)*pr*scale,cy+Math.sin(pa+rot*.3)*pr*.93*scale,2.5*scale,0,Math.PI*2);ctx.fillStyle=`rgba(${R},${G},${B},${.7*scale})`;ctx.fill();}
+    if(progress>.3&&progress<.85){for(let i=0;i<4;i++){const arcAng=rot*.5+i*Math.PI*.5;ctx.beginPath();ctx.arc(cx,cy,185+progress*20,arcAng,arcAng+.6);ctx.lineWidth=3;ctx.strokeStyle=`rgba(${R},${G},${B},${.5*(1-progress)})`;ctx.stroke();}}
+    if(elapsed<duration){af=requestAnimationFrame(drawBoot);}
+    else{
       setTimeout(()=>{
         if(callback)callback();
         if(speechFeedback){
           const doSpeak=(attempts=0)=>{
             const voices=speechSynthesis.getVoices();
-            if(!voices.length&&attempts<20){setTimeout(()=>doSpeak(attempts+1),150);return}
+            if(!voices.length&&attempts<20){setTimeout(()=>doSpeak(attempts+1),150);return;}
             speechSynthesis.cancel();
             setTimeout(()=>{
               const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
@@ -866,11 +801,9 @@ function playBootAnimation(callback){
               const bv=findBestVoice(preset);if(bv)u.voice=bv;
               speechSynthesis.speak(u);
             },50);
-          };
-          doSpeak();
+          };doSpeak();
         }
-        screen.style.transition='opacity 2.5s ease';
-        screen.style.opacity='0';
+        screen.style.transition='opacity 2.5s ease';screen.style.opacity='0';
         setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
       },1000);
     }
@@ -878,79 +811,44 @@ function playBootAnimation(callback){
   drawBoot();
 }
 
-function handleAppHotkeys(e){
-  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
-  const tag=(document.activeElement?.tagName||'').toLowerCase();
-  if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;
-  const key=(e.key||'').toLowerCase();
-  if(key==='k'){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI()}
-  else if(key==='h'){e.preventDefault();toggleSidebar()}
-  else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat')}
-  else if(e.key==='ArrowUp'||e.key==='ArrowDown'){
-    e.preventDefault();
-    const idx=agents.findIndex(ag=>ag.id===activeAgent);
-    const next=e.key==='ArrowUp'?(idx-1+agents.length)%agents.length:(idx+1)%agents.length;
-    setActiveAgent(agents[next].id);
-  }
-  else if(e.key==='ArrowLeft'){
-    e.preventDefault();
-    if(currentView==='calendar'){if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth()}
-    else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i>0)switchView(v[i-1])}
-  }
-  else if(e.key==='ArrowRight'){
-    e.preventDefault();
-    if(currentView==='calendar'){const mw=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);if(calendarWeekOffset<mw)nextWeek();else nextCalendarMonth()}
-    else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i<v.length-1)switchView(v[i+1])}
-  }
-}
+// ── EVENTS & STARTUP ──
+document.addEventListener('keydown',handleAppHotkeys);
+const mc=document.getElementById('main-content');
+if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});}
+setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render();},60000);
 
+render(); // initial render so UI is not blank
 
-document.addEventListener('DOMContentLoaded',()=>{
-  render();
-  document.addEventListener('keydown',handleAppHotkeys);
-  const mc=document.getElementById('main-content');
-  if(mc){
-    mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});
-    mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    fbUser=user;
+    document.getElementById('profile-modal').style.display='none';
+    try{
+      const snap=await db.collection('users').doc(user.uid).collection('data').doc('main').get();
+      if(snap.exists)applyData(snap.data());
+      else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;}
+    }catch(e){console.warn('Firestore:',e);}
+    appOpenStartupTriggered=false;startupRunLock=false;
+    render();
+    if(!apiKey)showApiKeyModal();
+    else playBootAnimation(()=>triggerAppOpenStartup());
+    let firstSnap=true;
+    fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
+      if(firstSnap){firstSnap=false;return;}
+      if(snap.exists){applyData(snap.data());render();}
+    });
+  }else{
+    fbUser=null;
+    agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;
+    conversations={};agentKnowledge={};agentTempKnowledge={};jarvisImports={};
+    apiKey='';startupCommands=[];speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
+    if(fbUnsub){fbUnsub();fbUnsub=null;}
+    render();showProfileModal();
   }
-  setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
-
-  // ── FIREBASE AUTH STATE ──
-  auth.onAuthStateChanged(async user=>{
-    if(user){
-      fbUser=user;
-      currentProfile=user.uid;
-      document.getElementById('profile-modal').style.display='none';
-      try{
-        const snap=await db.collection('users').doc(user.uid).collection('data').doc('main').get();
-        if(snap.exists)applyData(snap.data());
-        else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
-      }catch(e){console.warn('Firestore load error:',e)}
-      appOpenStartupTriggered=false;
-      startupRunLock=false;
-      render();
-      if(!apiKey)showApiKeyModal();
-      else playBootAnimation(()=>triggerAppOpenStartup());
-      let firstSnap=true;
-      fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
-        if(firstSnap){firstSnap=false;return}
-        if(snap.exists){applyData(snap.data());render()}
-      });
-    }else{
-      fbUser=null;currentProfile='';
-      agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;
-      conversations={};agentKnowledge={};agentTempKnowledge={};
-      jarvisImports={};apiKey='';startupCommands=[];
-      speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
-      if(fbUnsub){fbUnsub();fbUnsub=null}
-      render();
-      showProfileModal();
-    }
-  });
-
-  window.addEventListener('pageshow',()=>{if(fbUser&&apiKey)triggerAppOpenStartup()});
-  if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000)}
 });
+
+window.addEventListener('pageshow',()=>{if(fbUser&&apiKey)triggerAppOpenStartup();});
+if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000);}
 </script>
 </body>
 </html>
