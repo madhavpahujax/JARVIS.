@@ -255,7 +255,6 @@ a{color:var(--ac)}
     <div id="calendar-view" class="panel hidden-right">
       <div class="calendar-shell">
         <div class="cal-top"><div class="cal-title" id="cal-month-label">2026 — January</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">← Prev</button><button class="cal-btn" onclick="nextCalendarMonth()">Next →</button><button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button></div></div>
-        <div class="cal-week"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUE</div><div class="cal-dow">WED</div><div class="cal-dow">THU</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>
         <div class="cal-days" id="calendar-days"></div>
         <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
         <div class="swipe-hint">Swipe ← → to switch views. Arrow keys: ↑↓ agents, ← → weeks/months.</div>
@@ -491,9 +490,9 @@ function playBootAnimation(callback){
     // Faster scale-in
     const scale=progress<.18?progress/.18:1;
     // Much faster rotation — 10 full turns in 2.4s, eases out at end
-    // Use cubic ease-out so it whips fast then slows dramatically
-    const easeOut=1-Math.pow(1-progress,3);
-    const rot=easeOut*Math.PI*20; // 10 full spins
+    // Cubic ease-IN — starts slow, accelerates hard toward the end
+    const easeIn=Math.pow(progress,3);
+    const rot=easeIn*Math.PI*20; // 10 full spins, fastest at the end
     // Motion blur effect — draw previous frame ghost
     ctx.save();
     ctx.translate(cx,cy);
@@ -567,15 +566,25 @@ function playBootAnimation(callback){
     }
     if(elapsed<duration){af=requestAnimationFrame(drawBoot)}else{
       setTimeout(()=>{
+        // Ensure app is rendered before fade starts
+        if(callback)callback();
+        // Speak — load voices properly first
         if(speechFeedback){
-          const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
-          const u=new SpeechSynthesisUtterance('Systems online, Sir.');
-          u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
-          const bv=findBestVoice(preset);if(bv)u.voice=bv;
-          speechSynthesis.speak(u);
+          const doSpeak=()=>{
+            const voices=speechSynthesis.getVoices();
+            if(!voices.length){setTimeout(doSpeak,150);return}
+            const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
+            const u=new SpeechSynthesisUtterance('Systems online, Sir.');
+            u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+            const bv=findBestVoice(preset);if(bv)u.voice=bv;
+            speechSynthesis.speak(u);
+          };
+          doSpeak();
         }
-        screen.style.animation='bootFade .7s ease forwards';
-        setTimeout(()=>{screen.classList.add('hidden');screen.style.animation='';if(callback)callback()},800);
+        // Slow fade so the main app fades in gracefully underneath
+        screen.style.transition='opacity 2.5s ease';
+        screen.style.opacity='0';
+        setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
       },1000);
     }
   }
