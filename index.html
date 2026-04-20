@@ -193,6 +193,15 @@ a{color:var(--ac)}
 <body>
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(x=>x.unregister()));if('caches'in window)caches.keys().then(k=>k.forEach(x=>caches.delete(x)))}</script>
 
+<!-- Tap to continue screen (unlocks speech after login) -->
+<div id="tap-screen" style="display:none;position:fixed;inset:0;z-index:1500;background:#020409;align-items:center;justify-content:center;flex-direction:column;cursor:pointer" onclick="tapToContinue()">
+  <div style="font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.3em;color:var(--ac);margin-bottom:24px">J.A.R.V.I.S.</div>
+  <div style="width:80px;height:80px;border-radius:50%;border:2px solid var(--ac)44;display:flex;align-items:center;justify-content:center;animation:glow 2s ease-in-out infinite;margin-bottom:28px">
+    <div style="width:50px;height:50px;border-radius:50%;background:var(--ac)15;border:1px solid var(--ac)66;display:flex;align-items:center;justify-content:center;font-size:22px">⚡</div>
+  </div>
+  <div style="font-size:11px;color:var(--dim);letter-spacing:.2em;font-family:'Orbitron',sans-serif">TAP TO INITIALISE</div>
+</div>
+
 <!-- Boot screen -->
 <div id="boot-screen" class="hidden"><canvas id="boot-canvas" width="380" height="380"></canvas></div>
 
@@ -870,7 +879,7 @@ function deployAgent(){const n=document.getElementById('ca-name').value.trim();i
 
 // ── API KEY ──
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||'';document.getElementById('api-modal').style.display='flex';}
-function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;save();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200));}
+function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;save();document.getElementById('api-modal').style.display='none';render();showTapScreen(()=>scheduleStartupCommands(200));}
 
 // ── SETTINGS ──
 function openSettings(){const cog=document.getElementById('settings-cog');cog.classList.remove('spin');void cog.offsetWidth;cog.classList.add('spin');refreshSettingsUI();document.getElementById('settings-modal').style.display='flex';setTimeout(()=>cog.classList.remove('spin'),600);}
@@ -901,21 +910,55 @@ function handleAppHotkeys(e){
 }
 
 // ── BOOT ANIMATION ──
+// ── TAP TO INITIALISE (unlocks speech via user gesture) ──
+let tapCallback=null;
+function showTapScreen(callback){
+  tapCallback=callback;
+  const ts=document.getElementById('tap-screen');
+  ts.style.display='flex';
+}
+function tapToContinue(){
+  const ts=document.getElementById('tap-screen');
+  ts.style.display='none';
+  // THIS is the user gesture — prime speech right here
+  try{
+    speechSynthesis.cancel();
+    const p=new SpeechSynthesisUtterance(' ');
+    p.volume=0;
+    speechSynthesis.speak(p);
+  }catch(e){}
+  speechPrimed=true;
+  // Now play boot animation
+  playBootAnimation(tapCallback||null);
+  tapCallback=null;
+}
+
 // ── DIAGNOSTICS ──
 async function runDiagnostics(){
   const faults=[];
-  // 1. Gemini AI Core — live ping test
+  // 1. Gemini AI Core — live ping with reliable model
   if(!apiKey){
     faults.push('Gemini AI Core');
   }else{
     try{
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:'ping'}]}],generationConfig:{maxOutputTokens:5}})
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:1}})
       });
       const d=await r.json();
-      if(d.error)faults.push('Gemini AI Core');
-    }catch(e){faults.push('Gemini AI Core');}
+      // Only flag as broken if it's an auth/key error, not quota or other issues
+      if(d.error){
+        const code=d.error.code||0;
+        const msg=(d.error.message||'').toLowerCase();
+        // 400=bad key, 403=unauthorized — these mean the key is wrong
+        // 429=quota, 503=overloaded — key is fine, service is busy
+        if(code===400||code===403||msg.includes('api key')||msg.includes('invalid')||msg.includes('not valid')){
+          faults.push('Gemini AI Core');
+        }
+      }
+    }catch(e){
+      // Network error — don't flag the key as bad
+    }
   }
   // 2. Cloud Sync
   if(!fbUser||!db)faults.push('Cloud Sync');
@@ -1070,7 +1113,7 @@ auth.onAuthStateChanged(async user=>{
     appOpenStartupTriggered=false;startupRunLock=false;
     render();
     if(!apiKey)showApiKeyModal();
-    else playBootAnimation(()=>triggerAppOpenStartup());
+    else showTapScreen(()=>triggerAppOpenStartup());
     let firstSnap=true;
     fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
       if(firstSnap){firstSnap=false;return;}
