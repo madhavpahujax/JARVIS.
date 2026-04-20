@@ -712,7 +712,6 @@ function deleteTempKnowledge(i){if(agentTempKnowledge[activeAgent])agentTempKnow
 function toggleJarvisImport(agId,idx){if(!jarvisImports[agId])jarvisImports[agId]={};if(jarvisImports[agId][idx])delete jarvisImports[agId][idx];else jarvisImports[agId][idx]=true;save();render();}
 
 // ── CREATE AGENT ──
-let caIcon="🤖",caColor="#00d4ff";
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex';}
 function closeCreateModal(){document.getElementById('create-modal').style.display='none';}
 function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD();}
