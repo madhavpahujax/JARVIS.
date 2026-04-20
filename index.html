@@ -12,6 +12,9 @@
 <link rel="icon" href="icon-192.png"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;background:#05080f;color:#c8d6e5;font-family:'Rajdhani',sans-serif}
@@ -338,15 +341,12 @@ a{color:var(--ac)}
 <div style="padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.08em;margin-bottom:4px">v1.0 IRON</div><div style="color:var(--dim)">• Initial release — 5 agents, voice I/O, TTS<br>• Custom agents, knowledge base, Google Gemini<br>• Internet access, multilingual, PWA install</div></div>
 </div></div></div>
 
-<script type="module">
-// ── FIREBASE CONFIG ──
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updatePassword,EmailAuthProvider,reauthenticateWithCredential,sendPasswordResetEmail}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import{getFirestore,doc,setDoc,getDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+<script>
+// ── FIREBASE (globals loaded via CDN in head) ──
 const firebaseConfig={apiKey:"AIzaSyCwUop5XlyY7RHc3k94CrJ2ggo4jjP-4_w",authDomain:"jarvis-3c690.firebaseapp.com",projectId:"jarvis-3c690",storageBucket:"jarvis-3c690.firebasestorage.app",messagingSenderId:"599274910238",appId:"1:599274910238:web:69bdc4cc4eed1201b3f40f"};
-const fbApp=initializeApp(firebaseConfig);
-const auth=getAuth(fbApp);
-const db=getFirestore(fbApp);
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 let fbUser=null,fbUnsub=null;
 
 const DEFAULT_AGENTS=[{id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},{id:"football-analyst",name:"Pitch Intel",icon:"⚽",color:"#00ff88",description:"Football analysis — tactics, stats, live scores.",systemPrompt:"You are Pitch Intel inside J.A.R.V.I.S. Fully capable AI, specialty is football — tactics, stats, predictions, live scores. Internet access for real-time data. Help with anything asked."},{id:"football-news",name:"Transfer Wire",icon:"📰",color:"#ff6b35",description:"Football news — transfers, results, breaking stories.",systemPrompt:"You are Transfer Wire inside J.A.R.V.I.S. Fully capable AI, specialty is football news — transfers, results, injuries, breaking news. Internet access for latest info. Help with anything asked."},{id:"study-assistant",name:"Scholar",icon:"📚",color:"#a855f7",description:"Study assistant — homework, revision, research.",systemPrompt:"You are Scholar inside J.A.R.V.I.S. Fully capable AI, specialty is education — notes, revision, homework, exams, research. Internet access. Be encouraging. Help with anything asked."},{id:"school-manager",name:"Campus",icon:"🏫",color:"#f59e0b",description:"School organiser — timetable, assignments, deadlines.",systemPrompt:"You are Campus inside J.A.R.V.I.S. Fully capable AI, specialty is school organisation — timetables, assignments, deadlines. Internet access. Be proactive. Help with anything asked."}];
@@ -370,7 +370,7 @@ function getDataPayload(){
 }
 async function save(){
   if(!fbUser)return;
-  try{await setDoc(doc(db,'users',fbUser.uid,'data','main'),getDataPayload())}
+  try{await db.collection('users').doc(fbUser.uid).collection('data').doc('main').set(getDataPayload())}
   catch(e){console.warn('Firestore save failed:',e)}
 }
 function applyData(d){
@@ -396,8 +396,8 @@ function applyData(d){
 function subscribeToData(){
   if(fbUnsub)fbUnsub();
   if(!fbUser)return;
-  fbUnsub=onSnapshot(doc(db,'users',fbUser.uid,'data','main'),snap=>{
-    if(snap.exists()){applyData(snap.data());render()}
+  fbUnsub=db.collection('users').doc(fbUser.uid).collection('data').doc('main').onSnapshot(snap=>{
+    if(snap.exists){applyData(snap.data());render()}
   });
 }
 function saveApiKeyForProfile(){save()}
@@ -620,7 +620,7 @@ async function fbSendReset(){
   if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return}
   msg.textContent='Sending...';msg.style.color='var(--dim)';
   try{
-    await sendPasswordResetEmail(auth,email);
+    await auth.sendPasswordResetEmail(email);
     msg.textContent='Reset email sent! Check your inbox.';msg.style.color='#00d4ff';
     setTimeout(()=>showFbLogin(),3000);
   }catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050'}
@@ -632,7 +632,7 @@ async function fbLogin(){
   const err=document.getElementById('fb-error');
   if(!email||!pass){err.textContent='Enter email and password.';return}
   err.textContent='Signing in...';
-  try{await signInWithEmailAndPassword(auth,email,pass)}
+  try{await auth.signInWithEmailAndPassword(email,pass)}
   catch(e){err.textContent=fbErrMsg(e.code)}
 }
 async function fbRegister(){
@@ -641,12 +641,12 @@ async function fbRegister(){
   const err=document.getElementById('fb-reg-error');
   if(!email||!pass){err.textContent='Enter email and password.';return}
   err.textContent='Creating account...';
-  try{await createUserWithEmailAndPassword(auth,email,pass)}
+  try{await auth.createUserWithEmailAndPassword(email,pass)}
   catch(e){err.textContent=fbErrMsg(e.code)}
 }
 async function fbLogout(){
   if(fbUnsub){fbUnsub();fbUnsub=null}
-  await signOut(auth);
+  await auth.signOut();
   fbUser=null;agents=[...DEFAULT_AGENTS];conversations={};agentKnowledge={};agentTempKnowledge={};jarvisImports={};apiKey='';startupCommands=[];speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
   render();showProfileModal();
 }
@@ -665,9 +665,9 @@ async function changePassword(){
   if(!n||n.length<6){m.textContent='Min 6 chars.';m.style.color='#ff5050';return}
   m.textContent='Updating...';m.style.color='var(--dim)';
   try{
-    const cred=EmailAuthProvider.credential(fbUser.email,o);
-    await reauthenticateWithCredential(fbUser,cred);
-    await updatePassword(fbUser,n);
+    const cred=firebase.auth.EmailAuthProvider.credential(fbUser.email,o);
+    await fbUser.reauthenticateWithCredential(cred);
+    await fbUser.updatePassword(n);
     m.textContent='Password updated!';m.style.color='#00d4ff';
     document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';
     setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);
@@ -853,13 +853,13 @@ document.addEventListener('keydown',handleAppHotkeys);
 const mc=document.getElementById('main-content');if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true})}
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
 // ── APP STARTUP — Firebase Auth State ──
-onAuthStateChanged(auth,async user=>{
+auth.onAuthStateChanged(async user=>{
   if(user){
     fbUser=user;
     currentProfile=user.uid;
     // Load data from Firestore
-    const snap=await getDoc(doc(db,'users',user.uid,'data','main'));
-    if(snap.exists())applyData(snap.data());
+    const snap=await db.collection('users').doc(user.uid).collection('data').doc('main').get();
+    if(snap.exists)applyData(snap.data());
     else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
     render();
     document.getElementById('profile-modal').style.display='none';
