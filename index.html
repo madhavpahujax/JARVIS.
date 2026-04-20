@@ -559,6 +559,13 @@ function playBootAnimation(callback){
   const screen=document.getElementById('boot-screen');
   const canvas=document.getElementById('boot-canvas');
   screen.classList.remove('hidden');
+  // Prime the speech engine NOW while we still have the user gesture context
+  if(speechFeedback){
+    const primer=new SpeechSynthesisUtterance(' ');
+    primer.volume=0;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(primer);
+  }
   const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
   const startT=Date.now();
   const duration=2700; // +0.3s
@@ -645,22 +652,22 @@ function playBootAnimation(callback){
     }
     if(elapsed<duration){af=requestAnimationFrame(drawBoot)}else{
       setTimeout(()=>{
-        // Ensure app is rendered before fade starts
         if(callback)callback();
-        // Speak — load voices properly first
         if(speechFeedback){
-          const doSpeak=()=>{
+          const doSpeak=(attempts=0)=>{
             const voices=speechSynthesis.getVoices();
-            if(!voices.length){setTimeout(doSpeak,150);return}
-            const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
-            const u=new SpeechSynthesisUtterance('Systems online, Sir.');
-            u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
-            const bv=findBestVoice(preset);if(bv)u.voice=bv;
-            speechSynthesis.speak(u);
+            if(!voices.length&&attempts<20){setTimeout(()=>doSpeak(attempts+1),150);return}
+            speechSynthesis.cancel();
+            setTimeout(()=>{
+              const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
+              const u=new SpeechSynthesisUtterance('Systems online, Sir.');
+              u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
+              const bv=findBestVoice(preset);if(bv)u.voice=bv;
+              speechSynthesis.speak(u);
+            },50);
           };
           doSpeak();
         }
-        // Slow fade so the main app fades in gracefully underneath
         screen.style.transition='opacity 2.5s ease';
         screen.style.opacity='0';
         setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
