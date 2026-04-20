@@ -307,7 +307,30 @@ function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWid
 function addKnowledge(t){if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];agentKnowledge[activeAgent].push(t);save();render()}function deleteKnowledge(i){if(agentKnowledge[activeAgent])agentKnowledge[activeAgent].splice(i,1);save();render()}function addTempKnowledge(t){if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];agentTempKnowledge[activeAgent].push({text:t,created:Date.now()});save();render()}function deleteTempKnowledge(i){if(agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent].splice(i,1);save();render()}function toggleJarvisImport(agId,idx){if(!jarvisImports[agId])jarvisImports[agId]={};if(jarvisImports[agId][idx])delete jarvisImports[agId][idx];else jarvisImports[agId][idx]=true;save();render()}
 function cleanExpiredTemp(){const day=24*60*60*1000;for(const agId in agentTempKnowledge){agentTempKnowledge[agId]=agentTempKnowledge[agId].filter(item=>Date.now()-item.created<day)}save()}function timeLeft(created){const ms=(created+24*60*60*1000)-Date.now();if(ms<=0)return'Expired';const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h>0?`${h}h ${m}m left`:`${m}m left`}function clearChat(){if(!confirm('Clear chat? Memory stays.'))return;conversations[activeAgent]=[];save();render()}function toggleSpeechFeedback(){if(isSpeaking){stopSpeaking();speechFeedback=false}else{speechFeedback=!speechFeedback}save();render()}
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}function findBestVoice(preset){const voices=speechSynthesis.getVoices();if(!voices.length)return null;for(const kw of preset.keywords){const m=voices.find(v=>v.name.includes(kw)&&v.lang.startsWith('en'));if(m)return m}const ev=voices.filter(v=>v.lang.startsWith('en'));if(preset.gender==='female'){const f=ev.find(v=>v.name.toLowerCase().includes('female'));if(f)return f}else{const m=ev.find(v=>v.name.toLowerCase().includes('male'));if(m)return m}return ev[0]||voices[0]}
-function speakAnim(text){if(!speechFeedback)return;const spoken=cleanSpeechText(text);if(!spoken)return;speechSynthesis.cancel();isSpeaking=true;render();const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];const u=new SpeechSynthesisUtterance(spoken);const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';u.rate=preset.rate;u.pitch=preset.pitch;const voices=speechSynthesis.getVoices(),lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0]}else{const bv=findBestVoice(preset);if(bv)u.voice=bv}u.onend=()=>{isSpeaking=false;updateOrb();render()};u.onerror=()=>{isSpeaking=false;updateOrb();render()};speechSynthesis.speak(u)}
+function speakAnim(text){
+  if(!speechFeedback)return;
+  const spoken=cleanSpeechText(text);
+  if(!spoken)return;
+  // Ensure voices are loaded
+  let voices=speechSynthesis.getVoices();
+  if(!voices.length){
+    // Voices not loaded yet — wait and retry
+    setTimeout(()=>speakAnim(text),200);
+    return;
+  }
+  speechSynthesis.cancel();
+  isSpeaking=true;render();
+  const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice(activeAgent))||VOICE_PRESETS[0];
+  const u=new SpeechSynthesisUtterance(spoken);
+  const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
+  u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
+  u.rate=preset.rate;u.pitch=preset.pitch;
+  const lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
+  if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0]}else{const bv=findBestVoice(preset);if(bv)u.voice=bv}
+  u.onend=()=>{isSpeaking=false;updateOrb();render()};
+  u.onerror=()=>{isSpeaking=false;updateOrb();render()};
+  speechSynthesis.speak(u);
+}
 speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
 function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false}recognition=new SR();try{recognition.lang=''}catch(e){recognition.lang='en-US'}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop()},1500)};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage()}else{stopRec()}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec()};return true}
 function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return}if(isRecording){recognition.stop();return}startRec()}function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start()}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start()}catch(e2){}},200)}}function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb()}
@@ -316,8 +339,70 @@ async function generateReplyForAgent(agentId,contents){const sys=buildSystemProm
 async function sendMessage(){const input=document.getElementById('msg-input'),text=input.value.trim();if(!text||loading||isCooldownActive())return;if(!apiKey){showApiKeyModal();return}if(currentView!=='chat')switchView('chat');if(!conversations[activeAgent])conversations[activeAgent]=[];conversations[activeAgent].push({role:'user',content:text});input.value='';loading=true;startCooldown(12);save();render();const contents=conversations[activeAgent].slice(-20).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));try{const reply=await generateReplyForAgent(activeAgent,contents);conversations[activeAgent].push({role:'assistant',content:reply});if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return}}catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."})}voiceMode=false;loading=false;save();render()}
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:''});
 function addStartupCommand(){const input=document.getElementById('startup-input');const text=input.value.trim();if(!text)return;const agentId=document.getElementById('startup-agent').value||'jarvis-core';startupCommands.push({id:'sc-'+Date.now(),agentId,text,enabled:true});input.value='';save();render()}function moveStartupCommand(i,dir){const n=i+dir;if(i<0||i>=startupCommands.length||n<0||n>=startupCommands.length)return;const item=startupCommands[i];startupCommands.splice(i,1);startupCommands.splice(n,0,item);save();render()}function toggleStartupCommand(i){if(!startupCommands[i])return;startupCommands[i].enabled=!startupCommands[i].enabled;save();render()}function deleteStartupCommand(i){if(!startupCommands[i])return;startupCommands.splice(i,1);save();render()}function editStartupCommand(i){const cmd=startupCommands[i];if(!cmd)return;const next=prompt('Edit:',cmd.text);if(next===null)return;const clean=next.trim();if(!clean){deleteStartupCommand(i);return}cmd.text=clean;save();render()}
-async function runStartupCommand(command){if(!apiKey)return false;const cmd=typeof command==='number'?startupCommands[command]:command;if(!cmd||!cmd.enabled)return false;const agentId=agents.find(ag=>ag.id===cmd.agentId)?.id||'jarvis-core';if(!conversations[agentId])conversations[agentId]=[];conversations[agentId].push({role:'user',content:`[Login Command] ${cmd.text}`});const contents=conversations[agentId].slice(-12).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));let reply='';try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}conversations[agentId].push({role:'assistant',content:reply});save();if(activeAgent===agentId)render();if(speechFeedback&&reply&&!reply.startsWith('Error:')){const prev=activeAgent;activeAgent=agentId;render();setTimeout(()=>{speakAnim(reply);activeAgent=prev;render()},150)}return true}
-async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}async function runStartupCommands(){if(startupRunLock)return;normalizeStartupCommands();if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;startupRunLock=true;for(const cmd of startupCommands){if(cmd.enabled)await runStartupCommand(cmd)}startupRunLock=false;render()}function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands()},delay)}function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400)}
+// Speech helper that returns a promise — resolves when speech finishes
+function speakAnimAsync(text,forAgentId){
+  return new Promise(resolve=>{
+    if(!speechFeedback){resolve();return}
+    const spoken=cleanSpeechText(text);
+    if(!spoken){resolve();return}
+    speechSynthesis.cancel();
+    isSpeaking=true;render();
+    const voiceId=forAgentId?getAgentVoice(forAgentId):getAgentVoice(activeAgent);
+    const preset=VOICE_PRESETS.find(p=>p.id===voiceId)||VOICE_PRESETS[0];
+    const u=new SpeechSynthesisUtterance(spoken);
+    const hD=/[\u0900-\u097F]/.test(spoken),hA=/[\u0600-\u06FF]/.test(spoken),hC=/[\u4e00-\u9fff]/.test(spoken),hJ=/[\u3040-\u30ff]/.test(spoken),hK=/[\uac00-\ud7af]/.test(spoken),hR=/[\u0400-\u04FF]/.test(spoken);
+    u.lang=hD?'hi-IN':hA?'ar-SA':hC?'zh-CN':hJ?'ja-JP':hK?'ko-KR':hR?'ru-RU':'en-GB';
+    u.rate=preset.rate;u.pitch=preset.pitch;
+    const voices=speechSynthesis.getVoices(),lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
+    if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0]}else{const bv=findBestVoice(preset);if(bv)u.voice=bv}
+    u.onend=()=>{isSpeaking=false;updateOrb();render();resolve()};
+    u.onerror=()=>{isSpeaking=false;updateOrb();render();resolve()};
+    speechSynthesis.speak(u);
+    // Safety timeout — resolve after 60s even if speech hangs
+    setTimeout(()=>{if(isSpeaking){speechSynthesis.cancel();isSpeaking=false;updateOrb();render()}resolve()},60000);
+  });
+}
+
+async function runStartupCommand(command){
+  if(!apiKey)return false;
+  const cmd=typeof command==='number'?startupCommands[command]:command;
+  if(!cmd||!cmd.enabled)return false;
+  const agentId=agents.find(ag=>ag.id===cmd.agentId)?.id||'jarvis-core';
+  if(!conversations[agentId])conversations[agentId]=[];
+  conversations[agentId].push({role:'user',content:`[Login Command] ${cmd.text}`});
+  const contents=conversations[agentId].slice(-12).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+  let reply='';
+  try{reply=await generateReplyForAgent(agentId,contents)}catch(e){reply='Connection disrupted.'}
+  conversations[agentId].push({role:'assistant',content:reply});
+  save();
+  // Switch to the agent that ran the command so user sees the reply
+  activeAgent=agentId;
+  currentView='chat';
+  render();
+  // Speak the reply and WAIT for it to finish before returning
+  if(speechFeedback&&reply&&!reply.startsWith('Error:')){
+    await new Promise(r=>setTimeout(r,400));
+    await speakAnimAsync(reply,agentId);
+    await new Promise(r=>setTimeout(r,300));
+  }
+  return true;
+}
+async function runOneStartupCommand(i){if(!apiKey){showApiKeyModal();return}await runStartupCommand(i);render()}
+async function runStartupCommands(){
+  if(startupRunLock)return;
+  normalizeStartupCommands();
+  if(!apiKey||loading||!startupCommands.some(cmd=>cmd.enabled))return;
+  startupRunLock=true;
+  for(const cmd of startupCommands){
+    if(cmd.enabled){
+      await runStartupCommand(cmd);
+    }
+  }
+  startupRunLock=false;
+  // Return to JARVIS after all commands
+  activeAgent='jarvis-core';
+  render();
+}function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands()},delay)}function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400)}
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}function closeCreateModal(){document.getElementById('create-modal').style.display='none'}function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();scheduleStartupCommands(200)}
 function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}return 'h_'+Math.abs(h).toString(36)}
