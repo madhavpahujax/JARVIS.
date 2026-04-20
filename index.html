@@ -254,7 +254,7 @@ a{color:var(--ac)}
           <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">← Prev</button><button class="cal-btn" onclick="nextCalendarMonth()">Next →</button><button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button></div></div>
           <div class="cal-days" id="calendar-days"></div>
           <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
-          <div class="swipe-hint">Swipe ← → to switch views · Arrow keys: ↑↓ agents · ← → views/weeks</div>
+          <div class="swipe-hint">Swipe ← → to switch views · PageUp / PageDown to navigate weeks</div>
         </div>
       </div>
     </div>
@@ -337,6 +337,7 @@ a{color:var(--ac)}
   <div class="shortcut-row"><span class="shortcut-desc">Cycle views</span><span class="shortcut-key">M</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Switch agent</span><span class="shortcut-key">↑ ↓</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Switch view / calendar nav</span><span class="shortcut-key">← →</span></div>
+  <div class="shortcut-row"><span class="shortcut-desc">Calendar week / month nav</span><span class="shortcut-key">PgUp PgDn</span></div>
 </div></div>
 
 <!-- Changelog -->
@@ -898,7 +899,17 @@ function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const
 function handleAppHotkeys(e){
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
   const tag=(document.activeElement?.tagName||'').toLowerCase();
-  if(tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable)return;
+  const inField=tag==='input'||tag==='textarea'||tag==='select'||document.activeElement?.isContentEditable;
+
+  // PageUp/PageDown navigate calendar regardless of focus — no conflict with typing
+  if(currentView==='calendar'){
+    if(e.key==='PageUp'){e.preventDefault();if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth();return;}
+    if(e.key==='PageDown'){e.preventDefault();const mw=Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1);if(calendarWeekOffset<mw)nextWeek();else nextCalendarMonth();return;}
+  }
+
+  // All other shortcuts blocked when typing
+  if(inField)return;
+
   const key=(e.key||'').toLowerCase();
   if(key==='k'){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI();}
   else if(key==='h'){e.preventDefault();toggleSidebar();}
