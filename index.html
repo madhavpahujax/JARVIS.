@@ -884,60 +884,39 @@ function handleAppHotkeys(e){
 
 // ── BOOT ANIMATION ──
 // ── DIAGNOSTICS ──
-// Each system has a name and a test. Returns array of fault names.
-function runDiagnostics(){
+async function runDiagnostics(){
   const faults=[];
-  const checks=[
-    {
-      name:'Gemini AI Core',
-      test:()=>!!apiKey&&apiKey.startsWith('AIza')
-    },
-    {
-      name:'Cloud Sync',
-      test:()=>!!fbUser&&!!db
-    },
-    {
-      name:'Voice Engine',
-      test:()=>{
-        try{return typeof speechSynthesis!=='undefined'&&speechSynthesis!==null;}
-        catch(e){return false;}
-      }
-    },
-    {
-      name:'Voice Recognition',
-      test:()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition)
-    },
-    {
-      name:'Agent Network',
-      test:()=>Array.isArray(agents)&&agents.length>=1&&agents.find(a=>a.id==='jarvis-core')
-    },
-    {
-      name:'Memory Bank',
-      test:()=>typeof agentKnowledge==='object'&&agentKnowledge!==null
-    },
-    {
-      name:'Calendar Module',
-      test:()=>typeof calendarNotes==='object'&&calendarNotes!==null
-    },
-    {
-      name:'Orb Renderer',
-      test:()=>{
-        const cv=document.createElement('canvas');
-        return !!(cv.getContext&&cv.getContext('2d'));
-      }
-    },
-    {
-      name:'Login Command System',
-      test:()=>Array.isArray(startupCommands)
-    }
-  ];
-  for(const check of checks){
+  // 1. Gemini AI Core — live ping test
+  if(!apiKey){
+    faults.push('Gemini AI Core');
+  }else{
     try{
-      if(!check.test())faults.push(check.name);
-    }catch(e){
-      faults.push(check.name);
-    }
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'ping'}]}],generationConfig:{maxOutputTokens:5}})
+      });
+      const d=await r.json();
+      if(d.error)faults.push('Gemini AI Core');
+    }catch(e){faults.push('Gemini AI Core');}
   }
+  // 2. Cloud Sync
+  if(!fbUser||!db)faults.push('Cloud Sync');
+  // 3. Voice Engine
+  try{if(typeof speechSynthesis==='undefined'||speechSynthesis===null)faults.push('Voice Engine');}
+  catch(e){faults.push('Voice Engine');}
+  // 4. Voice Recognition
+  if(!(window.SpeechRecognition||window.webkitSpeechRecognition))faults.push('Voice Recognition');
+  // 5. Agent Network
+  if(!Array.isArray(agents)||!agents.length||!agents.find(a=>a.id==='jarvis-core'))faults.push('Agent Network');
+  // 6. Memory Bank
+  if(typeof agentKnowledge!=='object'||agentKnowledge===null)faults.push('Memory Bank');
+  // 7. Calendar Module
+  if(typeof calendarNotes!=='object'||calendarNotes===null)faults.push('Calendar Module');
+  // 8. Orb Renderer
+  try{const cv=document.createElement('canvas');if(!(cv.getContext&&cv.getContext('2d')))faults.push('Orb Renderer');}
+  catch(e){faults.push('Orb Renderer');}
+  // 9. Login Command System
+  if(!Array.isArray(startupCommands))faults.push('Login Command System');
   return faults;
 }
 
@@ -984,22 +963,23 @@ function playBootAnimation(callback){
       };
       setTimeout(()=>{
         if(speechFeedback){
-          const doSpeak=(attempts=0)=>{
+          const doSpeak=async(attempts=0)=>{
             const voices=speechSynthesis.getVoices();
             if(!voices.length&&attempts<20){setTimeout(()=>doSpeak(attempts+1),150);return;}
             speechSynthesis.cancel();
+            // Run live diagnostics
+            const faults=await runDiagnostics();
+            let msg;
+            if(faults.length===0){
+              msg='All systems online, Sir.';
+            }else if(faults.length===1){
+              msg=`Systems online, Sir, except ${faults[0]}.`;
+            }else{
+              const last=faults[faults.length-1];
+              const rest=faults.slice(0,-1);
+              msg=`Systems online, Sir, except ${rest.join(', ')}, and ${last}.`;
+            }
             setTimeout(()=>{
-              // Run diagnostics and build status message
-              const faults=runDiagnostics();
-              let msg;
-              if(faults.length===0){
-                msg='All systems online, Sir.';
-              }else if(faults.length===1){
-                msg=`Systems online, Sir, except ${faults[0]}.`;
-              }else{
-                const last=faults.pop();
-                msg=`Systems online, Sir, except ${faults.join(', ')}, and ${last}.`;
-              }
               const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
               const u=new SpeechSynthesisUtterance(msg);
               u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
