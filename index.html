@@ -936,27 +936,23 @@ function tapToContinue(){
 // ── DIAGNOSTICS ──
 function runDiagnostics(){
   const faults=[];
-  // 1. Gemini AI Core — check key exists and has valid format
-  if(!apiKey||apiKey.length<20||!apiKey.startsWith('AIza')){
-    faults.push('Gemini AI Core');
-  }
-  // 2. Cloud Sync
+  // Cloud Sync
   if(!fbUser||!db)faults.push('Cloud Sync');
-  // 3. Voice Engine
+  // Voice Engine
   try{if(typeof speechSynthesis==='undefined'||speechSynthesis===null)faults.push('Voice Engine');}
   catch(e){faults.push('Voice Engine');}
-  // 4. Voice Recognition
+  // Voice Recognition
   if(!(window.SpeechRecognition||window.webkitSpeechRecognition))faults.push('Voice Recognition');
-  // 5. Agent Network
+  // Agent Network
   if(!Array.isArray(agents)||!agents.length||!agents.find(a=>a.id==='jarvis-core'))faults.push('Agent Network');
-  // 6. Memory Bank
+  // Memory Bank
   if(typeof agentKnowledge!=='object'||agentKnowledge===null)faults.push('Memory Bank');
-  // 7. Calendar Module
+  // Calendar Module
   if(typeof calendarNotes!=='object'||calendarNotes===null)faults.push('Calendar Module');
-  // 8. Orb Renderer
+  // Orb Renderer
   try{const cv=document.createElement('canvas');if(!(cv.getContext&&cv.getContext('2d')))faults.push('Orb Renderer');}
   catch(e){faults.push('Orb Renderer');}
-  // 9. Login Command System
+  // Login Command System
   if(!Array.isArray(startupCommands))faults.push('Login Command System');
   return faults;
 }
