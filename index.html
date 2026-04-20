@@ -223,7 +223,7 @@ a{color:var(--ac)}
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.8</span>
+      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.9</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
@@ -266,10 +266,47 @@ a{color:var(--ac)}
 </div>
 <div class="ov" id="create-modal" style="display:none" onclick="closeCreateModal()"><div class="md" onclick="event.stopPropagation()"><h2>New Agent</h2><label>NAME</label><input id="ca-name" placeholder="e.g. Music Guru"/><label>ICON</label><div class="ig" id="ca-icons"></div><label>COLOUR</label><div class="cg" id="ca-colors"></div><label>DESCRIPTION</label><input id="ca-desc" placeholder="What does this agent do?"/><label>INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave..."></textarea><div class="md-act"><button class="md-cancel" onclick="closeCreateModal()">Cancel</button><button class="md-go" id="ca-deploy" onclick="deployAgent()">Deploy</button></div></div></div>
 <div class="ov" id="api-modal" style="display:none" onclick="if(apiKey)document.getElementById('api-modal').style.display='none'"><div class="md" onclick="event.stopPropagation()"><h2>Connect AI</h2><p style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:16px;line-height:1.6;text-align:center">Get a free Gemini API key at<br><a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p><label>API KEY</label><input id="api-key-input" placeholder="AIza..." style="font-size:11px" onkeydown="if(event.key==='Enter')saveApiKey()"/><p style="color:var(--dim);font-size:9px;margin-top:-8px;margin-bottom:14px;opacity:.6">Stored only on your device.</p><div class="md-act"><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="saveApiKey()">Activate</button></div></div></div>
-<div class="ov" id="profile-modal" style="display:none" onclick="closeProfileModal()"><div class="md" style="max-width:400px;text-align:center" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div></div><h2 style="margin-bottom:0">Who's using J.A.R.V.I.S.?</h2><button id="profile-close-btn" onclick="closeProfileModal()" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div><div id="profile-list" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px"></div><div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px"><p style="color:var(--dim);font-size:10px;margin-bottom:10px;letter-spacing:.08em;font-weight:700">NEW PROFILE</p><input id="new-profile-name" placeholder="Enter name..." style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:8px" onkeydown="if(event.key==='Enter')document.getElementById('new-profile-pass').focus()"/><input id="new-profile-pass" type="password" placeholder="Set password (required)" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')createProfile()"/><button onclick="createProfile()" style="width:100%;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Create Profile</button></div></div></div>
-<div class="ov" id="pass-modal" style="display:none" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔒 Enter Password</h2><div id="pass-profile-info" style="margin-bottom:16px"></div><input id="pass-input" type="password" placeholder="Password" style="width:100%;padding:10px 14px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;margin-bottom:6px;text-align:center" onkeydown="if(event.key==='Enter')checkPassword()"/><p id="pass-error" style="color:#ff5050;font-size:10px;margin-bottom:8px;min-height:14px"></p><button onclick="showResetModal()" style="width:100%;padding:8px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#f59e0b;cursor:pointer;font-weight:700;font-size:11px;margin-bottom:4px">⚠ Forgot password?</button><div class="md-act" style="margin-top:12px"><button class="md-cancel" onclick="document.getElementById('pass-modal').style.display='none';showProfileModal()">Back</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="checkPassword()">Unlock</button></div></div></div>
-<div class="ov" id="reset-modal" style="display:none" onclick="document.getElementById('reset-modal').style.display='none';document.getElementById('pass-modal').style.display='flex'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔓 Reset Password</h2><div id="reset-profile-info" style="margin-bottom:12px"></div><p style="color:var(--dim);font-size:10px;margin-bottom:14px">Enter universal reset code to set a new password.</p><input id="reset-code" type="password" placeholder="Universal code" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;text-align:center"/><input id="reset-newpass" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/><p id="reset-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('reset-modal').style.display='none';document.getElementById('pass-modal').style.display='flex'">Back</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="resetPassword()">Reset</button></div></div></div>
-<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><div id="chpass-normal"><input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px"/><input id="chpass-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p><div class="md-act" style="margin-top:8px"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div><div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"><button onclick="document.getElementById('chpass-normal').style.display='none';document.getElementById('chpass-reset').style.display='block'" style="width:100%;padding:10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#f59e0b;cursor:pointer;font-weight:700;font-size:12px">⚠ Forgot password? Use reset code</button></div></div><div id="chpass-reset" style="display:none"><p style="color:var(--dim);font-size:10px;margin-bottom:12px">Enter universal reset code.</p><input id="chpass-code" type="password" placeholder="Universal code" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;text-align:center"/><input id="chpass-reset-new" type="password" placeholder="New password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px"/><p id="chpass-reset-msg" style="font-size:10px;min-height:14px;margin-bottom:8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-reset').style.display='none';document.getElementById('chpass-normal').style.display='block'">Back</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="resetFromChangeScreen()">Reset</button></div></div></div></div>
+<div class="ov" id="profile-modal" style="display:none"><div class="md" style="max-width:400px;text-align:center" onclick="event.stopPropagation()">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div></div><h2 style="margin-bottom:0">J.A.R.V.I.S. Login</h2><button id="profile-close-btn" onclick="closeProfileModal()" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
+  <!-- Login form -->
+  <div id="fb-login-form">
+    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Sign in to sync your data across all devices.</p>
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
+    <input id="fb-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-pass').focus()"/>
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
+    <input id="fb-pass" type="password" placeholder="Password" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbLogin()"/>
+    <p id="fb-error" style="color:#ff5050;font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
+    <div style="display:flex;gap:8px">
+      <button onclick="fbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Sign In</button>
+      <button onclick="showFbRegister()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Create Account</button>
+    </div>
+    <button onclick="showFbReset()" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:11px;text-decoration:underline">Forgot password?</button>
+  </div>
+  <!-- Reset password form -->
+  <div id="fb-reset-form" style="display:none">
+    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your email and we'll send you a reset link.</p>
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
+    <input id="fb-reset-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbSendReset()"/>
+    <p id="fb-reset-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
+    <div style="display:flex;gap:8px">
+      <button onclick="fbSendReset()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Send Reset Email</button>
+      <button onclick="showFbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Back</button>
+    </div>
+  <!-- Register form -->
+  <div id="fb-register-form" style="display:none">
+    <p style="color:var(--dim);font-size:11px;margin-bottom:16px">Create a new account. Your data will sync across all devices.</p>
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">EMAIL</label>
+    <input id="fb-reg-email" type="email" placeholder="your@email.com" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('fb-reg-pass').focus()"/>
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.12em;margin-bottom:5px;text-align:left">PASSWORD</label>
+    <input id="fb-reg-pass" type="password" placeholder="Min 6 characters" style="width:100%;padding:9px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')fbRegister()"/>
+    <p id="fb-reg-error" style="color:#ff5050;font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p>
+    <div style="display:flex;gap:8px">
+      <button onclick="fbRegister()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px">Create Account</button>
+      <button onclick="showFbLogin()" style="flex:1;padding:10px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:12px">Back to Login</button>
+    </div>
+  </div>
+</div></div>
+<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 12px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;margin-bottom:6px" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
 <!-- Settings Modal -->
 <div class="ov" id="settings-modal" style="display:none" onclick="document.getElementById('settings-modal').style.display='none'"><div class="md" style="max-width:420px" onclick="event.stopPropagation()">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 style="margin-bottom:0">⚙ Settings</h2><button onclick="document.getElementById('settings-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
@@ -277,9 +314,9 @@ a{color:var(--ac)}
   <button class="settings-item" id="s-boot" onclick="toggleBootAnim();refreshSettingsUI()"><span class="s-ico">🚀</span><span id="s-boot-label">Boot Animation: On</span></button>
   <div style="margin-bottom:8px"><label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:6px;padding-left:4px">VOICE PRESET</label><select class="hsel" id="s-voice" onchange="setAgentVoice(activeAgent,this.value);render()" style="width:100%;padding:10px 12px;font-size:12px;border-radius:10px"></select></div>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
-  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';showProfileModal()"><span class="s-ico">👤</span>Change Profile<span class="s-hint">→</span></button>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';showApiKeyModal()"><span class="s-ico">🔑</span>API Key<span class="s-hint">→</span></button>
-  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex'"><span class="s-ico">🔒</span>Change PIN<span class="s-hint">→</span></button>
+  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex';document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';document.getElementById('chpass-msg').textContent=''"><span class="s-ico">🔒</span>Change Password<span class="s-hint">→</span></button>
+  <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';fbLogout()"><span class="s-ico">🔄</span>Switch / Sign Out<span class="s-hint">→</span></button>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
   <div style="color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:10px;padding-left:4px">KEYBOARD SHORTCUTS</div>
   <div class="shortcut-row"><span class="shortcut-desc">Toggle speech</span><span class="shortcut-key">K</span></div>
@@ -291,7 +328,8 @@ a{color:var(--ac)}
 
 <div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'"><div class="md" style="max-width:460px" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">Changelog</h2><button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
-<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Settings popup: speech, voice, profile, API, PIN<br>• Arrow keys: ↑↓ agents, ←→ views/weeks/months<br>• H shortcut to open/close sidebar<br>• Dynamic message bar adapts to sidebar</div></div>
+<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.9</div><div style="color:var(--dim)">• Firebase cloud sync — data across all devices<br>• Email/password login via Firebase Auth<br>• Real-time Firestore sync<br>• Sign out from Settings</div></div>
+<div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Settings popup: speech, voice, profile, API, PIN<br>• Arrow keys: ↑↓ agents, ←→ views/weeks/months<br>• H shortcut to open/close sidebar<br>• Dynamic message bar adapts to sidebar<br>• Boot animation, global orb, translucent panels</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar no longer blocks sidebar buttons<br>• All agents access calendar notes in AI context<br>• Clickable version badge with changelog</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on profile login<br>• Speech on/off toggle (K shortcut)<br>• Swipe between chat and calendar<br>• Cooldown timer between messages</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#a855f7;letter-spacing:.08em;margin-bottom:4px">v1.4</div><div style="color:var(--dim)">• 3D canvas orb with organic bulging rings<br>• Translucent chat with backdrop blur<br>• Orbiting particles and energy arcs<br>• 320px orb behind messages</div></div>
@@ -300,18 +338,72 @@ a{color:var(--ac)}
 <div style="padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#f59e0b;letter-spacing:.08em;margin-bottom:4px">v1.0 IRON</div><div style="color:var(--dim)">• Initial release — 5 agents, voice I/O, TTS<br>• Custom agents, knowledge base, Google Gemini<br>• Internet access, multilingual, PWA install</div></div>
 </div></div></div>
 
-<script>
+<script type="module">
+// ── FIREBASE CONFIG ──
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,updatePassword,EmailAuthProvider,reauthenticateWithCredential,sendPasswordResetEmail}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import{getFirestore,doc,setDoc,getDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const firebaseConfig={apiKey:"AIzaSyCwUop5XlyY7RHc3k94CrJ2ggo4jjP-4_w",authDomain:"jarvis-3c690.firebaseapp.com",projectId:"jarvis-3c690",storageBucket:"jarvis-3c690.firebasestorage.app",messagingSenderId:"599274910238",appId:"1:599274910238:web:69bdc4cc4eed1201b3f40f"};
+const fbApp=initializeApp(firebaseConfig);
+const auth=getAuth(fbApp);
+const db=getFirestore(fbApp);
+let fbUser=null,fbUnsub=null;
+
 const DEFAULT_AGENTS=[{id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#00d4ff",description:"Core intelligence — all-purpose AI with internet access.",systemPrompt:"You are J.A.R.V.I.S., a hyper-intelligent AI assistant modelled after the AI from Iron Man. You can do EVERYTHING: answer questions, write code, solve maths, write essays, explain science, give advice, plan, debug, translate. You have internet access via Google Search for real-time info. Be concise and precise. Speak like a refined British AI butler. Address the user as 'Sir'.",locked:true},{id:"football-analyst",name:"Pitch Intel",icon:"⚽",color:"#00ff88",description:"Football analysis — tactics, stats, live scores.",systemPrompt:"You are Pitch Intel inside J.A.R.V.I.S. Fully capable AI, specialty is football — tactics, stats, predictions, live scores. Internet access for real-time data. Help with anything asked."},{id:"football-news",name:"Transfer Wire",icon:"📰",color:"#ff6b35",description:"Football news — transfers, results, breaking stories.",systemPrompt:"You are Transfer Wire inside J.A.R.V.I.S. Fully capable AI, specialty is football news — transfers, results, injuries, breaking news. Internet access for latest info. Help with anything asked."},{id:"study-assistant",name:"Scholar",icon:"📚",color:"#a855f7",description:"Study assistant — homework, revision, research.",systemPrompt:"You are Scholar inside J.A.R.V.I.S. Fully capable AI, specialty is education — notes, revision, homework, exams, research. Internet access. Be encouraging. Help with anything asked."},{id:"school-manager",name:"Campus",icon:"🏫",color:"#f59e0b",description:"School organiser — timetable, assignments, deadlines.",systemPrompt:"You are Campus inside J.A.R.V.I.S. Fully capable AI, specialty is school organisation — timetables, assignments, deadlines. Internet access. Be proactive. Help with anything asked."}];
 const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];const MODELS=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite'];const UNIVERSAL_CODE='6070';
-let profiles=JSON.parse(localStorage.getItem('jv_profiles'))||[];let currentProfile=localStorage.getItem('jv_current_profile')||'';
-function pfx(){return currentProfile?`jv_${currentProfile}_`:'jv_'}
-function getGlobalApiKey(){return localStorage.getItem('jv_api_key_global')||''}function saveGlobalApiKey(k){localStorage.setItem('jv_api_key_global',k||'')}
-let agents=[...DEFAULT_AGENTS],conversations={},apiKey='';let currentView='chat',loading=false,sidebarOpen=true;let caIcon="🤖",caColor="#00d4ff";let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;let agentVoices={},activeAgent='jarvis-core';let agentKnowledge={},agentTempKnowledge={},jarvisImports={};let startupCommands=[],speechFeedback=true,bootAnimEnabled=true;let cooldownEnd=0,cooldownInterval=null;let startupRunLock=false,startupRunTimer=null,appOpenStartupTriggered=false;let calendarMonth=0,calendarWeekOffset=0,calendarNotes={};let touchStartX=0,touchStartY=0;let failedAttempts={},lockoutUntil={},pendingProfileId='';
-function loadProfileData(){const p=pfx();agents=JSON.parse(localStorage.getItem(p+'agents'))||[...DEFAULT_AGENTS];if(!agents||!agents.length)agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations=JSON.parse(localStorage.getItem(p+'convos'))||{};agentKnowledge=JSON.parse(localStorage.getItem(p+'agentknow'))||{};agentTempKnowledge=JSON.parse(localStorage.getItem(p+'agenttempknow'))||{};jarvisImports=JSON.parse(localStorage.getItem(p+'jimports'))||{};apiKey=localStorage.getItem(p+'api_key')||getGlobalApiKey()||'';agentVoices=JSON.parse(localStorage.getItem(p+'voices'))||{};startupCommands=JSON.parse(localStorage.getItem(p+'startup_commands'))||[];speechFeedback=JSON.parse(localStorage.getItem(p+'speech_feedback') ?? 'true');bootAnimEnabled=JSON.parse(localStorage.getItem(p+'boot_anim') ?? 'true');calendarNotes=JSON.parse(localStorage.getItem(p+'calendar_notes_2026'))||{};calendarMonth=Number(localStorage.getItem(p+'calendar_month_2026')||0);calendarWeekOffset=Number(localStorage.getItem(p+'calendar_week_2026')||0);const oldK=JSON.parse(localStorage.getItem(p+'knowledge'));if(oldK&&oldK.length>0){agentKnowledge['jarvis-core']=(agentKnowledge['jarvis-core']||[]).concat(oldK);localStorage.removeItem(p+'knowledge')}const oldT=JSON.parse(localStorage.getItem(p+'tempknow'));if(oldT&&oldT.length>0){agentTempKnowledge['jarvis-core']=(agentTempKnowledge['jarvis-core']||[]).concat(oldT);localStorage.removeItem(p+'tempknow')}currentView='chat';loading=false;try{cleanExpiredTemp()}catch(e){}}
-function getKnowledge(a){return agentKnowledge[a||activeAgent]||[]}function getTempKnowledge(a){return agentTempKnowledge[a||activeAgent]||[]}function isImportedToJarvis(a,i){return !!(jarvisImports[a]&&jarvisImports[a][i])}
-if(currentProfile&&profiles.find(x=>x.id===currentProfile)){loadProfileData()}else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
-function save(){const p=pfx();localStorage.setItem(p+'agents',JSON.stringify(agents));localStorage.setItem(p+'convos',JSON.stringify(conversations));localStorage.setItem(p+'agentknow',JSON.stringify(agentKnowledge));localStorage.setItem(p+'agenttempknow',JSON.stringify(agentTempKnowledge));localStorage.setItem(p+'jimports',JSON.stringify(jarvisImports));localStorage.setItem(p+'startup_commands',JSON.stringify(startupCommands));localStorage.setItem(p+'speech_feedback',JSON.stringify(speechFeedback));localStorage.setItem(p+'calendar_notes_2026',JSON.stringify(calendarNotes));localStorage.setItem(p+'calendar_month_2026',String(calendarMonth));localStorage.setItem(p+'calendar_week_2026',String(calendarWeekOffset))}
-function saveApiKeyForProfile(){const p=pfx();localStorage.setItem(p+'api_key',apiKey);saveGlobalApiKey(apiKey)}
+let currentProfile='',apiKey='';
+let agents=[...DEFAULT_AGENTS],conversations={};
+let currentView='chat',loading=false,sidebarOpen=true;
+let caIcon="🤖",caColor="#00d4ff";
+let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
+let agentVoices={},activeAgent='jarvis-core';
+let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
+let startupCommands=[],speechFeedback=true,bootAnimEnabled=true;
+let cooldownEnd=0,cooldownInterval=null;
+let startupRunLock=false,startupRunTimer=null,appOpenStartupTriggered=false;
+let calendarMonth=0,calendarWeekOffset=0,calendarNotes={};
+let touchStartX=0,touchStartY=0;
+
+// ── FIRESTORE SAVE / LOAD ──
+function getDataPayload(){
+  return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset};
+}
+async function save(){
+  if(!fbUser)return;
+  try{await setDoc(doc(db,'users',fbUser.uid,'data','main'),getDataPayload())}
+  catch(e){console.warn('Firestore save failed:',e)}
+}
+function applyData(d){
+  if(!d)return;
+  agents=d.agents||[...DEFAULT_AGENTS];
+  if(!agents.length)agents=[...DEFAULT_AGENTS];
+  conversations=d.conversations||{};
+  agentKnowledge=d.agentKnowledge||{};
+  agentTempKnowledge=d.agentTempKnowledge||{};
+  jarvisImports=d.jarvisImports||{};
+  apiKey=d.apiKey||'';
+  agentVoices=d.agentVoices||{};
+  startupCommands=d.startupCommands||[];
+  speechFeedback=d.speechFeedback!==undefined?d.speechFeedback:true;
+  bootAnimEnabled=d.bootAnimEnabled!==undefined?d.bootAnimEnabled:true;
+  calendarNotes=d.calendarNotes||{};
+  calendarMonth=d.calendarMonth||0;
+  calendarWeekOffset=d.calendarWeekOffset||0;
+  activeAgent=agents[0]?.id||'jarvis-core';
+  currentView='chat';loading=false;
+  try{cleanExpiredTemp()}catch(e){}
+}
+function subscribeToData(){
+  if(fbUnsub)fbUnsub();
+  if(!fbUser)return;
+  fbUnsub=onSnapshot(doc(db,'users',fbUser.uid,'data','main'),snap=>{
+    if(snap.exists()){applyData(snap.data());render()}
+  });
+}
+function saveApiKeyForProfile(){save()}
+function getKnowledge(a){return agentKnowledge[a||activeAgent]||[]}
+function getTempKnowledge(a){return agentTempKnowledge[a||activeAgent]||[]}
+function isImportedToJarvis(a,i){return !!(jarvisImports[a]&&jarvisImports[a][i])}
 const VOICE_PRESETS=[{id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},{id:'arjun',label:'Arjun',gender:'male',pitch:0.6,rate:0.9,keywords:['Male','David','Daniel','James','Google UK English Male','Alex','Fred']},{id:'nova',label:'Nova',gender:'female',pitch:1.1,rate:1.0,keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen']},{id:'titan',label:'Titan',gender:'male',pitch:0.85,rate:0.95,keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas']}];
 function getAgentVoice(id){return agentVoices[id]||(id==='jarvis-core'?'arjun':'friday')}function setAgentVoice(id,v){agentVoices[id]=v;localStorage.setItem(pfx()+'voices',JSON.stringify(agentVoices))}function getAgent(){return agents.find(a=>a.id===activeAgent)||agents[0]||DEFAULT_AGENTS[0]}function getMessages(){return conversations[activeAgent]||[]}function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}function escJs(s){return s.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$')}
 function getCooldownRemaining(){return Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000))}function isCooldownActive(){return getCooldownRemaining()>0}
@@ -324,7 +416,7 @@ function normalizeStartupCommands(){startupCommands=(startupCommands||[]).map(cm
 function buildMemoryContext(agentId){const myK=getKnowledge(agentId),myT=getTempKnowledge(agentId),isJ=agentId==='jarvis-core';let k='';if(myK.length>0)k+=`\n\nPrimary Memory:\n${myK.map((x,i)=>`[${i+1}] ${x}`).join('\n')}`;if(myT.length>0)k+=`\n\nTemporary Memory (24h):\n${myT.map((x,i)=>`[T${i+1}] ${x.text}`).join('\n')}`;if(isJ){let n='';agents.filter(ag=>ag.id!=='jarvis-core').forEach(ag=>{const agK=getKnowledge(ag.id),agT=getTempKnowledge(ag.id);if(agK.length||agT.length){n+=`\n\nSub-agent: ${ag.name}`;if(agK.length)n+=`\nMemory:\n${agK.map((x,i)=>`[${ag.name}-${i+1}] ${x}${isImportedToJarvis(ag.id,i)?' [SHARED]':''}`).join('\n')}`;if(agT.length)n+=`\nTemp:\n${agT.map((x,i)=>`[${ag.name}-T${i+1}] ${x.text}`).join('\n')}`}});if(n)k+=`\n\nSub-agent Network:${n}`}const calEntries=Object.entries(calendarNotes).filter(([_,v])=>v&&v.trim()).sort(([a],[b])=>a.localeCompare(b));if(calEntries.length>0){const today=new Date().toISOString().slice(0,10);const up=calEntries.filter(([d])=>d>=today).slice(0,14);const past=calEntries.filter(([d])=>d<today).slice(-7);let c='\n\nCalendar (2026):';if(up.length)c+=`\nUpcoming:\n${up.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;if(past.length)c+=`\nRecent:\n${past.map(([d,v])=>`[${d}] ${v}`).join('\n')}`;k+=c}return k}
 const JARVIS_UI_KNOWLEDGE=`
 
-## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v1.8)
+## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v1.9)
 You are a Progressive Web App (PWA) built for the user's phone and desktop browser. You run entirely in the browser — no servers, all data stored locally on the device.
 
 ### AGENTS
@@ -518,18 +610,71 @@ async function runStartupCommands(){
 }function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands()},delay)}function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400)}
 function openCreateModal(){caIcon='🤖';caColor='#00d4ff';document.getElementById('ca-name').value='';document.getElementById('ca-desc').value='';document.getElementById('ca-prompt').value='';rMO();document.getElementById('create-modal').style.display='flex'}function closeCreateModal(){document.getElementById('create-modal').style.display='none'}function rMO(){document.getElementById('ca-icons').innerHTML=ICONS.map(ic=>`<button class="ib ${ic===caIcon?'on':''}" onclick="caIcon='${ic}';rMO()">${ic}</button>`).join('');document.getElementById('ca-colors').innerHTML=COLORS.map(c=>`<button class="cb ${c===caColor?'on':''}" style="background:${c}" onclick="caColor='${c}';rMO();uD()"></button>`).join('');uD()}function uD(){const b=document.getElementById('ca-deploy');b.style.background=`${caColor}15`;b.style.borderColor=`${caColor}44`;b.style.color=caColor}function deployAgent(){const n=document.getElementById('ca-name').value.trim();if(!n){alert('Enter a name.');return}const d=document.getElementById('ca-desc').value.trim()||'Custom agent';const p=document.getElementById('ca-prompt').value.trim()||`You are ${n} inside J.A.R.V.I.S. Fully capable AI with internet access. Be helpful.`;agents.push({id:'c-'+Date.now(),name:n,icon:caIcon,color:caColor,description:d,systemPrompt:p,locked:false});activeAgent=agents[agents.length-1].id;currentView='chat';closeCreateModal();save();render()}
 function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey||getGlobalApiKey()||'';document.getElementById('api-modal').style.display='flex'}function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return}apiKey=k;saveApiKeyForProfile();document.getElementById('api-modal').style.display='none';render();playBootAnimation(()=>scheduleStartupCommands(200))}
-function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}return 'h_'+Math.abs(h).toString(36)}
-function closeProfileModal(){if(currentProfile&&profiles.find(x=>x.id===currentProfile))document.getElementById('profile-modal').style.display='none'}
-function showProfileModal(){const list=document.getElementById('profile-list');const cb=document.getElementById('profile-close-btn');if(cb)cb.style.display=(currentProfile&&profiles.find(x=>x.id===currentProfile))?'grid':'none';list.innerHTML=profiles.length===0?'<p style="color:var(--dim);font-size:11px;width:100%">No profiles yet. Create one below.</p>':profiles.map(p=>{const locked=lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id];return `<div onclick="${locked?'':`promptPassword('${p.id}')`}" style="cursor:${locked?'not-allowed':'pointer'};display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 18px;border-radius:12px;border:1px solid ${p.id===currentProfile?'var(--ac)44':'var(--border)'};background:${p.id===currentProfile?'var(--ac)08':'var(--input)'};min-width:80px;transition:all .2s;position:relative;${locked?'opacity:.5':''}"><div style="width:44px;height:44px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:20px;border:2px solid ${p.id===currentProfile?'var(--ac)':'var(--border)'}">${locked?'🔒':p.avatar||'👤'}</div><span style="font-size:12px;font-weight:700;color:${p.id===currentProfile?'var(--ac)':'var(--text)'}">${esc(p.name)}</span>${locked?`<span style="font-size:8px;color:#ff5050">Locked</span>`:p.id===currentProfile?'<span style="font-size:8px;color:var(--ac);letter-spacing:.1em">ACTIVE</span>':'<span style="font-size:8px;color:var(--dim)">🔒</span>'}<button onclick="event.stopPropagation();deleteProfileSecure('${p.id}')" style="position:absolute;top:4px;right:4px;width:16px;height:16px;border-radius:4px;background:rgba(255,50,50,.1);border:1px solid rgba(255,50,50,.2);color:#ff5050;cursor:pointer;font-size:10px;display:grid;place-items:center">×</button></div>`}).join('');document.getElementById('profile-modal').style.display='flex'}
-function createProfile(){const name=document.getElementById('new-profile-name').value.trim();const pass=document.getElementById('new-profile-pass').value;if(!name){alert('Enter a name.');return}if(!pass||pass.length<3){alert('Password must be at least 3 characters.');return}const avatars=['👤','👦','👧','🧑','👨','👩','🦸','🧙','🥷','🤓'];const colors=['#1e3a5f','#2d1b4e','#1b3d2f','#4a2020','#3d3520'];const id='p_'+Date.now();profiles.push({id,name,avatar:avatars[profiles.length%avatars.length],color:colors[profiles.length%colors.length],passHash:simpleHash(pass)});localStorage.setItem('jv_profiles',JSON.stringify(profiles));document.getElementById('new-profile-name').value='';document.getElementById('new-profile-pass').value='';switchProfile(id)}
-function promptPassword(id){if(id===currentProfile){document.getElementById('profile-modal').style.display='none';return}const p=profiles.find(x=>x.id===id);if(!p)return;pendingProfileId=id;document.getElementById('pass-profile-info').innerHTML=`<div style="width:50px;height:50px;border-radius:50%;background:${p.color||'#1a2035'};display:grid;place-items:center;font-size:24px;margin:0 auto 8px;border:2px solid var(--border)">${p.avatar||'👤'}</div><div style="font-weight:700;font-size:14px;color:var(--text)">${esc(p.name)}</div>`;document.getElementById('pass-input').value='';document.getElementById('pass-error').textContent='';document.getElementById('profile-modal').style.display='none';document.getElementById('pass-modal').style.display='flex';setTimeout(()=>document.getElementById('pass-input').focus(),100)}
-function checkPassword(){const pass=document.getElementById('pass-input').value;const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;if(pass===UNIVERSAL_CODE){failedAttempts[p.id]=0;delete lockoutUntil[p.id];document.getElementById('pass-modal').style.display='none';showResetModal();document.getElementById('reset-code').value=UNIVERSAL_CODE;return}if(lockoutUntil[p.id]&&Date.now()<lockoutUntil[p.id]){const s=Math.ceil((lockoutUntil[p.id]-Date.now())/1000);document.getElementById('pass-error').textContent=`Locked ${s}s. Use 6070.`;return}if(simpleHash(pass)===p.passHash){failedAttempts[p.id]=0;document.getElementById('pass-modal').style.display='none';switchProfile(p.id)}else{failedAttempts[p.id]=(failedAttempts[p.id]||0)+1;if(failedAttempts[p.id]>=3){lockoutUntil[p.id]=Date.now()+60000;document.getElementById('pass-error').textContent='Locked 60s. Enter 6070.';document.getElementById('pass-input').value='';setTimeout(()=>{delete lockoutUntil[p.id];failedAttempts[p.id]=0},60000)}else{document.getElementById('pass-error').textContent=`Wrong. ${3-failedAttempts[p.id]} left.`;document.getElementById('pass-input').value=''}}}
-function switchProfile(id){currentProfile=id;localStorage.setItem('jv_current_profile',id);loadProfileData();startupRunLock=false;appOpenStartupTriggered=true;document.getElementById('profile-modal').style.display='none';render();if(!apiKey)showApiKeyModal();else playBootAnimation(()=>scheduleStartupCommands(250))}
-function deleteProfileSecure(id){const p=profiles.find(x=>x.id===id);if(!p)return;const pass=prompt(`Delete "${p.name}"?\nEnter password OR code 6070:`);if(pass===null)return;if(simpleHash(pass)!==p.passHash&&pass!==UNIVERSAL_CODE){alert('Wrong.');return}if(!confirm(`DELETE "${p.name}" permanently?`))return;const px=`jv_${id}_`;['agents','convos','agentknow','agenttempknow','jimports','api_key','voices','startup_commands','speech_feedback','calendar_notes_2026','calendar_month_2026','calendar_week_2026'].forEach(k=>localStorage.removeItem(px+k));profiles=profiles.filter(x=>x.id!==id);localStorage.setItem('jv_profiles',JSON.stringify(profiles));if(currentProfile===id){currentProfile=profiles.length>0?profiles[0].id:'';localStorage.setItem('jv_current_profile',currentProfile);if(currentProfile)loadProfileData()}if(document.getElementById('profile-modal').style.display==='flex')showProfileModal();else render()}
-function changePassword(){const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');const p=profiles.find(x=>x.id===currentProfile);if(!p){m.textContent='No profile.';m.style.color='#ff5050';return}if(simpleHash(o)!==p.passHash){m.textContent='Wrong current password.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));m.textContent='Updated!';m.style.color='#00d4ff';document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';setTimeout(()=>{document.getElementById('chpass-modal').style.display='none'},1200)}
-function showResetModal(){const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;document.getElementById('pass-modal').style.display='none';document.getElementById('reset-profile-info').innerHTML=`<div style="font-weight:700;font-size:13px;color:var(--text)">${esc(p.name)}</div>`;document.getElementById('reset-code').value='';document.getElementById('reset-newpass').value='';document.getElementById('reset-msg').textContent='';document.getElementById('reset-modal').style.display='flex'}
-function resetPassword(){const code=document.getElementById('reset-code').value,n=document.getElementById('reset-newpass').value,m=document.getElementById('reset-msg');if(code!==UNIVERSAL_CODE){m.textContent='Invalid code.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}const p=profiles.find(x=>x.id===pendingProfileId);if(!p)return;p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));failedAttempts[p.id]=0;delete lockoutUntil[p.id];m.textContent='Reset! Logging in...';m.style.color='#00d4ff';setTimeout(()=>{document.getElementById('reset-modal').style.display='none';switchProfile(p.id)},1000)}
-function resetFromChangeScreen(){const code=document.getElementById('chpass-code').value,n=document.getElementById('chpass-reset-new').value,m=document.getElementById('chpass-reset-msg');if(code!==UNIVERSAL_CODE){m.textContent='Invalid code.';m.style.color='#ff5050';return}if(!n||n.length<3){m.textContent='Min 3 chars.';m.style.color='#ff5050';return}const p=profiles.find(x=>x.id===currentProfile);if(!p)return;p.passHash=simpleHash(n);localStorage.setItem('jv_profiles',JSON.stringify(profiles));m.textContent='Reset!';m.style.color='#00d4ff';document.getElementById('chpass-code').value='';document.getElementById('chpass-reset-new').value='';setTimeout(()=>{document.getElementById('chpass-modal').style.display='none';document.getElementById('chpass-reset').style.display='none';document.getElementById('chpass-normal').style.display='block'},1200)}
+// ── FIREBASE AUTH FUNCTIONS ──
+function showFbLogin(){document.getElementById('fb-login-form').style.display='block';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-error').textContent=''}
+function showFbRegister(){document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='block';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-reg-error').textContent=''}
+function showFbReset(){document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='block';document.getElementById('fb-reset-msg').textContent='';document.getElementById('fb-reset-msg').style.color='var(--dim)'}
+async function fbSendReset(){
+  const email=document.getElementById('fb-reset-email').value.trim();
+  const msg=document.getElementById('fb-reset-msg');
+  if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return}
+  msg.textContent='Sending...';msg.style.color='var(--dim)';
+  try{
+    await sendPasswordResetEmail(auth,email);
+    msg.textContent='Reset email sent! Check your inbox.';msg.style.color='#00d4ff';
+    setTimeout(()=>showFbLogin(),3000);
+  }catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050'}
+}
+function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email.','auth/wrong-password':'Wrong password.','auth/email-already-in-use':'Email already registered.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try again later.'};return m[code]||'Something went wrong. Try again.'}
+async function fbLogin(){
+  const email=document.getElementById('fb-email').value.trim();
+  const pass=document.getElementById('fb-pass').value;
+  const err=document.getElementById('fb-error');
+  if(!email||!pass){err.textContent='Enter email and password.';return}
+  err.textContent='Signing in...';
+  try{await signInWithEmailAndPassword(auth,email,pass)}
+  catch(e){err.textContent=fbErrMsg(e.code)}
+}
+async function fbRegister(){
+  const email=document.getElementById('fb-reg-email').value.trim();
+  const pass=document.getElementById('fb-reg-pass').value;
+  const err=document.getElementById('fb-reg-error');
+  if(!email||!pass){err.textContent='Enter email and password.';return}
+  err.textContent='Creating account...';
+  try{await createUserWithEmailAndPassword(auth,email,pass)}
+  catch(e){err.textContent=fbErrMsg(e.code)}
+}
+async function fbLogout(){
+  if(fbUnsub){fbUnsub();fbUnsub=null}
+  await signOut(auth);
+  fbUser=null;agents=[...DEFAULT_AGENTS];conversations={};agentKnowledge={};agentTempKnowledge={};jarvisImports={};apiKey='';startupCommands=[];speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
+  render();showProfileModal();
+}
+function closeProfileModal(){if(fbUser)document.getElementById('profile-modal').style.display='none'}
+function showProfileModal(){
+  showFbLogin();
+  document.getElementById('profile-close-btn').style.display=fbUser?'grid':'none';
+  document.getElementById('profile-modal').style.display='flex';
+}
+function getProfileName(){return fbUser?fbUser.email.split('@')[0]:'Guest'}
+
+// Change password via Firebase
+async function changePassword(){
+  const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');
+  if(!fbUser){m.textContent='Not logged in.';m.style.color='#ff5050';return}
+  if(!n||n.length<6){m.textContent='Min 6 chars.';m.style.color='#ff5050';return}
+  m.textContent='Updating...';m.style.color='var(--dim)';
+  try{
+    const cred=EmailAuthProvider.credential(fbUser.email,o);
+    await reauthenticateWithCredential(fbUser,cred);
+    await updatePassword(fbUser,n);
+    m.textContent='Password updated!';m.style.color='#00d4ff';
+    document.getElementById('chpass-old').value='';document.getElementById('chpass-new').value='';
+    setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);
+  }catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050'}
+}
+// Stub these out — no longer needed
+function simpleHash(s){return s}function createProfile(){}function promptPassword(){}function checkPassword(){}function showResetModal(){}
 function getProfileName(){if(!currentProfile)return'Guest';const p=profiles.find(x=>x.id===currentProfile);return p?p.name:'Guest'}
 
 // ── v1.8 NEW: Arrow key navigation ──
@@ -707,8 +852,34 @@ render();
 document.addEventListener('keydown',handleAppHotkeys);
 const mc=document.getElementById('main-content');if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true})}
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
-if(!currentProfile||!profiles.find(x=>x.id===currentProfile)){currentProfile='';localStorage.setItem('jv_current_profile','');agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;conversations={};startupCommands=[];speechFeedback=true;bootAnimEnabled=true;render();showProfileModal()}else if(!apiKey){showApiKeyModal()}else{playBootAnimation(()=>triggerAppOpenStartup())}
-window.addEventListener('pageshow',()=>{if(currentProfile&&apiKey)triggerAppOpenStartup()});
+// ── APP STARTUP — Firebase Auth State ──
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    fbUser=user;
+    currentProfile=user.uid;
+    // Load data from Firestore
+    const snap=await getDoc(doc(db,'users',user.uid,'data','main'));
+    if(snap.exists())applyData(snap.data());
+    else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
+    render();
+    document.getElementById('profile-modal').style.display='none';
+    appOpenStartupTriggered=false;
+    startupRunLock=false;
+    if(!apiKey)showApiKeyModal();
+    else playBootAnimation(()=>triggerAppOpenStartup());
+    // Subscribe to real-time updates
+    subscribeToData();
+  }else{
+    fbUser=null;currentProfile='';
+    agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;
+    conversations={};agentKnowledge={};agentTempKnowledge={};
+    jarvisImports={};apiKey='';startupCommands=[];
+    speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
+    if(fbUnsub){fbUnsub();fbUnsub=null}
+    render();showProfileModal();
+  }
+});
+window.addEventListener('pageshow',()=>{if(fbUser&&apiKey)triggerAppOpenStartup()});
 if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000)}
 </script>
 </body>
