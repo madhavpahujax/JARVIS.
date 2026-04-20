@@ -259,15 +259,15 @@ a{color:var(--ac)}
   <div id="fb-main-form">
     <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:var(--ac);letter-spacing:.15em;margin-bottom:6px">J.A.R.V.I.S.</div>
     <p style="color:var(--dim);font-size:11px;margin-bottom:28px">Your data syncs across all devices.</p>
-    <button onclick="showFbLogin()" style="width:100%;padding:14px;border-radius:10px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em;margin-bottom:12px">🔵 SIGN IN</button>
+    <button onclick="showFbLogin()" style="width:100%;padding:14px;border-radius:10px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em;margin-bottom:12px">🔵 LOG IN</button>
     <button onclick="showFbRegister()" style="width:100%;padding:14px;border-radius:10px;background:rgba(245,158,11,.1);border:2px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:800;font-size:14px;letter-spacing:.08em">🟡 CREATE ACCOUNT</button>
   </div>
   <div id="fb-login-form" style="display:none">
-    <h2 style="margin-bottom:18px">Sign In</h2>
+    <h2 style="margin-bottom:18px">Log In</h2>
     <label>EMAIL</label><input id="fb-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('fb-pass').focus()"/>
     <label>PASSWORD</label><input id="fb-pass" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')fbLogin()"/>
     <p id="fb-error" style="color:#ff5050;font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;margin-top:-8px;font-family:'IBM Plex Mono',monospace"></p>
-    <button onclick="fbLogin()" style="width:100%;padding:11px;border-radius:8px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Sign In</button>
+    <button onclick="fbLogin()" style="width:100%;padding:11px;border-radius:8px;background:rgba(0,212,255,.1);border:2px solid #00d4ff;color:#00d4ff;cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Log In</button>
     <div style="display:flex;gap:8px"><button onclick="showFbMain()" style="flex:1;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px;font-weight:700">← Back</button><button onclick="showFbReset()" style="flex:1;padding:9px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px">Forgot password?</button></div>
   </div>
   <div id="fb-register-form" style="display:none">
@@ -284,11 +284,11 @@ a{color:var(--ac)}
     <label>EMAIL</label><input id="fb-reset-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')fbSendReset()"/>
     <p id="fb-reset-msg" style="font-size:11px;min-height:16px;margin-bottom:10px;text-align:left;font-family:'IBM Plex Mono',monospace"></p>
     <button onclick="fbSendReset()" style="width:100%;padding:11px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:800;font-size:13px;margin-bottom:8px">Send Reset Email</button>
-    <button onclick="showFbLogin()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back to Sign In</button>
+    <button onclick="showFbLogin()" style="width:100%;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-weight:700;font-size:11px">← Back to Log In</button>
   </div>
 </div></div>
 
-<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left;margin-top:-8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
+<div class="ov" id="chpass-modal" style="display:none" onclick="document.getElementById('chpass-modal').style.display='none'"><div class="md" style="max-width:360px;text-align:center" onclick="event.stopPropagation()"><h2>🔑 Change Password</h2><p style="color:var(--dim);font-size:11px;margin-bottom:16px">Enter your current password and a new one.</p><input id="chpass-old" type="password" placeholder="Current password (or 6070)" onkeydown="if(event.key==='Enter')document.getElementById('chpass-new').focus()"/><input id="chpass-new" type="password" placeholder="New password (min 6 chars)" onkeydown="if(event.key==='Enter')changePassword()"/><p id="chpass-msg" style="font-size:10px;min-height:14px;margin-bottom:10px;text-align:left;margin-top:-8px"></p><div class="md-act"><button class="md-cancel" onclick="document.getElementById('chpass-modal').style.display='none'">Cancel</button><button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="changePassword()">Update</button></div></div></div>
 
 <!-- Settings Modal -->
 <div class="ov" id="settings-modal" style="display:none" onclick="document.getElementById('settings-modal').style.display='none'"><div class="md" style="max-width:420px" onclick="event.stopPropagation()">
@@ -304,6 +304,7 @@ a{color:var(--ac)}
   <div style="color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:10px;padding-left:4px">KEYBOARD SHORTCUTS</div>
   <div class="shortcut-row"><span class="shortcut-desc">Toggle speech</span><span class="shortcut-key">K</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Toggle sidebar</span><span class="shortcut-key">H</span></div>
+  <div class="shortcut-row"><span class="shortcut-desc">Open settings</span><span class="shortcut-key">S</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Cycle views</span><span class="shortcut-key">M</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Switch agent</span><span class="shortcut-key">↑ ↓</span></div>
   <div class="shortcut-row"><span class="shortcut-desc">Switch view / calendar nav</span><span class="shortcut-key">← →</span></div>
@@ -379,15 +380,37 @@ function showFbMain(){document.getElementById('fb-main-form').style.display='blo
 function showFbLogin(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='block';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-error').textContent='';setTimeout(()=>{const e=document.getElementById('fb-email');if(e)e.focus();},100);}
 function showFbRegister(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='block';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-reg-error').textContent='';setTimeout(()=>{const e=document.getElementById('fb-reg-email');if(e)e.focus();},100);}
 function showFbReset(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='block';document.getElementById('fb-reset-msg').textContent='';}
-function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email. Try creating one.','auth/wrong-password':'Incorrect password. Try again.','auth/invalid-credential':'Wrong email or password.','auth/email-already-in-use':'Email already registered. Sign in instead.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Wait a moment.','auth/network-request-failed':'No internet connection.'};return m[code]||`Error: ${code}`;}
-async function fbLogin(){const email=document.getElementById('fb-email').value.trim(),pass=document.getElementById('fb-pass').value,err=document.getElementById('fb-error');if(!email){err.textContent='Enter your email.';return;}if(!pass){err.textContent='Enter your password.';return;}err.textContent='Signing in...';err.style.color='var(--dim)';try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
+function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email. Try creating one.','auth/wrong-password':'Incorrect password. Try again.','auth/invalid-credential':'Wrong email or password.','auth/email-already-in-use':'Email already registered. Log in instead.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Wait a moment.','auth/network-request-failed':'No internet connection.'};return m[code]||`Error: ${code}`;}
+async function fbLogin(){const email=document.getElementById('fb-email').value.trim(),pass=document.getElementById('fb-pass').value,err=document.getElementById('fb-error');if(!email){err.textContent='Enter your email.';return;}if(!pass){err.textContent='Enter your password.';return;}err.textContent='Logging in...';err.style.color='var(--dim)';try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
 async function fbRegister(){const email=document.getElementById('fb-reg-email').value.trim(),pass=document.getElementById('fb-reg-pass').value,err=document.getElementById('fb-reg-error');if(!email){err.textContent='Enter an email.';return;}if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}err.textContent='Creating account...';err.style.color='var(--dim)';try{await auth.createUserWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
 async function fbLogout(){if(fbUnsub){fbUnsub();fbUnsub=null;}await auth.signOut();}
 async function fbSendReset(){const email=document.getElementById('fb-reset-email').value.trim(),msg=document.getElementById('fb-reset-msg');if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return;}msg.textContent='Sending...';msg.style.color='var(--dim)';try{await auth.sendPasswordResetEmail(email);msg.textContent='✓ Check your inbox!';msg.style.color='#00d4ff';setTimeout(()=>showFbLogin(),3000);}catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050';}}
 function showProfileModal(){showFbMain();document.getElementById('profile-modal').style.display='flex';}
 function closeProfileModal(){if(fbUser)document.getElementById('profile-modal').style.display='none';}
 function getProfileName(){return fbUser?fbUser.email.split('@')[0]:'—';}
-async function changePassword(){const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');if(!fbUser){m.textContent='Not logged in.';m.style.color='#ff5050';return;}if(!n||n.length<6){m.textContent='Min 6 chars.';m.style.color='#ff5050';return;}m.textContent='Updating...';m.style.color='var(--dim)';try{const cred=firebase.auth.EmailAuthProvider.credential(fbUser.email,o);await fbUser.reauthenticateWithCredential(cred);await fbUser.updatePassword(n);m.textContent='Updated!';m.style.color='#00d4ff';setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);}catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050';}}
+async function changePassword(){
+  const o=document.getElementById('chpass-old').value,n=document.getElementById('chpass-new').value,m=document.getElementById('chpass-msg');
+  if(!fbUser){m.textContent='Not logged in.';m.style.color='#ff5050';return;}
+  if(!n||n.length<6){m.textContent='Min 6 chars for new password.';m.style.color='#ff5050';return;}
+  m.textContent='Updating...';m.style.color='var(--dim)';
+  // Universal key path — send Firebase password reset email instead
+  if(o==='6070'){
+    try{
+      await auth.sendPasswordResetEmail(fbUser.email);
+      m.textContent=`Reset email sent to ${fbUser.email}! Check your inbox.`;m.style.color='#00d4ff';
+      setTimeout(()=>document.getElementById('chpass-modal').style.display='none',2500);
+    }catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050';}
+    return;
+  }
+  // Normal path — reauthenticate then update
+  try{
+    const cred=firebase.auth.EmailAuthProvider.credential(fbUser.email,o);
+    await fbUser.reauthenticateWithCredential(cred);
+    await fbUser.updatePassword(n);
+    m.textContent='Password updated!';m.style.color='#00d4ff';
+    setTimeout(()=>document.getElementById('chpass-modal').style.display='none',1200);
+  }catch(e){m.textContent=fbErrMsg(e.code);m.style.color='#ff5050';}
+}
 
 // ── HELPERS ──
 function getKnowledge(a){return agentKnowledge[a||activeAgent]||[];}
@@ -743,6 +766,7 @@ function handleAppHotkeys(e){
   const key=(e.key||'').toLowerCase();
   if(key==='k'){e.preventDefault();toggleSpeechFeedback();refreshSettingsUI();}
   else if(key==='h'){e.preventDefault();toggleSidebar();}
+  else if(key==='s'){e.preventDefault();openSettings();}
   else if(key==='m'){e.preventDefault();switchView(currentView==='chat'?'knowledge':currentView==='knowledge'?'calendar':'chat');}
   else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();const idx=agents.findIndex(ag=>ag.id===activeAgent);const next=e.key==='ArrowUp'?(idx-1+agents.length)%agents.length:(idx+1)%agents.length;setActiveAgent(agents[next].id);}
   else if(e.key==='ArrowLeft'){e.preventDefault();if(currentView==='calendar'){if(calendarWeekOffset>0)prevWeek();else prevCalendarMonth();}else{const v=['chat','knowledge','calendar'];const i=v.indexOf(currentView);if(i>0)switchView(v[i-1]);}}
@@ -786,8 +810,13 @@ function playBootAnimation(callback){
     if(progress>.3&&progress<.85){for(let i=0;i<4;i++){const arcAng=rot*.5+i*Math.PI*.5;ctx.beginPath();ctx.arc(cx,cy,185+progress*20,arcAng,arcAng+.6);ctx.lineWidth=3;ctx.strokeStyle=`rgba(${R},${G},${B},${.5*(1-progress)})`;ctx.stroke();}}
     if(elapsed<duration){af=requestAnimationFrame(drawBoot);}
     else{
-      setTimeout(()=>{
+      // Speak first, then callback, then fade
+      const afterSpeak=()=>{
         if(callback)callback();
+        screen.style.transition='opacity 2.5s ease';screen.style.opacity='0';
+        setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
+      };
+      setTimeout(()=>{
         if(speechFeedback){
           const doSpeak=(attempts=0)=>{
             const voices=speechSynthesis.getVoices();
@@ -798,12 +827,12 @@ function playBootAnimation(callback){
               const u=new SpeechSynthesisUtterance('Systems online, Sir.');
               u.lang='en-GB';u.rate=preset.rate;u.pitch=preset.pitch;
               const bv=findBestVoice(preset);if(bv)u.voice=bv;
+              u.onend=()=>setTimeout(afterSpeak,300);
+              u.onerror=()=>afterSpeak();
               speechSynthesis.speak(u);
             },50);
           };doSpeak();
-        }
-        screen.style.transition='opacity 2.5s ease';screen.style.opacity='0';
-        setTimeout(()=>{screen.classList.add('hidden');screen.style.transition='';screen.style.opacity='';},2600);
+        }else{afterSpeak();}
       },1000);
     }
   }
