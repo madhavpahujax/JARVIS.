@@ -904,44 +904,56 @@ function handleAppHotkeys(e){
   }
 }
 
-render();
-document.addEventListener('keydown',handleAppHotkeys);
-const mc=document.getElementById('main-content');if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true})}
-setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
-// ── APP STARTUP — Firebase Auth State ──
-auth.onAuthStateChanged(async user=>{
-  if(user){
-    fbUser=user;
-    currentProfile=user.uid;
-    // Hide login screen immediately
-    document.getElementById('profile-modal').style.display='none';
-    // Load data from Firestore
-    const snap=await db.collection('users').doc(user.uid).collection('data').doc('main').get();
-    if(snap.exists)applyData(snap.data());
-    else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
-    appOpenStartupTriggered=false;
-    startupRunLock=false;
-    render();
-    if(!apiKey)showApiKeyModal();
-    else playBootAnimation(()=>triggerAppOpenStartup());
-    // Subscribe to real-time updates (skip first snapshot since we just loaded)
-    let firstSnap=true;
-    fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
-      if(firstSnap){firstSnap=false;return}
-      if(snap.exists)applyData(snap.data());render();
-    });
-  }else{
-    fbUser=null;currentProfile='';
-    agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;
-    conversations={};agentKnowledge={};agentTempKnowledge={};
-    jarvisImports={};apiKey='';startupCommands=[];
-    speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
-    if(fbUnsub){fbUnsub();fbUnsub=null}
-    render();showProfileModal();
+
+document.addEventListener('DOMContentLoaded',()=>{
+  render();
+  document.addEventListener('keydown',handleAppHotkeys);
+  const mc=document.getElementById('main-content');
+  if(mc){
+    mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});
+    mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});
   }
+  setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
+
+  // Show login screen immediately while Firebase checks auth state
+  showProfileModal();
+
+  // ── FIREBASE AUTH STATE ──
+  auth.onAuthStateChanged(async user=>{
+    if(user){
+      fbUser=user;
+      currentProfile=user.uid;
+      document.getElementById('profile-modal').style.display='none';
+      try{
+        const snap=await db.collection('users').doc(user.uid).collection('data').doc('main').get();
+        if(snap.exists)applyData(snap.data());
+        else{agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id}
+      }catch(e){console.warn('Firestore load error:',e)}
+      appOpenStartupTriggered=false;
+      startupRunLock=false;
+      render();
+      if(!apiKey)showApiKeyModal();
+      else playBootAnimation(()=>triggerAppOpenStartup());
+      // Real-time sync — skip first snap (already loaded above)
+      let firstSnap=true;
+      fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
+        if(firstSnap){firstSnap=false;return}
+        if(snap.exists){applyData(snap.data());render()}
+      });
+    }else{
+      fbUser=null;currentProfile='';
+      agents=[...DEFAULT_AGENTS];activeAgent=agents[0].id;
+      conversations={};agentKnowledge={};agentTempKnowledge={};
+      jarvisImports={};apiKey='';startupCommands=[];
+      speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
+      if(fbUnsub){fbUnsub();fbUnsub=null}
+      render();showProfileModal();
+    }
+  });
+
+  window.addEventListener('pageshow',()=>{if(fbUser&&apiKey)triggerAppOpenStartup()});
+  if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000)}
 });
-window.addEventListener('pageshow',()=>{if(fbUser&&apiKey)triggerAppOpenStartup()});
-if('serviceWorker' in navigator){setTimeout(()=>navigator.serviceWorker.register('sw.js').catch(()=>{}),2000)}
 </script>
 </body>
 </html>
