@@ -401,8 +401,26 @@ function showFbLogin(){document.getElementById('fb-main-form').style.display='no
 function showFbRegister(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='block';document.getElementById('fb-reset-form').style.display='none';document.getElementById('fb-reg-error').textContent='';setTimeout(()=>{const e=document.getElementById('fb-reg-email');if(e)e.focus();},100);}
 function showFbReset(){document.getElementById('fb-main-form').style.display='none';document.getElementById('fb-login-form').style.display='none';document.getElementById('fb-register-form').style.display='none';document.getElementById('fb-reset-form').style.display='block';document.getElementById('fb-reset-msg').textContent='';}
 function fbErrMsg(code){const m={'auth/user-not-found':'No account with that email. Try creating one.','auth/wrong-password':'Incorrect password. Try again.','auth/invalid-credential':'Wrong email or password.','auth/email-already-in-use':'Email already registered. Log in instead.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Wait a moment.','auth/network-request-failed':'No internet connection.'};return m[code]||`Error: ${code}`;}
-async function fbLogin(){const email=document.getElementById('fb-email').value.trim(),pass=document.getElementById('fb-pass').value,err=document.getElementById('fb-error');if(!email){err.textContent='Enter your email.';return;}if(!pass){err.textContent='Enter your password.';return;}err.textContent='Logging in...';err.style.color='var(--dim)';try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
-async function fbRegister(){const email=document.getElementById('fb-reg-email').value.trim(),pass=document.getElementById('fb-reg-pass').value,err=document.getElementById('fb-reg-error');if(!email){err.textContent='Enter an email.';return;}if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}err.textContent='Creating account...';err.style.color='var(--dim)';try{await auth.createUserWithEmailAndPassword(email,pass);}catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}}
+async function fbLogin(){
+  // Prime speech engine NOW while we have the user gesture
+  try{const p=new SpeechSynthesisUtterance(' ');p.volume=0;speechSynthesis.speak(p);}catch(e){}
+  const email=document.getElementById('fb-email').value.trim(),pass=document.getElementById('fb-pass').value,err=document.getElementById('fb-error');
+  if(!email){err.textContent='Enter your email.';return;}
+  if(!pass){err.textContent='Enter your password.';return;}
+  err.textContent='Logging in...';err.style.color='var(--dim)';
+  try{await auth.signInWithEmailAndPassword(email,pass);}
+  catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}
+}
+async function fbRegister(){
+  // Prime speech engine NOW while we have the user gesture
+  try{const p=new SpeechSynthesisUtterance(' ');p.volume=0;speechSynthesis.speak(p);}catch(e){}
+  const email=document.getElementById('fb-reg-email').value.trim(),pass=document.getElementById('fb-reg-pass').value,err=document.getElementById('fb-reg-error');
+  if(!email){err.textContent='Enter an email.';return;}
+  if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}
+  err.textContent='Creating account...';err.style.color='var(--dim)';
+  try{await auth.createUserWithEmailAndPassword(email,pass);}
+  catch(e){err.textContent=fbErrMsg(e.code);err.style.color='#ff5050';}
+}
 async function fbLogout(){if(fbUnsub){fbUnsub();fbUnsub=null;}await auth.signOut();}
 async function fbSendReset(){const email=document.getElementById('fb-reset-email').value.trim(),msg=document.getElementById('fb-reset-msg');if(!email){msg.textContent='Enter your email.';msg.style.color='#ff5050';return;}msg.textContent='Sending...';msg.style.color='var(--dim)';try{await auth.sendPasswordResetEmail(email);msg.textContent='✓ Check your inbox!';msg.style.color='#00d4ff';setTimeout(()=>showFbLogin(),3000);}catch(e){msg.textContent=fbErrMsg(e.code);msg.style.color='#ff5050';}}
 function showProfileModal(){showFbMain();document.getElementById('profile-modal').style.display='flex';}
@@ -1020,6 +1038,15 @@ function playBootAnimation(callback){
 
 // ── EVENTS & STARTUP ──
 document.addEventListener('keydown',handleAppHotkeys);
+// Prime speech on very first interaction (handles returning users auto-logged in by Firebase)
+let speechPrimed=false;
+function primeSpeech(){
+  if(speechPrimed)return;
+  speechPrimed=true;
+  try{const p=new SpeechSynthesisUtterance(' ');p.volume=0;speechSynthesis.speak(p);}catch(e){}
+}
+document.addEventListener('click',primeSpeech,{once:false});
+document.addEventListener('keydown',primeSpeech,{once:false});
 // Blur textarea when clicking outside it so shortcuts work
 document.addEventListener('click',e=>{
   const ta=document.getElementById('msg-input');
