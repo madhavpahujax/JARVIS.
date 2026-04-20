@@ -915,9 +915,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render()},60000);
 
-  // Show login screen immediately while Firebase checks auth state
-  showProfileModal();
-
   // ── FIREBASE AUTH STATE ──
   auth.onAuthStateChanged(async user=>{
     if(user){
@@ -934,7 +931,6 @@ document.addEventListener('DOMContentLoaded',()=>{
       render();
       if(!apiKey)showApiKeyModal();
       else playBootAnimation(()=>triggerAppOpenStartup());
-      // Real-time sync — skip first snap (already loaded above)
       let firstSnap=true;
       fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
         if(firstSnap){firstSnap=false;return}
@@ -947,7 +943,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       jarvisImports={};apiKey='';startupCommands=[];
       speechFeedback=true;bootAnimEnabled=true;calendarNotes={};
       if(fbUnsub){fbUnsub();fbUnsub=null}
-      render();showProfileModal();
+      render();
+      showProfileModal();
     }
   });
 
