@@ -934,31 +934,11 @@ function tapToContinue(){
 }
 
 // ── DIAGNOSTICS ──
-async function runDiagnostics(){
+function runDiagnostics(){
   const faults=[];
-  // 1. Gemini AI Core — live ping with reliable model
-  if(!apiKey){
+  // 1. Gemini AI Core — check key exists and has valid format
+  if(!apiKey||apiKey.length<20||!apiKey.startsWith('AIza')){
     faults.push('Gemini AI Core');
-  }else{
-    try{
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:1}})
-      });
-      const d=await r.json();
-      // Only flag as broken if it's an auth/key error, not quota or other issues
-      if(d.error){
-        const code=d.error.code||0;
-        const msg=(d.error.message||'').toLowerCase();
-        // 400=bad key, 403=unauthorized — these mean the key is wrong
-        // 429=quota, 503=overloaded — key is fine, service is busy
-        if(code===400||code===403||msg.includes('api key')||msg.includes('invalid')||msg.includes('not valid')){
-          faults.push('Gemini AI Core');
-        }
-      }
-    }catch(e){
-      // Network error — don't flag the key as bad
-    }
   }
   // 2. Cloud Sync
   if(!fbUser||!db)faults.push('Cloud Sync');
@@ -990,7 +970,7 @@ function playBootAnimation(callback){
         let attempts=0;
         while(!voices.length&&attempts<20){await new Promise(r=>setTimeout(r,150));voices=speechSynthesis.getVoices();attempts++;}
         speechSynthesis.cancel();
-        const faults=await runDiagnostics();
+        const faults=runDiagnostics();
         const msg=faults.length===0?'All systems online, Sir.':faults.length===1?`Systems online, Sir, except ${faults[0]}.`:`Systems online, Sir, except ${faults.slice(0,-1).join(', ')}, and ${faults[faults.length-1]}.`;
         const preset=VOICE_PRESETS.find(p=>p.id===getAgentVoice('jarvis-core'))||VOICE_PRESETS[0];
         const u=new SpeechSynthesisUtterance(msg);
@@ -1053,7 +1033,7 @@ function playBootAnimation(callback){
           }
           speechSynthesis.cancel();
           // Run live diagnostics
-          const faults=await runDiagnostics();
+          const faults=runDiagnostics();
           let msg;
           if(faults.length===0){
             msg='All systems online, Sir.';
