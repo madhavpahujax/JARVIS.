@@ -651,10 +651,10 @@ function renderCalendar(){
   c.innerHTML=h;
 }
 function updateCalendarNote(k,v){calendarNotes[k]=v;save();}
-function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;save();render();}}
-function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;save();render();}}
-function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);save();render();}
-function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);save();render();}
+function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;render();save();}}
+function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;render();save();}}
+function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);render();}
+function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);render();}
 function refreshCalendar(){renderCalendar();}
 
 // ── SPEECH ──
@@ -1099,7 +1099,14 @@ auth.onAuthStateChanged(async user=>{
     let firstSnap=true;
     fbUnsub=db.collection('users').doc(user.uid).collection('data').doc('main').onSnapshot(snap=>{
       if(firstSnap){firstSnap=false;return;}
-      if(snap.exists){applyData(snap.data());render();}
+      if(snap.exists){
+        const d=snap.data();
+        // Preserve calendar navigation state — don't reset position from cloud
+        const savedMonth=calendarMonth,savedWeek=calendarWeekOffset;
+        applyData(d);
+        calendarMonth=savedMonth;calendarWeekOffset=savedWeek;
+        render();
+      }
     });
   }else{
     fbUser=null;
