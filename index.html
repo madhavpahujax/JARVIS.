@@ -251,7 +251,7 @@ a{color:var(--ac)}
       </div>
       <div id="calendar-view" class="panel hidden-right">
         <div class="calendar-shell">
-          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">Prev Month</button><button class="cal-btn" onclick="nextCalendarMonth()">Next Month</button><button class="cal-btn" onclick="prevWeek()">Prev Week</button><button class="cal-btn" onclick="nextWeek()">Next Week</button></div></div>
+          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()" ontouchend="event.stopPropagation()">Prev Month</button><button class="cal-btn" onclick="nextCalendarMonth()" ontouchend="event.stopPropagation()">Next Month</button><button class="cal-btn" onclick="prevWeek()" ontouchend="event.stopPropagation()">Prev Week</button><button class="cal-btn" onclick="nextWeek()" ontouchend="event.stopPropagation()">Next Week</button></div></div>
           <div class="cal-days" id="calendar-days"></div>
           <div class="swipe-hint">Swipe ← → to switch views · PgUp / PgDn to navigate weeks</div>
         </div>
@@ -329,13 +329,13 @@ a{color:var(--ac)}
     <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:8px;padding-left:4px">APPEARANCE</label>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
       <span style="font-size:13px;color:var(--text);flex:1">Orb Color</span>
-      <input type="color" id="s-orb-color" value="#00d4ff" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="orbColor=this.value;applyTheme();save();startOrbAnim()"/>
-      <button onclick="orbColor='';applyTheme();save();startOrbAnim();refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
+      <input type="color" id="s-orb-color" value="#00d4ff" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="setOrbColor(this.value)"/>
+      <button onclick="setOrbColor('');refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <span style="font-size:13px;color:var(--text);flex:1">Background Color</span>
-      <input type="color" id="s-bg-color" value="#05080f" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="bgColor=this.value;applyTheme();save()"/>
-      <button onclick="bgColor='#05080f';applyTheme();save();refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
+      <input type="color" id="s-bg-color" value="#05080f" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="setBgColor(this.value)"/>
+      <button onclick="setBgColor('#05080f');refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
     </div>
   </div>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
@@ -898,10 +898,28 @@ function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey
 function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;save();document.getElementById('api-modal').style.display='none';render();showTapScreen(()=>scheduleStartupCommands(200));}
 
 // ── SETTINGS ──
+let colorSaveTimer=null;
+function setOrbColor(v){
+  orbColor=v;
+  // Apply directly to canvas — no render() to avoid flashing
+  applyTheme();
+  if(colorSaveTimer)clearTimeout(colorSaveTimer);
+  colorSaveTimer=setTimeout(()=>save(),800);
+}
+function setBgColor(v){
+  bgColor=v;
+  applyTheme();
+  if(colorSaveTimer)clearTimeout(colorSaveTimer);
+  colorSaveTimer=setTimeout(()=>save(),800);
+}
 function applyTheme(){
   document.body.style.background=bgColor||'#05080f';
-  document.getElementById('global-orb').style.opacity=orbColor?'1':'1';
-  // orbColor is applied in renderOrb via getOrbColor()
+  // Update orb core/outer without full render
+  const core=document.getElementById('orb-core');
+  const outer=document.getElementById('orb-outer');
+  const oc=getOrbColor();
+  if(outer)outer.style.background=`radial-gradient(circle at 40% 35%,${oc}18,transparent 65%)`;
+  if(core)core.style.background=`radial-gradient(circle at 38% 38%,${oc}ee,${oc}88 35%,${oc}33 65%,transparent)`;
 }
 function getOrbColor(){return orbColor||getAgent().color;}
 
@@ -920,7 +938,7 @@ function refreshSettingsUI(){
 
 // ── SWIPE & KEYBOARD ──
 function handlePanelSwipeStart(e){const t=e.touches?.[0];if(!t)return;touchStartX=t.clientX;touchStartY=t.clientY;}
-function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy))return;const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(dx<0&&i<views.length-1)switchView(views[i+1]);else if(dx>0&&i>0)switchView(views[i-1]);}
+function handlePanelSwipeEnd(e){const t=e.changedTouches?.[0];if(!t)return;const dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;if(Math.abs(dx)<80||Math.abs(dx)<Math.abs(dy)*1.5)return;const views=['chat','knowledge','calendar'];const i=views.indexOf(currentView);if(dx<0&&i<views.length-1)switchView(views[i+1]);else if(dx>0&&i>0)switchView(views[i-1]);}
 function handleAppHotkeys(e){
   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;
   const tag=(document.activeElement?.tagName||'').toLowerCase();
