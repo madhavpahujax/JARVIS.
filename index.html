@@ -180,6 +180,13 @@ a{color:var(--ac)}
 .shortcut-key{font-family:'Orbitron',sans-serif;font-size:10px;padding:3px 8px;background:var(--input);border:1px solid var(--border);border-radius:5px;color:var(--ac)}
 .shortcut-desc{font-size:12px;color:var(--dim)}
 /* Smart Save Card */
+/* Voice mode toggle */
+.voice-toggle{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.voice-toggle-label{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--dim)}
+.voice-toggle-track{width:40px;height:22px;border-radius:11px;background:var(--input);border:1px solid var(--border);position:relative;cursor:pointer;transition:background .2s,border-color .2s;flex-shrink:0}
+.voice-toggle-track.on{background:var(--ac)22;border-color:var(--ac)55}
+.voice-toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--dim);transition:transform .2s,background .2s}
+.voice-toggle-track.on .voice-toggle-thumb{transform:translateX(18px);background:var(--ac)}
 @media(max-width:768px){
   #composer-wrap{padding:0 8px 8px}  .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
@@ -226,6 +233,10 @@ a{color:var(--ac)}
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
         <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
+        <div class="voice-toggle" onclick="toggleContinuousVoice()" title="Continuous Voice Mode">
+          <span class="voice-toggle-label">🎤</span>
+          <div class="voice-toggle-track" id="voice-mode-track"><div class="voice-toggle-thumb"></div></div>
+        </div>
         <button class="cog-btn" id="settings-cog" onclick="openSettings()"><span class="cog-ico">⚙</span></button>
       </div>
     </div>
@@ -416,7 +427,8 @@ function applyData(d){
   bgColor=d.bgColor||'#05080f';
   applyTheme();
   activeAgent=agents[0]?.id||'jarvis-core';
-  currentView='chat';loading=false;
+  // Don't reset currentView — preserve user's current panel
+  loading=false;
   try{cleanExpiredTemp();}catch(e){}
 }
 
@@ -690,7 +702,7 @@ function speakAnim(text){
   u.rate=preset.rate;u.pitch=preset.pitch;
   const lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
   if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0];}else{const bv=findBestVoice(preset);if(bv)u.voice=bv;}
-  u.onend=()=>{isSpeaking=false;updateOrb();render();};u.onerror=()=>{isSpeaking=false;updateOrb();render();};
+  u.onend=()=>{isSpeaking=false;updateOrb();render();if(continuousVoiceMode&&!isRecording&&!loading)setTimeout(()=>{if(continuousVoiceMode&&!isRecording&&!loading)startRec();},500);};u.onerror=()=>{isSpeaking=false;updateOrb();render();};
   speechSynthesis.speak(u);
 }
 function speakAnimAsync(text,forAgentId){
@@ -717,7 +729,38 @@ function speakAnimAsync(text,forAgentId){
 speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
 
 // ── VOICE INPUT ──
-function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false;}recognition=new SR();try{recognition.lang='';}catch(e){recognition.lang='en-US';}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript;}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop();},1500);};recognition.onend=()=>{clearTimeout(silenceTimer);const t=document.getElementById('msg-input').value.trim();if(isRecording&&t){voiceMode=true;stopRec();sendMessage();}else{stopRec();}};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec();};return true;}
+let continuousVoiceMode=false;
+
+function toggleContinuousVoice(){
+  continuousVoiceMode=!continuousVoiceMode;
+  const track=document.getElementById('voice-mode-track');
+  if(track)track.className='voice-toggle-track'+(continuousVoiceMode?' on':'');
+  if(continuousVoiceMode){
+    // Start listening immediately
+    if(!isSpeaking&&!isRecording)startRec();
+  }else{
+    // Stop listening
+    if(isRecording&&recognition)recognition.stop();
+  }
+}
+
+function updateVoiceToggleUI(){
+  const track=document.getElementById('voice-mode-track');
+  if(track)track.className='voice-toggle-track'+(continuousVoiceMode?' on':'');
+}
+function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice needs Chrome or Edge.');return false;}recognition=new SR();try{recognition.lang='';}catch(e){recognition.lang='en-US';}recognition.continuous=false;recognition.interimResults=true;let ft='';recognition.onresult=e=>{let it='';ft='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)ft+=e.results[i][0].transcript+' ';else it+=e.results[i][0].transcript;}document.getElementById('msg-input').value=(ft+it).trim();clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{if(isRecording)recognition.stop();},1500);};recognition.onend=()=>{
+  clearTimeout(silenceTimer);
+  const t=document.getElementById('msg-input').value.trim();
+  if(isRecording&&t){
+    voiceMode=true;stopRec();sendMessage();
+  }else{
+    stopRec();
+    // In continuous mode, restart listening after a short pause
+    if(continuousVoiceMode&&!isSpeaking&&!loading){
+      setTimeout(()=>{if(continuousVoiceMode&&!isSpeaking&&!loading)startRec();},600);
+    }
+  }
+};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec();if(continuousVoiceMode){setTimeout(()=>{if(continuousVoiceMode&&!isRecording)startRec();},1000);}};return true;}
 function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return;}if(isRecording){recognition.stop();return;}startRec();}
 function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start();}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start();}catch(e2){}},200);}}
 function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb();}
@@ -859,7 +902,7 @@ async function runStartupCommand(command){
   const contents=conversations[agentId].slice(-12).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
   let reply='';try{reply=await generateReplyForAgent(agentId,contents);}catch(e){reply='Connection disrupted.';}
   conversations[agentId].push({role:'assistant',content:reply});
-  save();activeAgent=agentId;currentView='chat';render();
+  save();activeAgent=agentId;render();
   if(speechFeedback&&reply&&!reply.startsWith('Error:')){await new Promise(r=>setTimeout(r,400));await speakAnimAsync(reply,agentId);await new Promise(r=>setTimeout(r,300));}
   return true;
 }
