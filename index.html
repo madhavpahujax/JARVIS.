@@ -251,10 +251,9 @@ a{color:var(--ac)}
       </div>
       <div id="calendar-view" class="panel hidden-right">
         <div class="calendar-shell">
-          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">← Prev</button><button class="cal-btn" onclick="nextCalendarMonth()">Next →</button><button class="cal-btn primary" onclick="refreshCalendar()">Refresh</button></div></div>
+          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()">Prev Month</button><button class="cal-btn" onclick="nextCalendarMonth()">Next Month</button><button class="cal-btn" onclick="prevWeek()">Prev Week</button><button class="cal-btn" onclick="nextWeek()">Next Week</button></div></div>
           <div class="cal-days" id="calendar-days"></div>
-          <div style="display:flex;justify-content:space-between;gap:8px"><button class="cal-btn" onclick="prevWeek()">↑ Prev Week</button><button class="cal-btn" onclick="nextWeek()">↓ Next Week</button></div>
-          <div class="swipe-hint">Swipe ← → to switch views · PageUp / PageDown to navigate weeks</div>
+          <div class="swipe-hint">Swipe ← → to switch views · PgUp / PgDn to navigate weeks</div>
         </div>
       </div>
     </div>
@@ -326,6 +325,20 @@ a{color:var(--ac)}
   <button class="settings-item" id="s-boot" onclick="toggleBootAnim();refreshSettingsUI()"><span class="s-ico">🚀</span><span id="s-boot-label">Boot Animation: On</span></button>
   <div style="margin-bottom:8px"><label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:6px;padding-left:4px">VOICE PRESET</label><select class="hsel" id="s-voice" onchange="setAgentVoice(activeAgent,this.value);render()" style="width:100%;padding:10px 12px;font-size:12px;border-radius:10px"></select></div>
   <div style="height:1px;background:var(--border);margin:14px 0"></div>
+  <div style="margin-bottom:12px">
+    <label style="display:block;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:8px;padding-left:4px">APPEARANCE</label>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;color:var(--text);flex:1">Orb Color</span>
+      <input type="color" id="s-orb-color" value="#00d4ff" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="orbColor=this.value;applyTheme();save();startOrbAnim()"/>
+      <button onclick="orbColor='';applyTheme();save();startOrbAnim();refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span style="font-size:13px;color:var(--text);flex:1">Background Color</span>
+      <input type="color" id="s-bg-color" value="#05080f" style="width:44px;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;padding:2px" oninput="bgColor=this.value;applyTheme();save()"/>
+      <button onclick="bgColor='#05080f';applyTheme();save();refreshSettingsUI()" style="padding:5px 10px;border-radius:7px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:10px;font-weight:700">Reset</button>
+    </div>
+  </div>
+  <div style="height:1px;background:var(--border);margin:14px 0"></div>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';showApiKeyModal()"><span class="s-ico">🔑</span>API Key<span class="s-hint">→</span></button>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';document.getElementById('chpass-modal').style.display='flex'"><span class="s-ico">🔒</span>Change Password<span class="s-hint">→</span></button>
   <button class="settings-item" onclick="document.getElementById('settings-modal').style.display='none';fbLogout()"><span class="s-ico">🔄</span>Switch / Sign Out<span class="s-hint">→</span></button>
@@ -368,6 +381,7 @@ let agentKnowledge={},agentTempKnowledge={},jarvisImports={};
 let agentVoices={},activeAgent='jarvis-core';
 let startupCommands=[],speechFeedback=true,bootAnimEnabled=true;
 let calendarNotes={},calendarMonth=0,calendarWeekOffset=0;
+let orbColor='',bgColor='#05080f';
 let currentView='chat',loading=false,sidebarOpen=true;
 let caIcon="🤖",caColor="#00d4ff";
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
@@ -377,7 +391,7 @@ let touchStartX=0,touchStartY=0;
 let orbAF=null,orbT=0;
 
 // ── FIREBASE SAVE / LOAD ──
-function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset};}
+function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor};}
 async function save(){
   if(!fbUser)return;
   try{await db.collection('users').doc(fbUser.uid).collection('data').doc('main').set(getDataPayload());}
@@ -398,6 +412,9 @@ function applyData(d){
   calendarNotes=d.calendarNotes||{};
   calendarMonth=d.calendarMonth||0;
   calendarWeekOffset=d.calendarWeekOffset||0;
+  orbColor=d.orbColor||'';
+  bgColor=d.bgColor||'#05080f';
+  applyTheme();
   activeAgent=agents[0]?.id||'jarvis-core';
   currentView='chat';loading=false;
   try{cleanExpiredTemp();}catch(e){}
@@ -602,18 +619,18 @@ function render(){
   saEl.innerHTML=agents.map(ag=>`<option value="${ag.id}">${esc(ag.name)}</option>`).join('');
   if(!saEl.value||!agents.find(ag=>ag.id===saEl.value))saEl.value='jarvis-core';
   const sab=document.getElementById('startup-add-btn');sab.style.borderColor=`${a.color}44`;sab.style.color=a.color;
-  document.getElementById('startup-items').innerHTML=startupCommands.length===0?`<p style="color:var(--dim);font-size:11px">No login commands yet.</p>`:startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn" onclick="moveStartupCommand(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="kp-mini-btn" onclick="moveStartupCommand(${i},1)" ${i===startupCommands.length-1?'disabled':''}>↓</button><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
+  document.getElementById('startup-items').innerHTML=startupCommands.length===0?`<p style="color:var(--dim);font-size:11px">No login commands yet.</p>`:startupCommands.map((cmd,i)=>`<div class="kp-item" style="${cmd.enabled?'':'opacity:.55'}"><span class="kp-idx" style="color:${agents.find(ag=>ag.id===cmd.agentId)?.color||a.color}">${i+1}</span><div style="flex:1;min-width:0"><div class="kp-txt" style="color:var(--text)">${esc(cmd.text)}</div><div style="font-size:9px;color:var(--dim);margin-top:3px">${esc(getStartupAgentName(cmd.agentId))} | ${cmd.enabled?'ACTIVE':'PAUSED'}</div></div><button class="kp-mini-btn ${cmd.enabled?'on':''}" onclick="toggleStartupCommand(${i})">${cmd.enabled?'On':'Off'}</button><button class="kp-mini-btn" onclick="editStartupCommand(${i})">Edit</button><button class="kp-mini-btn" onclick="runOneStartupCommand(${i})">Run</button><button class="kp-del" onclick="deleteStartupCommand(${i})">×</button></div>`).join('');
   renderCalendar();
 }
 
 // ── ORB ──
-function renderOrb(c){return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${c}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${c}ee,${c}88 35%,${c}33 65%,transparent)"></div>`;}
+function renderOrb(c){const oc=getOrbColor();return `<canvas id="orb-canvas" width="380" height="380" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px"></canvas><div class="orb-outer" id="orb-outer" style="background:radial-gradient(circle at 40% 35%,${oc}18,transparent 65%)"></div><div class="orb-core" id="orb-core" style="background:radial-gradient(circle at 38% 38%,${oc}ee,${oc}88 35%,${oc}33 65%,transparent)"></div>`;}
 function startOrbAnim(){
   function draw(){
     const cv=document.getElementById('orb-canvas');if(!cv){orbAF=requestAnimationFrame(draw);return;}
     const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2;
     ctx.clearRect(0,0,W,H);
-    const a=getAgent(),c=a.color;
+    const a=getAgent(),c=getOrbColor();
     orbT+=isSpeaking?.12:.015;
     const R=parseInt(c.slice(1,3),16),G=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
     const ag=ctx.createRadialGradient(cx,cy,40,cx,cy,190);
@@ -881,6 +898,13 @@ function showApiKeyModal(){document.getElementById('api-key-input').value=apiKey
 function saveApiKey(){const k=document.getElementById('api-key-input').value.trim();if(!k){alert('Enter your API key.');return;}apiKey=k;save();document.getElementById('api-modal').style.display='none';render();showTapScreen(()=>scheduleStartupCommands(200));}
 
 // ── SETTINGS ──
+function applyTheme(){
+  document.body.style.background=bgColor||'#05080f';
+  document.getElementById('global-orb').style.opacity=orbColor?'1':'1';
+  // orbColor is applied in renderOrb via getOrbColor()
+}
+function getOrbColor(){return orbColor||getAgent().color;}
+
 function openSettings(){const cog=document.getElementById('settings-cog');cog.classList.remove('spin');void cog.offsetWidth;cog.classList.add('spin');refreshSettingsUI();document.getElementById('settings-modal').style.display='flex';setTimeout(()=>cog.classList.remove('spin'),600);}
 function refreshSettingsUI(){
   const btn=document.getElementById('s-speech'),lbl=document.getElementById('s-speech-label');
@@ -889,6 +913,9 @@ function refreshSettingsUI(){
   if(bLbl)bLbl.textContent='Boot Animation: '+(bootAnimEnabled?'On':'Off');if(bBtn)bBtn.className='settings-item'+(bootAnimEnabled?' active':'');
   const vSel=document.getElementById('s-voice');
   if(vSel){const cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');}
+  // Update color pickers
+  const oc=document.getElementById('s-orb-color');if(oc)oc.value=orbColor||getAgent().color;
+  const bc=document.getElementById('s-bg-color');if(bc)bc.value=bgColor||'#05080f';
 }
 
 // ── SWIPE & KEYBOARD ──
@@ -1081,7 +1108,7 @@ const mc=document.getElementById('main-content');
 if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc.addEventListener('touchend',handlePanelSwipeEnd,{passive:true});}
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render();},60000);
 
-render(); // initial render so UI is not blank
+render();applyTheme(); // initial render
 
 auth.onAuthStateChanged(async user=>{
   if(user){
