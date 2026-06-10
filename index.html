@@ -324,22 +324,21 @@ a{color:var(--ac)}
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
       <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v2.2</span>
       <div class="hdr-actions">
-        <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
-        <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Mem</button>
-        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Cal</button>
-        <button class="hbtn" id="tab-graphs" onclick="switchView('graphs')" style="color:#a855f7">📊</button>
-        <button class="hbtn" id="tab-notepad" onclick="switchView('notepad')" style="color:#f59e0b">📝</button>
-        <button class="hbtn" onclick="openWebClipModal()" title="Web Clip">🌐</button>
+        <button class="hbtn on" id="tab-chat" onclick="switchView('chat')" title="Chat">Chat</button>
+        <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')" title="Memory">Mem</button>
+        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')" title="Calendar">Cal</button>
+        <button class="hbtn" id="tab-graphs" onclick="switchView('graphs')" style="color:#a855f7" title="Insights & Graphs">📊</button>
+        <button class="hbtn" onclick="openWebClipModal()" title="Web Clip — fetch & summarise a URL">🌐</button>
         <button class="hbtn" onclick="document.getElementById('imagegen-modal').style.display='flex'" title="Image Generation" style="color:#a855f7">🎨</button>
-        <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">✕</button>
+        <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)" title="Clear current chat">✕</button>
         <span class="temp-badge" id="temp-badge">TEMP</span>
-        <button class="t-btn" id="t-btn" onclick="toggleTempMode()" title="Temporary chat">T</button>
+        <button class="t-btn" id="t-btn" onclick="toggleTempMode()" title="Temporary mode — chat won't be saved to history">T</button>
         <button class="streak-hbtn" id="streak-hbtn" onclick="openStreakHistory()" title="Login Streak">🔥</button>
-        <div class="voice-toggle" onclick="toggleContinuousVoice()" title="Continuous Voice Mode">
+        <div class="voice-toggle" onclick="toggleContinuousVoice()" title="Continuous Voice Mode — mic stays on after each reply">
           <span class="voice-toggle-label">🎤</span>
           <div class="voice-toggle-track" id="voice-mode-track"><div class="voice-toggle-thumb"></div></div>
         </div>
-        <button class="cog-btn" id="settings-cog" onclick="openSettings()"><span class="cog-ico">⚙</span></button>
+        <button class="cog-btn" id="settings-cog" onclick="openSettings()" title="Settings"><span class="cog-ico">⚙</span></button>
       </div>
     </div>
     <div id="main-content">
@@ -388,7 +387,8 @@ a{color:var(--ac)}
       </div>
       <!-- GRAPHS PANEL -->
       <div id="graphs-view" class="panel hidden-right">
-        <div style="padding:14px;height:100%;display:flex;flex-direction:column;gap:10px;overflow:auto">
+        <div style="padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%">
+          <!-- Graphs header -->
           <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:6px">
             <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#a855f7;letter-spacing:.1em;font-weight:700">📊 INSIGHTS</div>
             <div style="display:flex;gap:6px">
@@ -396,39 +396,39 @@ a{color:var(--ac)}
               <button onclick="openNewGraphModal()" style="padding:5px 12px;border-radius:8px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);color:#a855f7;cursor:pointer;font-size:10px;font-weight:700">+ Graph</button>
             </div>
           </div>
-          <div id="graphs-list" style="display:flex;flex-direction:column;gap:10px;flex:1"></div>
+          <!-- Graphs list -->
+          <div id="graphs-list" style="display:flex;flex-direction:column;gap:10px"></div>
+          <!-- Notepad section (inline, scrolls with graphs) -->
+          <div style="height:1px;background:var(--border);margin:6px 0;flex-shrink:0"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#f59e0b;letter-spacing:.1em;font-weight:700">📝 NOTES</div>
+            <button onclick="createNotepad()" style="padding:5px 12px;border-radius:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#f59e0b;cursor:pointer;font-size:10px;font-weight:700">+ New Note</button>
+          </div>
+          <!-- Note selector tabs -->
+          <div id="notepad-tabs" style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"></div>
+          <!-- Active note card (auto-resizes) -->
+          <div id="notepad-card" style="display:none;background:rgba(11,17,32,.75);border:1px solid rgba(245,158,11,.2);border-radius:12px;overflow:hidden;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(245,158,11,.12)">
+              <input id="notepad-title-input" placeholder="Note title..." style="flex:1;background:transparent;border:none;outline:none;color:#f59e0b;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:.05em;min-width:0" oninput="updateNotepadTitle(this.value)"/>
+              <button onclick="saveNotepadToMemory()" style="padding:3px 8px;border-radius:6px;background:var(--ac)10;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0" title="Save note to JARVIS memory">→ Memory</button>
+              <button onclick="deleteNotepad()" style="background:none;border:none;color:rgba(255,80,80,.4);cursor:pointer;font-size:15px;padding:0;flex-shrink:0" title="Delete note">🗑</button>
+            </div>
+            <textarea id="notepad-editor" placeholder="Start writing..." style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;padding:12px 14px;resize:none;min-height:80px;box-sizing:border-box;overflow:hidden" oninput="updateNotepadContent(this.value);autoResizeNotepad(this)" disabled></textarea>
+          </div>
+          <!-- Bottom padding -->
+          <div style="height:8px;flex-shrink:0"></div>
         </div>
       </div>
-      <!-- NOTEPAD PANEL -->
-      <div id="notepad-view" class="panel hidden-right" style="overflow:hidden">
-        <div style="display:flex;height:100%">
-          <div id="notepad-list-col" style="width:130px;min-width:130px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(11,17,32,.6)">
-            <div style="padding:8px 8px 6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-              <span style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--dim)">NOTES</span>
-              <button onclick="createNotepad()" style="width:20px;height:20px;border-radius:4px;background:var(--ac)18;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:16px;display:grid;place-items:center;line-height:1">+</button>
-            </div>
-            <div id="notepad-list" style="flex:1;overflow-y:auto;padding:4px"></div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;min-width:0">
-            <div id="notepad-toolbar" style="display:none;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;gap:8px">
-              <input id="notepad-title-input" placeholder="Title..." style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:.05em;min-width:0" oninput="updateNotepadTitle(this.value)"/>
-              <button onclick="saveNotepadToMemory()" style="padding:3px 8px;border-radius:6px;background:var(--ac)10;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">→ Memory</button>
-              <button onclick="deleteNotepad()" style="background:none;border:none;color:rgba(255,80,80,.4);cursor:pointer;font-size:15px;padding:0;flex-shrink:0">🗑</button>
-            </div>
-            <textarea id="notepad-editor" placeholder="Create a note to start writing..." style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;padding:14px 16px;resize:none" oninput="updateNotepadContent(this.value)" disabled></textarea>
-          </div>
-        </div>
-      </div>
-      <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7"><span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span><select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select></div>
-    <div class="inp-box" id="input-box">
-      <input type="file" id="media-input" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.csv,.json,.md" style="display:none" onchange="handleMediaAttach(this)"/>
-      <button class="mic" id="attach-btn" onclick="document.getElementById('media-input').click()" title="Attach file" style="font-size:14px">📎</button>
-      <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-      <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
-      <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
     </div>
-    <!-- Attachment preview -->
-    <div id="attach-preview" style="display:none;padding:6px 4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap"></div>
+    <div id="composer-wrap">
+      <div id="attach-preview" style="display:none;padding:4px 4px 6px;align-items:center;gap:8px;flex-wrap:wrap"></div>
+      <div class="inp-box" id="input-box">
+        <input type="file" id="media-input" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.csv,.json,.md" style="display:none" onchange="handleMediaAttach(this)"/>
+        <button class="mic" id="attach-btn" onclick="document.getElementById('media-input').click()" title="Attach file" style="font-size:14px">📎</button>
+        <textarea id="msg-input" rows="1" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+        <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
+        <button class="snd" id="send-btn" onclick="sendMessage()">Send</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1138,21 +1138,19 @@ function render(){
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
-  ['chat','knowledge','calendar','graphs','notepad'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'');});
-  ['chat','knowledge','calendar','graphs','notepad'].forEach(v=>{
+  ['chat','knowledge','calendar','graphs'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'');});
+  ['chat','knowledge','calendar','graphs'].forEach(v=>{
     const p=document.getElementById(v+'-view');if(!p)return;
     p.classList.remove('active','hidden-left','hidden-right');
     if(v===currentView)p.classList.add('active');
     else if(v==='chat')p.classList.add('hidden-left');
-    else if(v==='knowledge'&&['calendar','graphs','notepad'].includes(currentView))p.classList.add('hidden-left');
-    else if(v==='calendar'&&['graphs','notepad'].includes(currentView))p.classList.add('hidden-left');
-    else if(v==='graphs'&&currentView==='notepad')p.classList.add('hidden-left');
+    else if(v==='knowledge'&&['calendar','graphs'].includes(currentView))p.classList.add('hidden-left');
+    else if(v==='calendar'&&currentView==='graphs')p.classList.add('hidden-left');
     else p.classList.add('hidden-right');
   });
-  if(currentView==='graphs')renderGraphsPanel();
-  if(currentView==='notepad'){renderNotepadList();if(activeNotepadId)openNotepad(activeNotepadId);}
-  const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
-  vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
+  if(currentView==='graphs'){renderGraphsPanel();renderNotepadTabs();}
+  const vSel=document.getElementById('voice-select');
+  if(vSel){const cv=getAgentVoice(activeAgent);vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');}
   const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
   sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';
   syncCooldownState();updateCooldownUI();
@@ -1562,68 +1560,81 @@ function renderGraphCard(g,currentFolderId){
   </div>`;
 }
 
-// ── NOTEPAD ──
+// ── NOTEPAD (inline in graphs panel) ──
 let notepadSaveTimer=null;
+
+function autoResizeNotepad(ta){
+  ta.style.height='auto';
+  ta.style.height=(ta.scrollHeight)+'px';
+}
+
+function renderNotepadTabs(){
+  const tabs=document.getElementById('notepad-tabs');
+  const card=document.getElementById('notepad-card');
+  if(!tabs||!card)return;
+  if(!notepads.length){
+    tabs.innerHTML='<div style="font-size:10px;color:var(--dim);font-family:IBM Plex Mono,monospace">No notes yet. Tap + New Note to start.</div>';
+    card.style.display='none';return;
+  }
+  tabs.innerHTML=notepads.map(n=>`
+    <button onclick="openNotepad('${n.id}')" style="padding:5px 10px;border-radius:20px;cursor:pointer;font-size:10px;font-weight:700;border:1px solid ${n.id===activeNotepadId?'rgba(245,158,11,.5)':'var(--border)'};background:${n.id===activeNotepadId?'rgba(245,158,11,.12)':'transparent'};color:${n.id===activeNotepadId?'#f59e0b':'var(--dim)'};white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;transition:all .15s">${esc(n.title||'Untitled')}</button>
+  `).join('');
+  if(activeNotepadId){card.style.display='block';const n=notepads.find(x=>x.id===activeNotepadId);if(n)_loadNoteIntoCard(n);}
+  else{card.style.display='none';}
+}
+
+function _loadNoteIntoCard(note){
+  const ti=document.getElementById('notepad-title-input');
+  const ed=document.getElementById('notepad-editor');
+  if(ti)ti.value=note.title||'';
+  if(ed){ed.value=note.content||'';ed.disabled=false;setTimeout(()=>autoResizeNotepad(ed),10);}
+}
+
 function createNotepad(){
   const id='np_'+Date.now();
-  const note={id,title:'New Note',content:'',updatedAt:Date.now()};
-  notepads.unshift(note);
+  notepads.unshift({id,title:'New Note',content:'',updatedAt:Date.now()});
   activeNotepadId=id;
-  save();renderNotepadList();openNotepad(id);
+  save();renderNotepadTabs();
+  setTimeout(()=>{const ti=document.getElementById('notepad-title-input');if(ti){ti.focus();ti.select();}},100);
 }
+
 function deleteNotepad(){
   if(!activeNotepadId)return;
   if(!confirm('Delete this note?'))return;
   notepads=notepads.filter(n=>n.id!==activeNotepadId);
   activeNotepadId=notepads.length?notepads[0].id:null;
-  save();renderNotepadList();
-  if(activeNotepadId)openNotepad(activeNotepadId);
-  else{
-    const tb=document.getElementById('notepad-toolbar');
-    const ed=document.getElementById('notepad-editor');
-    if(tb)tb.style.display='none';
-    if(ed){ed.value='';ed.disabled=true;}
-  }
+  save();renderNotepadTabs();
 }
+
 function openNotepad(id){
   activeNotepadId=id;
-  const note=notepads.find(n=>n.id===id);if(!note)return;
-  const tb=document.getElementById('notepad-toolbar');
-  const ed=document.getElementById('notepad-editor');
-  const ti=document.getElementById('notepad-title-input');
-  if(tb)tb.style.display='flex';
-  if(ti)ti.value=note.title;
-  if(ed){ed.value=note.content;ed.disabled=false;ed.focus();}
-  renderNotepadList();
+  renderNotepadTabs();
 }
+
 function updateNotepadTitle(v){
   const note=notepads.find(n=>n.id===activeNotepadId);if(!note)return;
   note.title=v;note.updatedAt=Date.now();
   if(notepadSaveTimer)clearTimeout(notepadSaveTimer);
-  notepadSaveTimer=setTimeout(()=>{save();renderNotepadList();},800);
+  notepadSaveTimer=setTimeout(()=>{save();renderNotepadTabs();},800);
 }
+
 function updateNotepadContent(v){
   const note=notepads.find(n=>n.id===activeNotepadId);if(!note)return;
   note.content=v;note.updatedAt=Date.now();
   if(notepadSaveTimer)clearTimeout(notepadSaveTimer);
   notepadSaveTimer=setTimeout(()=>save(),800);
 }
+
 function saveNotepadToMemory(){
-  const note=notepads.find(n=>n.id===activeNotepadId);if(!note||!note.content.trim())return;
-  const text=`Note: ${note.title}\n${note.content}`.slice(0,300);
-  addKnowledge(text);
+  const note=notepads.find(n=>n.id===activeNotepadId);
+  if(!note||!note.content.trim())return;
+  addKnowledge(`Note — ${note.title}: ${note.content}`.slice(0,300));
   const ed=document.getElementById('notepad-editor');
-  if(ed){const old=ed.style.borderColor;ed.style.borderColor=getAgent().color;setTimeout(()=>ed.style.borderColor=old,1000);}
+  if(ed){const prev=ed.style.borderColor;ed.style.borderColor='var(--ac)';setTimeout(()=>ed.style.borderColor=prev,1000);}
 }
-function renderNotepadList(){
-  const list=document.getElementById('notepad-list');if(!list)return;
-  if(!notepads.length){list.innerHTML='<div style="padding:8px;font-size:10px;color:var(--dim);text-align:center">No notes yet</div>';return;}
-  list.innerHTML=notepads.map(n=>`
-    <div onclick="openNotepad('${n.id}')" style="padding:7px 8px;border-radius:7px;cursor:pointer;border:1px solid ${n.id===activeNotepadId?'var(--ac)33':'transparent'};background:${n.id===activeNotepadId?'var(--ac)08':'transparent'};margin-bottom:2px;transition:all .15s">
-      <div style="font-size:11px;font-weight:700;color:${n.id===activeNotepadId?'var(--ac)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n.title||'Untitled')}</div>
-      <div style="font-size:9px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n.content.slice(0,30))||'Empty'}</div>
-    </div>`).join('');
-}
+
+// Keep renderNotepadList as no-op for backward compat
+function renderNotepadList(){renderNotepadTabs();}
 let lastGenImageUrl='';
 let lastGenImagePrompt='';
 
@@ -2317,7 +2328,7 @@ function triggerAppOpenStartup(){
 
 // ── AGENT MANAGEMENT ──
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render();}
-function switchView(v){if(!['chat','knowledge','calendar','graphs','notepad'].includes(v))return;currentView=v;render();}
+function switchView(v){if(!['chat','knowledge','calendar','graphs'].includes(v))return;currentView=v;render();}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB();}
 function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed';}
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render();}
