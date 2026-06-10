@@ -69,13 +69,13 @@ a{color:var(--ac)}
 .sb-foot{padding:10px;border-top:1px solid var(--border)}
 .sb-btn{width:100%;padding:10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center;transition:all .2s}
 .sb-add{background:transparent;border:1px dashed var(--ac)30;color:var(--ac)}
-#hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(11,17,32,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:52px;position:relative;z-index:5}
+#hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);background:rgba(11,17,32,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:52px;position:relative;z-index:5;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#hdr::-webkit-scrollbar{display:none}
 .hdr-menu{background:none;border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;padding:5px 9px;font-size:15px;flex-shrink:0}
-.hdr-info{flex:1;min-width:0;overflow:hidden}
-.hdr-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-info{min-width:80px;max-width:140px;overflow:hidden;flex-shrink:0}
+.hdr-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hdr-desc{font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-actions{display:flex;gap:5px;align-items:center;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.hdr-actions::-webkit-scrollbar{display:none}
+.hdr-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}
 .hbtn{padding:5px 10px;border-radius:7px;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);white-space:nowrap;flex-shrink:0;transition:all .15s}
 .hbtn.on{border-color:var(--ac)44;color:var(--ac);background:var(--ac)0a}
 .hsel{padding:4px 6px;border-radius:7px;font-size:10px;font-weight:700;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;outline:none;flex-shrink:0}
@@ -210,6 +210,36 @@ a{color:var(--ac)}
 .temp-badge.show{display:inline-block}
 .t-btn{width:28px;height:28px;border-radius:50%;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:11px;font-weight:700;font-family:'Orbitron',sans-serif;display:grid;place-items:center;flex-shrink:0;transition:all .2s}
 .t-btn.on{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4);color:#f59e0b}
+/* Calendar grid view */
+.cal-grid-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.cal-grid-dow span{text-align:center;font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.08em;padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;transition:all .15s;position:relative;min-height:36px}
+.cal-cell.empty{pointer-events:none;opacity:0}
+.cal-cell.has-note{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35)}
+.cal-cell.has-note .cal-cell-num{color:#86efac;font-weight:700}
+.cal-cell:not(.empty):not(.has-note){background:rgba(14,22,40,.55);border-color:var(--border)}
+.cal-cell:hover:not(.empty){border-color:var(--ac)44;background:var(--ac)0a}
+.cal-cell.today{border-color:var(--ac)66!important;background:var(--ac)12!important}
+.cal-cell.today .cal-cell-num{color:var(--ac)!important}
+.cal-cell-num{font-size:13px;font-weight:600;color:var(--dim)}
+.cal-cell.has-note .cal-note-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;position:absolute;bottom:4px}
+/* Web clips */
+#webclip-modal .md{max-width:460px}
+.webclip-result{margin-top:14px;padding:12px;background:var(--input);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1.6;max-height:200px;overflow-y:auto}
+/* Quick commands panel */
+#qc-panel{position:fixed;bottom:0;left:0;right:0;z-index:800;background:rgba(5,8,15,.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:16px;transform:translateY(100%);transition:transform .3s ease;max-height:70vh;overflow-y:auto}
+#qc-panel.open{transform:translateY(0)}
+#qc-panel-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 16px}
+.qc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.qc-btn{padding:12px 10px;border-radius:10px;background:rgba(14,22,40,.8);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:12px;font-weight:600;text-align:left;transition:all .15s;display:flex;align-items:center;gap:8px}
+.qc-btn:active{transform:scale(.97)}
+.qc-btn .qc-icon{font-size:18px;flex-shrink:0}
+.qc-btn.custom{border-color:var(--ac)22;background:var(--ac)06}
+.qc-add-btn{width:100%;padding:11px;border-radius:10px;background:transparent;border:1px dashed var(--ac)33;color:var(--ac);cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.05em;margin-top:4px}
+/* Long press overlay */
+#longpress-indicator{position:fixed;pointer-events:none;z-index:900;border-radius:50%;width:60px;height:60px;margin:-30px;border:2px solid var(--ac);opacity:0;transform:scale(0);transition:transform .6s ease,opacity .6s ease}
+#longpress-indicator.active{opacity:.6;transform:scale(1)}
 @media(max-width:768px){
   #composer-wrap{padding:0 8px 8px}  .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
@@ -253,11 +283,12 @@ a{color:var(--ac)}
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v1.9</span>
+      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v2.1.5</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
         <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
+        <button class="hbtn" onclick="openWebClipModal()" title="Web Clip" style="flex-shrink:0">🌐</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
         <span class="temp-badge" id="temp-badge">TEMP</span>
         <button class="t-btn" id="t-btn" onclick="toggleTempMode()" title="Temporary chat">T</button>
@@ -290,9 +321,27 @@ a{color:var(--ac)}
       </div>
       <div id="calendar-view" class="panel hidden-right">
         <div class="calendar-shell">
-          <div class="cal-top"><div class="cal-title" id="cal-month-label">2026</div><div class="cal-actions"><button class="cal-btn" onclick="prevCalendarMonth()" ontouchend="event.stopPropagation()">Prev Month</button><button class="cal-btn" onclick="nextCalendarMonth()" ontouchend="event.stopPropagation()">Next Month</button><button class="cal-btn" onclick="prevWeek()" ontouchend="event.stopPropagation()">Prev Week</button><button class="cal-btn" onclick="nextWeek()" ontouchend="event.stopPropagation()">Next Week</button></div></div>
-          <div class="cal-days" id="calendar-days"></div>
-          <div class="swipe-hint">Swipe ← → to switch views · PgUp / PgDn to navigate weeks</div>
+          <div class="cal-top">
+            <div class="cal-title" id="cal-month-label">2026</div>
+            <div class="cal-actions">
+              <button class="cal-btn" id="cal-view-toggle" onclick="toggleCalendarView()" ontouchend="event.stopPropagation()">Week View</button>
+              <button class="cal-btn" onclick="prevCalendarMonth()" ontouchend="event.stopPropagation()">Prev Month</button>
+              <button class="cal-btn" onclick="nextCalendarMonth()" ontouchend="event.stopPropagation()">Next Month</button>
+              <button class="cal-btn" id="cal-prev-week-btn" onclick="prevWeek()" ontouchend="event.stopPropagation()" style="display:none">Prev Week</button>
+              <button class="cal-btn" id="cal-next-week-btn" onclick="nextWeek()" ontouchend="event.stopPropagation()" style="display:none">Next Week</button>
+            </div>
+          </div>
+          <!-- Month grid view (default) -->
+          <div id="cal-grid-view">
+            <div class="cal-grid-dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div class="swipe-hint">Tap a day to edit · Green = has note · Pinch/tap to zoom into week view</div>
+          </div>
+          <!-- Week detail view -->
+          <div id="cal-week-view" style="display:none">
+            <div class="cal-days" id="calendar-days"></div>
+            <div class="swipe-hint">Swipe ← → to switch views · PgUp / PgDn to navigate weeks</div>
+          </div>
         </div>
       </div>
     </div>
@@ -327,14 +376,40 @@ a{color:var(--ac)}
 <!-- Temp mode toast -->
 <div id="temp-toast"></div>
 
-<!-- Chat History Modal -->
-<div class="ov" id="history-modal" style="display:none" onclick="document.getElementById('history-modal').style.display='none'">
-  <div class="history-modal" onclick="event.stopPropagation()">
-    <div class="history-modal-head">
-      <h2>🕐 Chat History</h2>
-      <button onclick="document.getElementById('history-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+<!-- Long press indicator -->
+<div id="longpress-indicator"></div>
+
+<!-- Quick Commands Panel -->
+<div id="qc-panel">
+  <div id="qc-panel-handle"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.12em;font-weight:700">⚡ QUICK COMMANDS</div>
+    <button onclick="closeQcPanel()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:18px;padding:0">×</button>
+  </div>
+  <div class="qc-grid" id="qc-grid"></div>
+  <button class="qc-add-btn" onclick="addCustomQuickCommand()">+ Add Custom Command</button>
+</div>
+
+<!-- Web Clips Modal -->
+<div class="ov" id="webclip-modal" style="display:none" onclick="document.getElementById('webclip-modal').style.display='none'">
+  <div class="md" onclick="event.stopPropagation()" style="max-width:460px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">🌐 Web Clip</h2>
+      <button onclick="document.getElementById('webclip-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
     </div>
-    <div class="history-list" id="history-list"></div>
+    <label>PASTE URL</label>
+    <input id="webclip-url" placeholder="https://..." onkeydown="if(event.key==='Enter')fetchWebClip()"/>
+    <div style="display:flex;gap:8px;margin-top:-8px;margin-bottom:14px">
+      <button onclick="fetchWebClip()" style="flex:1;padding:10px;border-radius:8px;background:var(--ac)15;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-weight:700;font-size:12px" id="webclip-fetch-btn">Fetch & Analyse</button>
+    </div>
+    <div id="webclip-status" style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;min-height:16px;margin-bottom:8px"></div>
+    <div id="webclip-result" class="webclip-result" style="display:none"></div>
+    <div id="webclip-actions" style="display:none;margin-top:10px;display:none">
+      <div class="md-act" style="margin-top:10px">
+        <button class="md-cancel" onclick="document.getElementById('webclip-modal').style.display='none'">Close</button>
+        <button class="md-go" style="background:var(--ac)10;border-color:var(--ac)33;color:var(--ac)" onclick="saveWebClipToMemory()">Save to Memory</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -416,7 +491,7 @@ a{color:var(--ac)}
 <!-- Changelog -->
 <div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'"><div class="md" style="max-width:460px" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">Changelog</h2><button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
-<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.9</div><div style="color:var(--dim)">• Firebase cloud sync — data across all devices<br>• Email/password login via Firebase Auth<br>• Real-time Firestore sync<br>• Switch / Sign Out in Settings</div></div>
+<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v2.1.5</div><div style="color:var(--dim)">• Chat History — searchable, clickable, auto-named<br/>• Auto-archive after 3h inactivity + Temporary mode<br/>• Media sharing — images, PDFs, documents<br/>• Continuous voice mode toggle<br/>• Reset Agents, colour pickers, scrollable header<br/>• Boot diagnostics speech report</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Boot animation — rings spin on login<br>• Global 380px orb behind all panels<br>• Arrow keys ↑↓ agents · ← → views<br>• H shortcut for sidebar · K for speech<br>• JARVIS knows its own features</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar adapts to sidebar<br>• All agents access calendar in AI context<br>• Clickable version badge with changelog</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on login<br>• Speech toggle (K shortcut)<br>• Cooldown timer between messages</div></div>
@@ -441,9 +516,6 @@ a{color:var(--ac)}
     <div class="history-list" id="history-list"></div>
   </div>
 </div>
-
-<!-- Temp mode toast -->
-<div id="temp-toast"></div>
 
 <script>
 // ── FIREBASE ──
@@ -480,7 +552,7 @@ let touchStartX=0,touchStartY=0;
 let orbAF=null,orbT=0;
 
 // ── FIREBASE SAVE / LOAD ──
-function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId};}
+
 async function save(){
   if(!fbUser)return;
   try{await db.collection('users').doc(fbUser.uid).collection('data').doc('main').set(getDataPayload());}
@@ -505,6 +577,7 @@ function applyData(d){
   bgColor=d.bgColor||'#05080f';
   chatSessions=d.chatSessions||{};
   currentSessionId=d.currentSessionId||{};
+  customQuickCommands=d.customQuickCommands||[];
   applyTheme();
   activeAgent=agents[0]?.id||'jarvis-core';
   // Don't reset currentView — preserve user's current panel
@@ -799,7 +872,7 @@ function buildMemoryContext(agentId){
 
 const JARVIS_UI_KNOWLEDGE=`
 
-## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v1.9)
+## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v2.1.5)
 You run in the browser as a PWA. Cloud sync via Firebase.
 
 ### AGENTS
@@ -920,25 +993,242 @@ function updateOrb(){const o=document.getElementById('orb-outer'),c=document.get
 setInterval(()=>startOrbAnim(),600);
 
 // ── CALENDAR ──
+// ── CALENDAR ──
+let calendarViewMode='grid'; // 'grid' or 'week'
 function calendarKey(d){return `2026-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function monthLabel(i){return new Date(2026,i,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});}
 function daysInMonth(i){return new Date(2026,i+1,0).getDate();}
+
+function toggleCalendarView(){
+  calendarViewMode=calendarViewMode==='grid'?'week':'grid';
+  const toggle=document.getElementById('cal-view-toggle');
+  const prevW=document.getElementById('cal-prev-week-btn');
+  const nextW=document.getElementById('cal-next-week-btn');
+  if(toggle)toggle.textContent=calendarViewMode==='grid'?'Week View':'Month View';
+  if(prevW)prevW.style.display=calendarViewMode==='week'?'':'none';
+  if(nextW)nextW.style.display=calendarViewMode==='week'?'':'none';
+  document.getElementById('cal-grid-view').style.display=calendarViewMode==='grid'?'':'none';
+  document.getElementById('cal-week-view').style.display=calendarViewMode==='week'?'':'none';
+  renderCalendar();
+}
+
 function renderCalendar(){
-  const l=document.getElementById('cal-month-label'),c=document.getElementById('calendar-days');if(!l||!c)return;
+  const l=document.getElementById('cal-month-label');if(!l)return;
   calendarMonth=Math.max(0,Math.min(11,calendarMonth));
+  l.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');
+  if(calendarViewMode==='grid')renderCalendarGrid();
+  else renderCalendarWeek();
+}
+
+function renderCalendarGrid(){
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  const today=new Date();
+  const todayKey=today.getFullYear()===2026?calendarKey(today):'';
+  const firstDay=new Date(2026,calendarMonth,1).getDay();
+  const total=daysInMonth(calendarMonth);
+  let h='';
+  // Empty cells before first day
+  for(let i=0;i<firstDay;i++)h+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=total;d++){
+    const dt=new Date(2026,calendarMonth,d);
+    const k=calendarKey(dt);
+    const hasNote=!!(calendarNotes[k]&&calendarNotes[k].trim());
+    const isToday=k===todayKey;
+    h+=`<div class="cal-cell${hasNote?' has-note':''}${isToday?' today':''}" onclick="openDayFromGrid('${k}',${d})" title="${hasNote?calendarNotes[k].slice(0,60):''}">
+      <span class="cal-cell-num">${d}</span>
+      ${hasNote?'<div class="cal-note-dot"></div>':''}
+    </div>`;
+  }
+  grid.innerHTML=h;
+}
+
+function openDayFromGrid(key,day){
+  // Jump to week view showing this day
+  const weekIndex=Math.floor((day-1)/7);
+  calendarWeekOffset=weekIndex;
+  calendarViewMode='week';
+  const toggle=document.getElementById('cal-view-toggle');
+  const prevW=document.getElementById('cal-prev-week-btn');
+  const nextW=document.getElementById('cal-next-week-btn');
+  if(toggle)toggle.textContent='Month View';
+  if(prevW)prevW.style.display='';if(nextW)nextW.style.display='';
+  document.getElementById('cal-grid-view').style.display='none';
+  document.getElementById('cal-week-view').style.display='';
+  renderCalendarWeek();
+  // Focus the textarea for that day
+  setTimeout(()=>{
+    const textareas=document.querySelectorAll('.cal-note');
+    textareas.forEach(ta=>{if(ta.closest('.cal-day')?.querySelector('.cal-day-date')?.textContent==day)ta.focus();});
+  },100);
+}
+
+function renderCalendarWeek(){
+  const c=document.getElementById('calendar-days');if(!c)return;
   const td=daysInMonth(calendarMonth),mw=Math.max(0,Math.ceil(td/7)-1);
   calendarWeekOffset=Math.max(0,Math.min(mw,calendarWeekOffset));
-  l.textContent='2026 — '+monthLabel(calendarMonth).replace(' 2026','');
   const s=calendarWeekOffset*7+1,e=Math.min(td,s+6);let h='';
-  for(let d=s;d<=e;d++){const dt=new Date(2026,calendarMonth,d);const k=calendarKey(dt);h+=`<div class="cal-day"><div class="cal-day-meta"><div class="cal-day-date">${d}</div><div class="cal-day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div></div><textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea></div>`;}
+  for(let d=s;d<=e;d++){
+    const dt=new Date(2026,calendarMonth,d);const k=calendarKey(dt);
+    const hasNote=!!(calendarNotes[k]&&calendarNotes[k].trim());
+    h+=`<div class="cal-day" style="${hasNote?'border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.06)':''}">
+      <div class="cal-day-meta">
+        <div class="cal-day-date" style="${hasNote?'color:#86efac':''}">${d}</div>
+        <div class="cal-day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div>
+      </div>
+      <textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value);renderCalendarGrid()">${esc(calendarNotes[k]||'')}</textarea>
+    </div>`;
+  }
   c.innerHTML=h;
 }
+
 function updateCalendarNote(k,v){calendarNotes[k]=v;save();}
 function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;render();save();}}
 function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;render();save();}}
 function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);render();}
 function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);render();}
 function refreshCalendar(){renderCalendar();}
+
+// ── QUICK COMMANDS ──
+const DEFAULT_QUICK_COMMANDS=[
+  {id:'qc1',icon:'📰',label:'Today\'s News',command:'Give me a brief summary of today\'s top news.',agentId:'jarvis-core'},
+  {id:'qc2',icon:'📅',label:'My Schedule',command:'What do I have coming up based on my calendar?',agentId:'jarvis-core'},
+  {id:'qc3',icon:'📝',label:'Summarise Chat',command:'Summarise our conversation so far in bullet points.',agentId:'jarvis-core'},
+  {id:'qc4',icon:'💡',label:'Suggest Tasks',command:'Based on my memory and calendar, what should I focus on today?',agentId:'jarvis-core'},
+  {id:'qc5',icon:'🌤️',label:'Weather',command:'What\'s the weather like in Delhi today?',agentId:'jarvis-core'},
+  {id:'qc6',icon:'⚽',label:'Football News',command:'Any latest football news or match results?',agentId:'jarvis-core'},
+];
+let customQuickCommands=[];
+
+function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId,customQuickCommands};}
+
+function openQcPanel(){
+  renderQcGrid();
+  document.getElementById('qc-panel').classList.add('open');
+}
+function closeQcPanel(){document.getElementById('qc-panel').classList.remove('open');}
+
+function renderQcGrid(){
+  const allCmds=[...DEFAULT_QUICK_COMMANDS,...customQuickCommands];
+  document.getElementById('qc-grid').innerHTML=allCmds.map(cmd=>`
+    <button class="qc-btn${cmd.isCustom?' custom':''}" onclick="runQuickCommand('${cmd.id}')">
+      <span class="qc-icon">${cmd.icon}</span>
+      <span style="flex:1;line-height:1.3">${esc(cmd.label)}</span>
+      ${cmd.isCustom?`<span onclick="deleteQuickCommand('${cmd.id}',event)" style="color:rgba(255,80,80,.5);font-size:14px;padding:0 2px">×</span>`:''}
+    </button>`).join('');
+}
+
+function runQuickCommand(id){
+  const cmd=[...DEFAULT_QUICK_COMMANDS,...customQuickCommands].find(c=>c.id===id);
+  if(!cmd)return;
+  closeQcPanel();
+  if(cmd.agentId&&cmd.agentId!==activeAgent)setActiveAgent(cmd.agentId);
+  document.getElementById('msg-input').value=cmd.command;
+  setTimeout(()=>sendMessage(),100);
+}
+
+function addCustomQuickCommand(){
+  const icon=prompt('Choose an icon (emoji):','🔧');if(!icon)return;
+  const label=prompt('Short label (max 20 chars):','');if(!label)return;
+  const command=prompt('What should JARVIS do?','');if(!command)return;
+  const id='cqc_'+Date.now();
+  customQuickCommands.push({id,icon:icon.trim(),label:label.slice(0,20),command,agentId:'jarvis-core',isCustom:true});
+  save();renderQcGrid();
+}
+
+function deleteQuickCommand(id,e){
+  e.stopPropagation();
+  customQuickCommands=customQuickCommands.filter(c=>c.id!==id);
+  save();renderQcGrid();
+}
+
+// ── LONG PRESS ──
+let longPressTimer=null,longPressX=0,longPressY=0;
+const LONG_PRESS_MS=600;
+
+function initLongPress(){
+  const mc=document.getElementById('main-content');
+  if(!mc)return;
+  mc.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    const t=e.touches[0];
+    longPressX=t.clientX;longPressY=t.clientY;
+    const ind=document.getElementById('longpress-indicator');
+    if(ind){ind.style.left=longPressX+'px';ind.style.top=longPressY+'px';ind.classList.add('active');}
+    longPressTimer=setTimeout(()=>{
+      if(ind)ind.classList.remove('active');
+      openQcPanel();
+    },LONG_PRESS_MS);
+  },{passive:true});
+  mc.addEventListener('touchmove',e=>{
+    if(longPressTimer){
+      const t=e.touches[0];
+      if(Math.abs(t.clientX-longPressX)>10||Math.abs(t.clientY-longPressY)>10){
+        clearTimeout(longPressTimer);longPressTimer=null;
+        document.getElementById('longpress-indicator')?.classList.remove('active');
+      }
+    }
+  },{passive:true});
+  mc.addEventListener('touchend',()=>{
+    clearTimeout(longPressTimer);longPressTimer=null;
+    document.getElementById('longpress-indicator')?.classList.remove('active');
+  },{passive:true});
+  // Desktop: right-click opens quick commands
+  mc.addEventListener('contextmenu',e=>{
+    if(currentView==='chat'){e.preventDefault();openQcPanel();}
+  });
+}
+
+// ── WEB CLIPS ──
+let lastWebClipSummary='';
+function openWebClipModal(){
+  document.getElementById('webclip-url').value='';
+  document.getElementById('webclip-status').textContent='';
+  document.getElementById('webclip-result').style.display='none';
+  document.getElementById('webclip-actions').style.display='none';
+  document.getElementById('webclip-modal').style.display='flex';
+}
+
+async function fetchWebClip(){
+  const url=document.getElementById('webclip-url').value.trim();
+  if(!url||!url.startsWith('http')){document.getElementById('webclip-status').textContent='Please enter a valid URL starting with http';return;}
+  const status=document.getElementById('webclip-status');
+  const result=document.getElementById('webclip-result');
+  const actions=document.getElementById('webclip-actions');
+  status.textContent='Fetching and analysing...';
+  status.style.color='var(--dim)';
+  result.style.display='none';
+  actions.style.display='none';
+  if(!apiKey){status.textContent='No API key set';return;}
+  try{
+    // Use Gemini with Google Search to fetch and summarise the URL
+    const prompt=`Please visit and summarise this URL: ${url}\n\nProvide:\n1. A brief title\n2. Key points (3-5 bullets)\n3. Main takeaway\n\nBe concise. If you cannot access the URL, say so.`;
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        tools:[{google_search:{}}],
+        generationConfig:{maxOutputTokens:600,temperature:0.3}
+      })
+    });
+    const d=await r.json();
+    if(d.error){status.textContent='Error: '+d.error.message;status.style.color='#ff5050';return;}
+    const summary=d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'Could not fetch content.';
+    lastWebClipSummary=`From: ${url}\n\n${summary}`;
+    result.textContent=summary;
+    result.style.display='block';
+    actions.style.display='block';
+    status.textContent='✓ Done';status.style.color='#4ade80';
+  }catch(e){status.textContent='Network error. Check connection.';status.style.color='#ff5050';}
+}
+
+function saveWebClipToMemory(){
+  if(!lastWebClipSummary)return;
+  addKnowledge(lastWebClipSummary.slice(0,300));
+  document.getElementById('webclip-modal').style.display='none';
+}
+
+// Also add web clip button to settings area via a small button in the header actions
+// (added in render function)
 
 // ── SPEECH ──
 function stopSpeaking(){speechSynthesis.cancel();isSpeaking=false;updateOrb();render();}
@@ -1523,9 +1813,14 @@ if(mc){mc.addEventListener('touchstart',handlePanelSwipeStart,{passive:true});mc
 setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render();},60000);
 
 render();applyTheme(); // initial render
-resetInactivityTimer(); // start inactivity tracking
-// Reset timer on any user interaction
-document.addEventListener('click',()=>resetInactivityTimer());
+resetInactivityTimer();
+initLongPress(); // long press for quick commands
+document.addEventListener('click',e=>{
+  resetInactivityTimer();
+  // Close QC panel if clicking outside
+  const qcp=document.getElementById('qc-panel');
+  if(qcp&&qcp.classList.contains('open')&&!qcp.contains(e.target))closeQcPanel();
+});
 document.addEventListener('keydown',()=>resetInactivityTimer());
 
 auth.onAuthStateChanged(async user=>{
