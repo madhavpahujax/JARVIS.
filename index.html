@@ -72,7 +72,7 @@ a{color:var(--ac)}
 #hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);background:rgba(11,17,32,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:52px;position:relative;z-index:5;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #hdr::-webkit-scrollbar{display:none}
 .hdr-menu{background:none;border:1px solid var(--border);border-radius:7px;color:var(--dim);cursor:pointer;padding:5px 9px;font-size:15px;flex-shrink:0}
-.hdr-info{min-width:80px;max-width:140px;overflow:hidden;flex-shrink:0}
+.hdr-info{flex:1;min-width:60px;overflow:hidden}
 .hdr-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hdr-desc{font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hdr-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}
@@ -240,6 +240,34 @@ a{color:var(--ac)}
 /* Long press overlay */
 #longpress-indicator{position:fixed;pointer-events:none;z-index:900;border-radius:50%;width:60px;height:60px;margin:-30px;border:2px solid var(--ac);opacity:0;transform:scale(0);transition:transform .6s ease,opacity .6s ease}
 #longpress-indicator.active{opacity:.6;transform:scale(1)}
+/* Streak */
+#streak-popup{position:fixed;inset:0;z-index:1800;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);animation:fadeIn .3s}
+#streak-popup.hidden{display:none!important}
+.streak-card{background:var(--card);border:1px solid rgba(251,191,36,.3);border-radius:18px;padding:24px 20px;width:92%;max-width:360px;text-align:center;box-shadow:0 0 40px rgba(251,191,36,.1)}
+.streak-title{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.15em;color:#fbbf24;margin-bottom:4px;font-weight:700}
+.streak-subtitle{font-size:11px;color:var(--dim);margin-bottom:20px;font-family:'IBM Plex Mono',monospace}
+.streak-days{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.streak-day{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Orbitron',sans-serif;color:var(--dim);position:relative;transition:all .3s}
+.streak-day.done{border-color:#fbbf24;background:rgba(251,191,36,.15);color:#fbbf24;box-shadow:0 0 12px rgba(251,191,36,.4)}
+.streak-day.done::after{content:'✓';position:absolute;font-size:12px}
+.streak-day.done span{display:none}
+.streak-day.today{border-color:var(--ac);animation:glow .8s ease-in-out 3}
+.streak-count{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#fbbf24;line-height:1}
+.streak-count-label{font-size:10px;color:var(--dim);letter-spacing:.1em;margin-top:2px;margin-bottom:16px}
+.streak-btn{width:100%;padding:12px;border-radius:10px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#fbbf24;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;transition:all .2s}
+.streak-btn:hover{background:rgba(251,191,36,.2)}
+/* Streak header button */
+.streak-hbtn{width:26px;height:26px;border-radius:50%;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:#fbbf24;cursor:pointer;font-size:12px;display:grid;place-items:center;flex-shrink:0;transition:all .2s;position:relative}
+.streak-hbtn:hover{background:rgba(251,191,36,.25);box-shadow:0 0 8px rgba(251,191,36,.3)}
+/* Streak history modal */
+.streak-history-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
+.sh-dow{text-align:center;font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.05em;padding:2px 0}
+.sh-cell{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border:1px solid transparent}
+.sh-cell.logged{background:rgba(251,191,36,.2);border-color:rgba(251,191,36,.4);color:#fbbf24}
+.sh-cell.missed{background:rgba(255,50,50,.08);border-color:rgba(255,50,50,.15);color:rgba(255,80,80,.5)}
+.sh-cell.future{opacity:.25;background:var(--input)}
+.sh-cell.today{border-color:var(--ac)!important;color:var(--ac)!important}
+.sh-cell.empty{opacity:0;pointer-events:none}
 @media(max-width:768px){
   #composer-wrap{padding:0 8px 8px}  .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
@@ -286,12 +314,13 @@ a{color:var(--ac)}
       <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v2.1.5</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
-        <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Memory</button>
-        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Calendar</button>
-        <button class="hbtn" onclick="openWebClipModal()" title="Web Clip" style="flex-shrink:0">🌐</button>
-        <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">Clear</button>
+        <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Mem</button>
+        <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Cal</button>
+        <button class="hbtn" onclick="openWebClipModal()" title="Web Clip">🌐</button>
+        <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">✕</button>
         <span class="temp-badge" id="temp-badge">TEMP</span>
         <button class="t-btn" id="t-btn" onclick="toggleTempMode()" title="Temporary chat">T</button>
+        <button class="streak-hbtn" id="streak-hbtn" onclick="openStreakHistory()" title="Login Streak">🔥</button>
         <div class="voice-toggle" onclick="toggleContinuousVoice()" title="Continuous Voice Mode">
           <span class="voice-toggle-label">🎤</span>
           <div class="voice-toggle-track" id="voice-mode-track"><div class="voice-toggle-thumb"></div></div>
@@ -335,7 +364,6 @@ a{color:var(--ac)}
           <div id="cal-grid-view">
             <div class="cal-grid-dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
             <div class="cal-grid" id="cal-grid"></div>
-            <div class="swipe-hint">Tap a day to edit · Green = has note · Pinch/tap to zoom into week view</div>
           </div>
           <!-- Week detail view -->
           <div id="cal-week-view" style="display:none">
@@ -375,6 +403,46 @@ a{color:var(--ac)}
 
 <!-- Temp mode toast -->
 <div id="temp-toast"></div>
+
+<!-- Streak Popup (shown after boot) -->
+<div id="streak-popup" class="hidden">
+  <div class="streak-card">
+    <div class="streak-title">🔥 LOGIN STREAK</div>
+    <div class="streak-subtitle" id="streak-sub">Keep your streak alive, Sir.</div>
+    <div class="streak-count" id="streak-count">0</div>
+    <div class="streak-count-label">DAY STREAK</div>
+    <div class="streak-days" id="streak-days"></div>
+    <button class="streak-btn" onclick="closeStreakPopup()">CONTINUE</button>
+  </div>
+</div>
+
+<!-- Streak History Modal -->
+<div class="ov" id="streak-history-modal" style="display:none" onclick="document.getElementById('streak-history-modal').style.display='none'">
+  <div class="md" style="max-width:360px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <h2 style="margin:0">🔥 Login History</h2>
+      <button onclick="document.getElementById('streak-history-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:#fbbf24;font-weight:900" id="sh-streak-num">0</div>
+      <div style="font-size:10px;color:var(--dim);letter-spacing:.1em">DAY STREAK</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="shPrevMonth()" style="background:var(--input);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">←</button>
+      <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--ac);letter-spacing:.08em" id="sh-month-label"></div>
+      <button onclick="shNextMonth()" style="background:var(--input);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">→</button>
+    </div>
+    <div class="streak-history-grid">
+      <div class="sh-dow">S</div><div class="sh-dow">M</div><div class="sh-dow">T</div><div class="sh-dow">W</div><div class="sh-dow">T</div><div class="sh-dow">F</div><div class="sh-dow">S</div>
+      <div id="sh-grid"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:14px;justify-content:center;font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">
+      <span><span style="color:#fbbf24">■</span> Logged in</span>
+      <span><span style="color:rgba(255,80,80,.5)">■</span> Missed</span>
+      <span><span style="color:var(--ac)">■</span> Today</span>
+    </div>
+  </div>
+</div>
 
 <!-- Long press indicator -->
 <div id="longpress-indicator"></div>
@@ -545,6 +613,10 @@ let currentSessionId={}; // {agentId: sessionId}
 let lastActivityTime=Date.now();
 let inactivityTimer=null;
 const INACTIVITY_HOURS=3; // auto-archive after 3 hours
+let loginDates=[];
+let currentStreak=0;
+let shViewMonth=new Date().getMonth();
+let shViewYear=new Date().getFullYear();
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
 let cooldownEnd=0,cooldownInterval=null;
 let startupRunLock=false,startupRunTimer=null,appOpenStartupTriggered=false;
@@ -578,6 +650,7 @@ function applyData(d){
   chatSessions=d.chatSessions||{};
   currentSessionId=d.currentSessionId||{};
   customQuickCommands=d.customQuickCommands||[];
+  loginDates=d.loginDates||[];
   applyTheme();
   activeAgent=agents[0]?.id||'jarvis-core';
   // Don't reset currentView — preserve user's current panel
@@ -1075,20 +1148,148 @@ function renderCalendarWeek(){
         <div class="cal-day-date" style="${hasNote?'color:#86efac':''}">${d}</div>
         <div class="cal-day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div>
       </div>
-      <textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value);renderCalendarGrid()">${esc(calendarNotes[k]||'')}</textarea>
+      <textarea class="cal-note" placeholder="Write note..." oninput="updateCalendarNote('${k}',this.value)">${esc(calendarNotes[k]||'')}</textarea>
     </div>`;
   }
   c.innerHTML=h;
 }
 
-function updateCalendarNote(k,v){calendarNotes[k]=v;save();}
+let calNoteSaveTimer=null;
+function updateCalendarNote(k,v){
+  calendarNotes[k]=v;
+  if(calNoteSaveTimer)clearTimeout(calNoteSaveTimer);
+  calNoteSaveTimer=setTimeout(()=>save(),1000);
+}
 function prevCalendarMonth(){if(calendarMonth>0){calendarMonth--;calendarWeekOffset=0;render();save();}}
 function nextCalendarMonth(){if(calendarMonth<11){calendarMonth++;calendarWeekOffset=0;render();save();}}
 function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);render();}
 function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);render();}
 function refreshCalendar(){renderCalendar();}
 
-// ── QUICK COMMANDS ──
+// ── LOGIN STREAK SYSTEM ──
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function dateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/(1000*60*60*24));}
+
+function recordLoginAndShowStreak(){
+  const today=todayStr();
+  // Add today if not already recorded
+  if(!loginDates.includes(today)){
+    loginDates.push(today);
+    loginDates.sort();
+    save();
+  }
+  currentStreak=calculateStreak();
+  updateStreakHeaderBtn();
+  showStreakPopup();
+}
+
+function calculateStreak(){
+  if(!loginDates.length)return 0;
+  const today=todayStr();
+  const sorted=[...new Set(loginDates)].sort().reverse();
+  // Must have logged in today or yesterday to maintain streak
+  const mostRecent=sorted[0];
+  const gap=daysBetween(mostRecent,today);
+  if(gap>1)return 1; // streak broken, today starts fresh
+  let streak=0;
+  let checkDate=new Date(today);
+  for(let i=0;i<365;i++){
+    const ds=dateStr(checkDate);
+    if(sorted.includes(ds)){streak++;checkDate.setDate(checkDate.getDate()-1);}
+    else break;
+  }
+  return streak;
+}
+
+function updateStreakHeaderBtn(){
+  const btn=document.getElementById('streak-hbtn');
+  if(!btn)return;
+  if(currentStreak>=7){btn.style.boxShadow='0 0 12px rgba(251,191,36,.6)';btn.style.background='rgba(251,191,36,.25)';}
+  else if(currentStreak>0){btn.style.boxShadow='0 0 6px rgba(251,191,36,.3)';}
+}
+
+function showStreakPopup(){
+  const today=todayStr();
+  const streak=currentStreak;
+  // Build 7-day display — last 7 days
+  const days7=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days7.push(dateStr(d));}
+  const daysHtml=days7.map((ds,i)=>{
+    const done=loginDates.includes(ds);
+    const isToday=ds===today;
+    const dayNum=new Date(ds).getDate();
+    return `<div class="streak-day${done?' done':''}${isToday?' today':''}" style="${done?'animation:fadeIn .3s ease '+( i*0.1)+'s both':''}">
+      <span>${dayNum}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('streak-days').innerHTML=daysHtml;
+  document.getElementById('streak-count').textContent=streak;
+  // Subtitle
+  let sub='Keep going, Sir.';
+  if(streak===0)sub='Start your streak today!';
+  else if(streak===1)sub='Day 1 — the journey begins.';
+  else if(streak>=7)sub='🏆 Week complete! Outstanding, Sir.';
+  else if(streak>=3)sub=`${streak} days strong. Keep it up!`;
+  document.getElementById('streak-sub').textContent=sub;
+  document.getElementById('streak-popup').classList.remove('hidden');
+}
+
+function closeStreakPopup(){
+  document.getElementById('streak-popup').classList.add('hidden');
+}
+
+function openStreakHistory(){
+  shViewMonth=new Date().getMonth();
+  shViewYear=new Date().getFullYear();
+  document.getElementById('sh-streak-num').textContent=currentStreak;
+  renderStreakHistoryGrid();
+  document.getElementById('streak-history-modal').style.display='flex';
+}
+
+function shPrevMonth(){
+  shViewMonth--;if(shViewMonth<0){shViewMonth=11;shViewYear--;}
+  renderStreakHistoryGrid();
+}
+function shNextMonth(){
+  const now=new Date();
+  if(shViewYear>now.getFullYear()||(shViewYear===now.getFullYear()&&shViewMonth>=now.getMonth()))return;
+  shViewMonth++;if(shViewMonth>11){shViewMonth=0;shViewYear++;}
+  renderStreakHistoryGrid();
+}
+
+function renderStreakHistoryGrid(){
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('sh-month-label').textContent=`${MONTHS[shViewMonth]} ${shViewYear}`;
+  const today=todayStr();
+  const firstDay=new Date(shViewYear,shViewMonth,1).getDay();
+  const total=new Date(shViewYear,shViewMonth+1,0).getDate();
+  const nowObj=new Date();
+  let h='';
+  for(let i=0;i<firstDay;i++)h+=`<div class="sh-cell empty"></div>`;
+  for(let d=1;d<=total;d++){
+    const ds=`${shViewYear}-${String(shViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isFuture=ds>today;
+    const isToday=ds===today;
+    const logged=loginDates.includes(ds);
+    const isPast=ds<today;
+    let cls='sh-cell';
+    if(isFuture)cls+=' future';
+    else if(isToday)cls+=' today '+(logged?'logged':'');
+    else if(logged)cls+=' logged';
+    else if(isPast)cls+=' missed';
+    h+=`<div class="${cls}">${d}</div>`;
+  }
+  document.getElementById('sh-grid').innerHTML=h;
+}
+
+function initStreakSystem(){
+  // Auto-switch history month to current month
+  shViewMonth=new Date().getMonth();
+  shViewYear=new Date().getFullYear();
+  currentStreak=calculateStreak();
+  updateStreakHeaderBtn();
+}
 const DEFAULT_QUICK_COMMANDS=[
   {id:'qc1',icon:'📰',label:'Today\'s News',command:'Give me a brief summary of today\'s top news.',agentId:'jarvis-core'},
   {id:'qc2',icon:'📅',label:'My Schedule',command:'What do I have coming up based on my calendar?',agentId:'jarvis-core'},
@@ -1099,7 +1300,7 @@ const DEFAULT_QUICK_COMMANDS=[
 ];
 let customQuickCommands=[];
 
-function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId,customQuickCommands};}
+function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId,customQuickCommands,loginDates};}
 
 function openQcPanel(){
   renderQcGrid();
@@ -1143,7 +1344,7 @@ function deleteQuickCommand(id,e){
 
 // ── LONG PRESS ──
 let longPressTimer=null,longPressX=0,longPressY=0;
-const LONG_PRESS_MS=600;
+const LONG_PRESS_MS=1400;
 
 function initLongPress(){
   const mc=document.getElementById('main-content');
@@ -1558,7 +1759,13 @@ async function runStartupCommands(){
   startupRunLock=false;activeAgent='jarvis-core';render();
 }
 function scheduleStartupCommands(delay=250){if(startupRunTimer)clearTimeout(startupRunTimer);startupRunTimer=setTimeout(()=>{startupRunTimer=null;runStartupCommands();},delay);}
-function triggerAppOpenStartup(){if(appOpenStartupTriggered)return;appOpenStartupTriggered=true;scheduleStartupCommands(400);}
+function triggerAppOpenStartup(){
+  if(appOpenStartupTriggered)return;
+  appOpenStartupTriggered=true;
+  // Record login and show streak popup, then run startup commands after dismissal
+  recordLoginAndShowStreak();
+  scheduleStartupCommands(400);
+}
 
 // ── AGENT MANAGEMENT ──
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render();}
@@ -1815,6 +2022,7 @@ setInterval(()=>{cleanExpiredTemp();if(currentView==='knowledge')render();},6000
 render();applyTheme(); // initial render
 resetInactivityTimer();
 initLongPress(); // long press for quick commands
+initStreakSystem();
 document.addEventListener('click',e=>{
   resetInactivityTimer();
   // Close QC panel if clicking outside
