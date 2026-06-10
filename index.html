@@ -268,6 +268,17 @@ a{color:var(--ac)}
 .sh-cell.future{opacity:.25;background:var(--input)}
 .sh-cell.today{border-color:var(--ac)!important;color:var(--ac)!important}
 .sh-cell.empty{opacity:0;pointer-events:none}
+/* Graphs Panel */
+#graphs-view{padding:14px 14px 16px;overflow:auto;background:transparent}
+.graph-card{background:rgba(11,17,32,.75);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative}
+.graph-card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.graph-card-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;flex:1}
+.graph-card-del{background:none;border:none;color:rgba(255,80,80,.4);cursor:pointer;font-size:16px;padding:0 2px;transition:color .15s}
+.graph-card-del:hover{color:#ff5050}
+.graph-add-point{display:flex;gap:6px;margin-top:10px}
+.graph-add-point input{flex:1;padding:6px 10px;background:rgba(14,22,40,.6);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;outline:none}
+.graph-add-point input:focus{border-color:var(--ac)33}
+.graph-canvas-wrap{position:relative;height:160px;width:100%}
 @media(max-width:768px){
   #composer-wrap{padding:0 8px 8px}  .cal-day{grid-template-columns:72px 1fr}
   #sidebar{position:fixed;height:100dvh;width:260px;min-width:260px}
@@ -311,12 +322,15 @@ a{color:var(--ac)}
       <button class="hdr-menu" onclick="toggleSidebar()">☰</button>
       <span id="h-icon" style="font-size:20px;flex-shrink:0"></span>
       <div class="hdr-info"><div class="hdr-name" id="h-name"></div><div class="hdr-desc" id="h-desc"></div></div>
-      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v2.1.5</span>
+      <span onclick="document.getElementById('changelog-modal').style.display='flex'" style="padding:3px 8px;border-radius:5px;background:var(--ac)0c;border:1px solid var(--ac)25;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:var(--ac);letter-spacing:.08em;flex-shrink:0;white-space:nowrap;cursor:pointer">v2.2</span>
       <div class="hdr-actions">
         <button class="hbtn on" id="tab-chat" onclick="switchView('chat')">Chat</button>
         <button class="hbtn" id="tab-knowledge" onclick="switchView('knowledge')">Mem</button>
         <button class="hbtn" id="tab-calendar" onclick="switchView('calendar')">Cal</button>
+        <button class="hbtn" id="tab-graphs" onclick="switchView('graphs')" style="color:#a855f7">📊</button>
+        <button class="hbtn" id="tab-notepad" onclick="switchView('notepad')" style="color:#f59e0b">📝</button>
         <button class="hbtn" onclick="openWebClipModal()" title="Web Clip">🌐</button>
+        <button class="hbtn" onclick="document.getElementById('imagegen-modal').style.display='flex'" title="Image Generation" style="color:#a855f7">🎨</button>
         <button class="hbtn" id="tab-clear" onclick="clearChat()" style="color:#ff5050;border-color:rgba(255,50,50,.2)">✕</button>
         <span class="temp-badge" id="temp-badge">TEMP</span>
         <button class="t-btn" id="t-btn" onclick="toggleTempMode()" title="Temporary chat">T</button>
@@ -372,8 +386,39 @@ a{color:var(--ac)}
           </div>
         </div>
       </div>
-    </div>
-    <div id="composer-wrap">
+      <!-- GRAPHS PANEL -->
+      <div id="graphs-view" class="panel hidden-right">
+        <div style="padding:14px;height:100%;display:flex;flex-direction:column;gap:10px;overflow:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:6px">
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#a855f7;letter-spacing:.1em;font-weight:700">📊 INSIGHTS</div>
+            <div style="display:flex;gap:6px">
+              <button onclick="openNewFolderModal()" style="padding:5px 10px;border-radius:8px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);color:#a855f7;cursor:pointer;font-size:10px;font-weight:700">📁 Folder</button>
+              <button onclick="openNewGraphModal()" style="padding:5px 12px;border-radius:8px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);color:#a855f7;cursor:pointer;font-size:10px;font-weight:700">+ Graph</button>
+            </div>
+          </div>
+          <div id="graphs-list" style="display:flex;flex-direction:column;gap:10px;flex:1"></div>
+        </div>
+      </div>
+      <!-- NOTEPAD PANEL -->
+      <div id="notepad-view" class="panel hidden-right" style="overflow:hidden">
+        <div style="display:flex;height:100%">
+          <div id="notepad-list-col" style="width:130px;min-width:130px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(11,17,32,.6)">
+            <div style="padding:8px 8px 6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--dim)">NOTES</span>
+              <button onclick="createNotepad()" style="width:20px;height:20px;border-radius:4px;background:var(--ac)18;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:16px;display:grid;place-items:center;line-height:1">+</button>
+            </div>
+            <div id="notepad-list" style="flex:1;overflow-y:auto;padding:4px"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+            <div id="notepad-toolbar" style="display:none;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;gap:8px">
+              <input id="notepad-title-input" placeholder="Title..." style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:.05em;min-width:0" oninput="updateNotepadTitle(this.value)"/>
+              <button onclick="saveNotepadToMemory()" style="padding:3px 8px;border-radius:6px;background:var(--ac)10;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;flex-shrink:0">→ Memory</button>
+              <button onclick="deleteNotepad()" style="background:none;border:none;color:rgba(255,80,80,.4);cursor:pointer;font-size:15px;padding:0;flex-shrink:0">🗑</button>
+            </div>
+            <textarea id="notepad-editor" placeholder="Create a note to start writing..." style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;padding:14px 16px;resize:none" oninput="updateNotepadContent(this.value)" disabled></textarea>
+          </div>
+        </div>
+      </div>
       <div id="voice-bar" style="display:flex;align-items:center;gap:6px;padding:0 4px 6px;opacity:.7"><span style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.1em">VOICE</span><select class="hsel" id="voice-select" onchange="setAgentVoice(activeAgent,this.value);render();" style="font-size:10px;padding:3px 6px"></select></div>
     <div class="inp-box" id="input-box">
       <input type="file" id="media-input" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.csv,.json,.md" style="display:none" onchange="handleMediaAttach(this)"/>
@@ -481,6 +526,102 @@ a{color:var(--ac)}
   </div>
 </div>
 
+<!-- New Folder Modal -->
+<div class="ov" id="new-folder-modal" style="display:none" onclick="document.getElementById('new-folder-modal').style.display='none'">
+  <div class="md" style="max-width:360px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0;color:#a855f7">📁 New Folder</h2>
+      <button onclick="document.getElementById('new-folder-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
+    <label>FOLDER NAME</label><input id="nf-name" placeholder="e.g. Fitness, School, Work"/>
+    <label>ICON (optional)</label><input id="nf-icon" placeholder="📁" maxlength="4" style="width:70px"/>
+    <label>ADD GRAPHS</label>
+    <div id="nf-graph-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:160px;overflow-y:auto"></div>
+    <div class="md-act">
+      <button class="md-cancel" onclick="document.getElementById('new-folder-modal').style.display='none'">Cancel</button>
+      <button class="md-go" style="background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4);color:#a855f7" onclick="createFolder()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Graph Modal -->
+<div class="ov" id="new-graph-modal" style="display:none" onclick="document.getElementById('new-graph-modal').style.display='none'">
+  <div class="md" style="max-width:420px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h2 style="margin:0;color:#a855f7">📊 New Graph</h2>
+      <button onclick="document.getElementById('new-graph-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
+    <label>GRAPH NAME</label><input id="ng-name" placeholder="e.g. Study Hours"/>
+    <label>ICON (optional emoji)</label><input id="ng-icon" placeholder="📚" maxlength="4" style="width:80px"/>
+    <label>COLOR</label>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span id="ng-color-preview" style="width:32px;height:32px;border-radius:6px;border:2px solid white;display:inline-block;background:#a855f7;cursor:pointer" onclick="document.getElementById('ng-color-input').click()"></span>
+      <input type="color" id="ng-color-input" value="#a855f7" style="width:0;height:0;opacity:0;position:absolute" oninput="document.getElementById('ng-color-preview').style.background=this.value"/>
+      <span onclick="setNgColor('#a855f7')" style="width:24px;height:24px;border-radius:50%;background:#a855f7;cursor:pointer;border:2px solid transparent"></span>
+      <span onclick="setNgColor('#00d4ff')" style="width:24px;height:24px;border-radius:50%;background:#00d4ff;cursor:pointer"></span>
+      <span onclick="setNgColor('#00ff88')" style="width:24px;height:24px;border-radius:50%;background:#00ff88;cursor:pointer"></span>
+      <span onclick="setNgColor('#f59e0b')" style="width:24px;height:24px;border-radius:50%;background:#f59e0b;cursor:pointer"></span>
+      <span onclick="setNgColor('#ef4444')" style="width:24px;height:24px;border-radius:50%;background:#ef4444;cursor:pointer"></span>
+      <span onclick="setNgColor('#ec4899')" style="width:24px;height:24px;border-radius:50%;background:#ec4899;cursor:pointer"></span>
+    </div>
+    <label>X-AXIS LABEL</label><input id="ng-xlabel" placeholder="e.g. Date / Week / Month"/>
+    <label>Y-AXIS LABEL</label><input id="ng-ylabel" placeholder="e.g. Hours / Score / Count"/>
+    <label>WHAT TO TRACK (describe for JARVIS)</label>
+    <input id="ng-track" placeholder="e.g. hours I study each day"/>
+    <p style="color:var(--dim);font-size:10px;margin-top:-8px;margin-bottom:14px;opacity:.7">JARVIS will auto-log data points when you mention this in chat, memory, or calendar.</p>
+    <div class="md-act">
+      <button class="md-cancel" onclick="document.getElementById('new-graph-modal').style.display='none'">Cancel</button>
+      <button class="md-go" style="background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4);color:#a855f7" onclick="createGraph()">Create Graph</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Generation Modal -->
+<div class="ov" id="imagegen-modal" style="display:none" onclick="document.getElementById('imagegen-modal').style.display='none'">
+  <div class="md" style="max-width:480px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h2 style="margin:0">🎨 Image Generation</h2>
+      <button onclick="document.getElementById('imagegen-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+    </div>
+    <label>DESCRIBE YOUR IMAGE</label>
+    <textarea id="ig-prompt" placeholder="A futuristic city at night with neon lights reflecting in rain puddles..." style="height:80px;resize:vertical"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="flex:1">
+        <label>STYLE</label>
+        <select id="ig-style" class="hsel" style="width:100%;padding:8px 10px;font-size:12px;border-radius:8px">
+          <option value="">None</option>
+          <option value="photorealistic">Photorealistic</option>
+          <option value="digital art">Digital Art</option>
+          <option value="anime">Anime</option>
+          <option value="oil painting">Oil Painting</option>
+          <option value="watercolor">Watercolor</option>
+          <option value="3D render">3D Render</option>
+          <option value="sketch">Sketch</option>
+          <option value="cinematic">Cinematic</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label>ASPECT</label>
+        <select id="ig-aspect" class="hsel" style="width:100%;padding:8px 10px;font-size:12px;border-radius:8px">
+          <option value="1:1">Square 1:1</option>
+          <option value="16:9">Wide 16:9</option>
+          <option value="9:16">Portrait 9:16</option>
+          <option value="4:3">4:3</option>
+        </select>
+      </div>
+    </div>
+    <button onclick="generateImage()" id="ig-btn" style="width:100%;padding:12px;border-radius:10px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);color:#a855f7;cursor:pointer;font-weight:700;font-size:13px;margin-bottom:12px">🎨 Generate Image</button>
+    <div id="ig-status" style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;min-height:16px;text-align:center"></div>
+    <div id="ig-result" style="display:none;margin-top:12px;text-align:center">
+      <img id="ig-img" style="max-width:100%;border-radius:10px;border:1px solid var(--border)" alt="Generated image"/>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="downloadGenImage()" style="flex:1;padding:9px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:12px;font-weight:700">⬇ Download</button>
+        <button onclick="sendImageToChat()" style="flex:1;padding:9px;border-radius:8px;background:var(--ac)10;border:1px solid var(--ac)33;color:var(--ac);cursor:pointer;font-size:12px;font-weight:700">💬 Send to Chat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modals -->
 <div class="ov" id="create-modal" style="display:none" onclick="closeCreateModal()"><div class="md" onclick="event.stopPropagation()"><h2>New Agent</h2><label>NAME</label><input id="ca-name" placeholder="e.g. Music Guru"/><label>ICON</label><div class="ig" id="ca-icons"></div><label>COLOUR</label><div class="cg" id="ca-colors"></div><label>DESCRIPTION</label><input id="ca-desc" placeholder="What does this agent do?"/><label>INSTRUCTIONS</label><textarea id="ca-prompt" placeholder="Tell this agent how to behave..."></textarea><div class="md-act"><button class="md-cancel" onclick="closeCreateModal()">Cancel</button><button class="md-go" id="ca-deploy" onclick="deployAgent()">Deploy</button></div></div></div>
 
@@ -559,7 +700,7 @@ a{color:var(--ac)}
 <!-- Changelog -->
 <div class="ov" id="changelog-modal" style="display:none" onclick="document.getElementById('changelog-modal').style.display='none'"><div class="md" style="max-width:460px" onclick="event.stopPropagation()"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="margin-bottom:0">Changelog</h2><button onclick="document.getElementById('changelog-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button></div>
 <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);line-height:1.7">
-<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v2.1.5</div><div style="color:var(--dim)">• Chat History — searchable, clickable, auto-named<br/>• Auto-archive after 3h inactivity + Temporary mode<br/>• Media sharing — images, PDFs, documents<br/>• Continuous voice mode toggle<br/>• Reset Agents, colour pickers, scrollable header<br/>• Boot diagnostics speech report</div></div>
+<div style="margin-bottom:14px"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v2.2</div><div style="color:var(--dim)">• Image Generation (Imagen / SVG fallback)<br/>• Graphs panel — line graphs, auto-log from chat<br/>• Login streak tracker with history calendar<br/>• Quick commands (long press 1.4s)<br/>• Web clips, media sharing, continuous voice</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.8</div><div style="color:var(--dim)">• Settings cog (⚙) with spin animation<br>• Boot animation — rings spin on login<br>• Global 380px orb behind all panels<br>• Arrow keys ↑↓ agents · ← → views<br>• H shortcut for sidebar · K for speech<br>• JARVIS knows its own features</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7.3</div><div style="color:var(--dim)">• Input bar adapts to sidebar<br>• All agents access calendar in AI context<br>• Clickable version badge with changelog</div></div>
 <div style="margin-bottom:14px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--ac);letter-spacing:.08em;margin-bottom:4px">v1.7</div><div style="color:var(--dim)">• Calendar view with weekly notes for 2026<br>• Login commands — auto-run on login<br>• Speech toggle (K shortcut)<br>• Cooldown timer between messages</div></div>
@@ -615,6 +756,10 @@ let inactivityTimer=null;
 const INACTIVITY_HOURS=3; // auto-archive after 3 hours
 let loginDates=[];
 let currentStreak=0;
+let userGraphs=[];
+let graphFolders=[];  // [{id,name,icon,color,graphIds:[]}]
+let notepads=[];       // [{id,title,content,updatedAt}]
+let activeNotepadId=null;
 let shViewMonth=new Date().getMonth();
 let shViewYear=new Date().getFullYear();
 let recognition=null,isRecording=false,voiceMode=false,isSpeaking=false,silenceTimer=null;
@@ -651,6 +796,9 @@ function applyData(d){
   currentSessionId=d.currentSessionId||{};
   customQuickCommands=d.customQuickCommands||[];
   loginDates=d.loginDates||[];
+  userGraphs=d.userGraphs||[];
+  graphFolders=d.graphFolders||[];
+  notepads=d.notepads||[];
   applyTheme();
   activeAgent=agents[0]?.id||'jarvis-core';
   // Don't reset currentView — preserve user's current panel
@@ -945,7 +1093,7 @@ function buildMemoryContext(agentId){
 
 const JARVIS_UI_KNOWLEDGE=`
 
-## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v2.1.5)
+## YOUR SYSTEM — J.A.R.V.I.S. MULTI-AGENT PWA (v2.2)
 You run in the browser as a PWA. Cloud sync via Firebase.
 
 ### AGENTS
@@ -990,14 +1138,19 @@ function render(){
   document.getElementById('h-icon').textContent=a.icon;
   document.getElementById('h-name').textContent=a.name;document.getElementById('h-name').style.color=a.color;
   document.getElementById('h-desc').textContent=a.description;
-  ['chat','knowledge','calendar'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'');});
-  ['chat','knowledge','calendar'].forEach(v=>{
+  ['chat','knowledge','calendar','graphs','notepad'].forEach(v=>{const b=document.getElementById('tab-'+v);if(b)b.className='hbtn'+(currentView===v?' on':'');});
+  ['chat','knowledge','calendar','graphs','notepad'].forEach(v=>{
     const p=document.getElementById(v+'-view');if(!p)return;
     p.classList.remove('active','hidden-left','hidden-right');
     if(v===currentView)p.classList.add('active');
-    else if((v==='chat'&&currentView!=='chat')||(v==='knowledge'&&currentView==='calendar'))p.classList.add('hidden-left');
+    else if(v==='chat')p.classList.add('hidden-left');
+    else if(v==='knowledge'&&['calendar','graphs','notepad'].includes(currentView))p.classList.add('hidden-left');
+    else if(v==='calendar'&&['graphs','notepad'].includes(currentView))p.classList.add('hidden-left');
+    else if(v==='graphs'&&currentView==='notepad')p.classList.add('hidden-left');
     else p.classList.add('hidden-right');
   });
+  if(currentView==='graphs')renderGraphsPanel();
+  if(currentView==='notepad'){renderNotepadList();if(activeNotepadId)openNotepad(activeNotepadId);}
   const vSel=document.getElementById('voice-select'),cv=getAgentVoice(activeAgent);
   vSel.innerHTML=VOICE_PRESETS.map(p=>`<option value="${p.id}"${p.id===cv?' selected':''}>${p.label}</option>`).join('');
   const sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();
@@ -1007,7 +1160,7 @@ function render(){
   bgBox.innerHTML=renderOrb(a.color);
   if(msgs.length===0){ca.innerHTML='';}
   else{
-    let h=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${esc(m.content)}${m.role==='assistant'&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
+    let h=msgs.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}"><div class="bub">${m.isHtml?m.content:esc(m.content)}${m.role==='assistant'&&!m.isHtml&&speechFeedback?`<button class="spk" onclick="speakAnim(\`${escJs(m.content)}\`)">🔊</button>`:''}</div></div>`).join('');
     if(loading)h+=`<div class="dots"><span style="background:${a.color}"></span><span style="background:${a.color}"></span><span style="background:${a.color}"></span></div>`;
     if(isSpeaking)h+=`<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop</button>`;
     ca.innerHTML=h;ca.scrollTop=ca.scrollHeight;
@@ -1166,6 +1319,400 @@ function prevWeek(){calendarWeekOffset=Math.max(0,calendarWeekOffset-1);render()
 function nextWeek(){calendarWeekOffset=Math.min(Math.max(0,Math.ceil(daysInMonth(calendarMonth)/7)-1),calendarWeekOffset+1);render();}
 function refreshCalendar(){renderCalendar();}
 
+// ── GRAPHS SYSTEM ──
+
+
+function openNewGraphModal(){
+  document.getElementById('ng-name').value='';
+  document.getElementById('ng-icon').value='';
+  document.getElementById('ng-color-input').value='#a855f7';
+  document.getElementById('ng-color-preview').style.background='#a855f7';
+  document.getElementById('ng-xlabel').value='';
+  document.getElementById('ng-ylabel').value='';
+  document.getElementById('ng-track').value='';
+  document.getElementById('new-graph-modal').style.display='flex';
+}
+function setNgColor(c){
+  document.getElementById('ng-color-input').value=c;
+  document.getElementById('ng-color-preview').style.background=c;
+}
+function createGraph(){
+  const name=document.getElementById('ng-name').value.trim();
+  if(!name){alert('Enter a graph name.');return;}
+  const g={
+    id:'g_'+Date.now(),
+    name,
+    icon:document.getElementById('ng-icon').value.trim()||'📊',
+    color:document.getElementById('ng-color-input').value||'#a855f7',
+    xlabel:document.getElementById('ng-xlabel').value.trim()||'X',
+    ylabel:document.getElementById('ng-ylabel').value.trim()||'Y',
+    track:document.getElementById('ng-track').value.trim(),
+    points:[]
+  };
+  userGraphs.push(g);
+  document.getElementById('new-graph-modal').style.display='none';
+  save();
+  switchView('graphs');
+}
+function deleteGraph(id){
+  if(!confirm('Remove this graph?'))return;
+  userGraphs=userGraphs.filter(g=>g.id!==id);
+  save();renderGraphsPanel();
+}
+function addPointToGraph(id){
+  const g=userGraphs.find(x=>x.id===id);if(!g)return;
+  const xEl=document.getElementById('gx_'+id);
+  const yEl=document.getElementById('gy_'+id);
+  const x=xEl?.value.trim(),y=parseFloat(yEl?.value);
+  if(!x||isNaN(y)){alert('Enter valid X label and Y value.');return;}
+  g.points.push({x,y,ts:Date.now()});
+  if(xEl)xEl.value='';if(yEl)yEl.value='';
+  save();renderGraphsPanel();
+}
+function removeLastPoint(id){
+  const g=userGraphs.find(x=>x.id===id);if(!g||!g.points.length)return;
+  g.points.pop();save();renderGraphsPanel();
+}
+
+function drawGraph(g){
+  const canvas=document.getElementById('gc_'+g.id);if(!canvas)return;
+  const W=canvas.offsetWidth||300,H=canvas.offsetHeight||160;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const pts=g.points;
+  const pad={l:40,r:16,t:16,b:36};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  // Parse color
+  const c=g.color||'#a855f7';
+  const R=parseInt(c.slice(1,3),16),G2=parseInt(c.slice(3,5),16),B=parseInt(c.slice(5,7),16);
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+cH*(i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();}
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+cH);ctx.lineTo(pad.l+cW,pad.t+cH);ctx.stroke();
+  // Labels
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='9px IBM Plex Mono,monospace';
+  ctx.textAlign='center';ctx.fillText(g.xlabel,pad.l+cW/2,H-4);
+  ctx.save();ctx.translate(10,pad.t+cH/2);ctx.rotate(-Math.PI/2);ctx.fillText(g.ylabel,0,0);ctx.restore();
+  if(!pts.length){
+    ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='11px IBM Plex Mono,monospace';
+    ctx.textAlign='center';ctx.fillText('No data yet',pad.l+cW/2,pad.t+cH/2);
+    return;
+  }
+  const yVals=pts.map(p=>p.y);
+  const yMin=Math.min(...yVals),yMax=Math.max(...yVals);
+  const yRange=yMax-yMin||1;
+  const toX=i=>(pad.l+10)+(i/(Math.max(pts.length-1,1)))*(cW-20);
+  const toY=v=>pad.t+cH-(((v-yMin)/yRange)*cH*.85+cH*.075);
+  // Fill gradient
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grad.addColorStop(0,`rgba(${R},${G2},${B},.3)`);
+  grad.addColorStop(1,`rgba(${R},${G2},${B},0)`);
+  ctx.beginPath();ctx.moveTo(toX(0),pad.t+cH);
+  pts.forEach((p,i)=>ctx.lineTo(toX(i),toY(p.y)));
+  ctx.lineTo(toX(pts.length-1),pad.t+cH);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  // Line
+  ctx.beginPath();pts.forEach((p,i)=>{i===0?ctx.moveTo(toX(i),toY(p.y)):ctx.lineTo(toX(i),toY(p.y));});
+  ctx.strokeStyle=c;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+  // Dots + labels
+  pts.forEach((p,i)=>{
+    const x=toX(i),y=toY(p.y);
+    ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);
+    ctx.fillStyle=c;ctx.fill();
+    ctx.strokeStyle='#05080f';ctx.lineWidth=1.5;ctx.stroke();
+    // X label
+    if(pts.length<=12){
+      ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='8px IBM Plex Mono,monospace';
+      ctx.textAlign='center';ctx.fillText(String(p.x).slice(0,6),x,pad.t+cH+14);
+    }
+    // Y value on hover area (show on last point always)
+    if(i===pts.length-1){
+      ctx.fillStyle=c;ctx.font='bold 9px IBM Plex Mono,monospace';
+      ctx.textAlign='center';ctx.fillText(p.y,x,y-8);
+    }
+  });
+  // Y axis ticks
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='8px IBM Plex Mono,monospace';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const v=yMin+(yRange*(i/4));
+    const y=pad.t+cH-(cH*.85*(i/4)+cH*.075);
+    ctx.fillText(Math.round(v*10)/10,pad.l-4,y+3);
+  }
+}
+
+// Auto-log data from chat messages to graphs
+function autoLogToGraphs(userText,aiReply){
+  if(!userGraphs.length||!apiKey)return;
+  const prompt=`You are a data extraction assistant. Given this conversation and a list of graphs the user tracks, extract any numeric data points that should be logged.
+
+User said: "${userText.slice(0,200)}"
+JARVIS replied: "${aiReply.slice(0,200)}"
+
+Graphs to track:
+${userGraphs.map((g,i)=>`${i}: "${g.name}" tracking "${g.track||g.ylabel}" (x=${g.xlabel}, y=${g.ylabel})`).join('\n')}
+
+Respond ONLY with JSON array (empty if nothing to log):
+[{"graphIndex":0,"x":"label","y":42}]
+No markdown, no explanation.`;
+  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:200,temperature:0}})
+  }).then(r=>r.json()).then(d=>{
+    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||'[]';
+    const pts=JSON.parse(raw.replace(/```json?|```/g,'').trim());
+    if(!Array.isArray(pts)||!pts.length)return;
+    pts.forEach(pt=>{
+      const g=userGraphs[pt.graphIndex];
+      if(!g||pt.x===undefined||pt.y===undefined)return;
+      g.points.push({x:pt.x,y:parseFloat(pt.y),ts:Date.now(),auto:true});
+    });
+    save();
+    if(currentView==='graphs')renderGraphsPanel();
+  }).catch(()=>{});
+}
+
+// ── GRAPH FOLDERS ──
+function openNewFolderModal(){
+  document.getElementById('nf-name').value='';
+  document.getElementById('nf-icon').value='';
+  // Populate graph checkboxes
+  const ungrouped=userGraphs.filter(g=>!graphFolders.some(f=>f.graphIds.includes(g.id)));
+  document.getElementById('nf-graph-list').innerHTML=userGraphs.length===0
+    ?'<p style="color:var(--dim);font-size:11px">No graphs yet. Create graphs first.</p>'
+    :userGraphs.map(g=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0"><input type="checkbox" id="nf_${g.id}" style="accent-color:#a855f7"/><span style="font-size:13px">${g.icon}</span><span style="font-size:12px;color:var(--text)">${esc(g.name)}</span></label>`).join('');
+  document.getElementById('new-folder-modal').style.display='flex';
+}
+function createFolder(){
+  const name=document.getElementById('nf-name').value.trim();
+  if(!name){alert('Enter a folder name.');return;}
+  const checked=userGraphs.filter(g=>document.getElementById('nf_'+g.id)?.checked).map(g=>g.id);
+  graphFolders.push({id:'f_'+Date.now(),name,icon:document.getElementById('nf-icon').value.trim()||'📁',graphIds:checked,open:true});
+  document.getElementById('new-folder-modal').style.display='none';
+  save();renderGraphsPanel();
+}
+function deleteFolder(id){
+  if(!confirm('Delete this folder? Graphs inside are kept.'))return;
+  graphFolders=graphFolders.filter(f=>f.id!==id);
+  save();renderGraphsPanel();
+}
+function toggleFolder(id){
+  const f=graphFolders.find(x=>x.id===id);if(f)f.open=!f.open;
+  renderGraphsPanel();
+}
+function assignGraphToFolder(gid,fid){
+  // Remove from all folders first
+  graphFolders.forEach(f=>{f.graphIds=f.graphIds.filter(x=>x!==gid);});
+  if(fid!=='none'){const f=graphFolders.find(x=>x.id===fid);if(f)f.graphIds.push(gid);}
+  save();renderGraphsPanel();
+}
+
+function renderGraphsPanel(){
+  const list=document.getElementById('graphs-list');if(!list)return;
+  if(!userGraphs.length&&!graphFolders.length){
+    list.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.8">No graphs yet.<br><br>Create a graph to start tracking anything — JARVIS will auto-log data from your chats.</div>`;
+    return;
+  }
+  const graphedIds=new Set(graphFolders.flatMap(f=>f.graphIds));
+  const ungrouped=userGraphs.filter(g=>!graphedIds.has(g.id));
+  let html='';
+  // Render folders
+  graphFolders.forEach(f=>{
+    const folderGraphs=f.graphIds.map(id=>userGraphs.find(g=>g.id===id)).filter(Boolean);
+    html+=`<div style="background:rgba(14,22,40,.5);border:1px solid rgba(168,85,247,.2);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none" onclick="toggleFolder('${f.id}')">
+        <span style="font-size:16px">${f.icon}</span>
+        <span style="font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#a855f7;flex:1;letter-spacing:.06em">${esc(f.name)}</span>
+        <span style="font-size:10px;color:var(--dim)">${folderGraphs.length} graph${folderGraphs.length!==1?'s':''}</span>
+        <span style="color:var(--dim);font-size:12px">${f.open?'▾':'▸'}</span>
+        <button onclick="event.stopPropagation();deleteFolder('${f.id}')" style="background:none;border:none;color:rgba(255,80,80,.3);cursor:pointer;font-size:13px;padding:0">🗑</button>
+      </div>
+      ${f.open&&folderGraphs.length?`<div style="display:flex;flex-direction:column;gap:8px;padding:0 10px 10px">${folderGraphs.map(g=>renderGraphCard(g,f.id)).join('')}</div>`:''}
+      ${f.open&&!folderGraphs.length?'<div style="padding:8px 12px 10px;font-size:11px;color:var(--dim);font-family:IBM Plex Mono,monospace">No graphs in this folder yet.</div>':''}
+    </div>`;
+  });
+  // Render ungrouped
+  if(ungrouped.length){
+    if(graphFolders.length)html+=`<div style="font-size:9px;color:var(--dim);font-weight:700;letter-spacing:.12em;padding:4px 2px">UNGROUPED</div>`;
+    html+=ungrouped.map(g=>renderGraphCard(g,'none')).join('');
+  }
+  list.innerHTML=html;
+  setTimeout(()=>userGraphs.forEach(g=>drawGraph(g)),60);
+}
+
+function renderGraphCard(g,currentFolderId){
+  const folderOptions=`<option value="none" ${currentFolderId==='none'?'selected':''}>No folder</option>`+
+    graphFolders.map(f=>`<option value="${f.id}" ${currentFolderId===f.id?'selected':''}>${esc(f.name)}</option>`).join('');
+  return `<div class="graph-card">
+    <div class="graph-card-head">
+      <span style="font-size:18px">${g.icon}</span>
+      <span class="graph-card-title" style="color:${g.color}">${esc(g.name)}</span>
+      <select onchange="assignGraphToFolder('${g.id}',this.value)" style="padding:2px 6px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);font-size:9px;cursor:pointer;max-width:80px">${folderOptions}</select>
+      <button class="graph-card-del" onclick="removeLastPoint('${g.id}')" title="Remove last" style="font-size:11px;color:var(--dim)">−</button>
+      <button class="graph-card-del" onclick="deleteGraph('${g.id}')">🗑</button>
+    </div>
+    <div class="graph-canvas-wrap"><canvas id="gc_${g.id}" style="width:100%;height:100%"></canvas></div>
+    <div class="graph-add-point">
+      <input id="gx_${g.id}" placeholder="${esc(g.xlabel)}" style="flex:1.2"/>
+      <input id="gy_${g.id}" type="number" placeholder="${esc(g.ylabel)}" style="flex:.8"/>
+      <button onclick="addPointToGraph('${g.id}')" style="padding:6px 12px;border-radius:7px;background:${g.color}18;border:1px solid ${g.color}44;color:${g.color};cursor:pointer;font-size:11px;font-weight:700;flex-shrink:0">+ Add</button>
+    </div>
+  </div>`;
+}
+
+// ── NOTEPAD ──
+let notepadSaveTimer=null;
+function createNotepad(){
+  const id='np_'+Date.now();
+  const note={id,title:'New Note',content:'',updatedAt:Date.now()};
+  notepads.unshift(note);
+  activeNotepadId=id;
+  save();renderNotepadList();openNotepad(id);
+}
+function deleteNotepad(){
+  if(!activeNotepadId)return;
+  if(!confirm('Delete this note?'))return;
+  notepads=notepads.filter(n=>n.id!==activeNotepadId);
+  activeNotepadId=notepads.length?notepads[0].id:null;
+  save();renderNotepadList();
+  if(activeNotepadId)openNotepad(activeNotepadId);
+  else{
+    const tb=document.getElementById('notepad-toolbar');
+    const ed=document.getElementById('notepad-editor');
+    if(tb)tb.style.display='none';
+    if(ed){ed.value='';ed.disabled=true;}
+  }
+}
+function openNotepad(id){
+  activeNotepadId=id;
+  const note=notepads.find(n=>n.id===id);if(!note)return;
+  const tb=document.getElementById('notepad-toolbar');
+  const ed=document.getElementById('notepad-editor');
+  const ti=document.getElementById('notepad-title-input');
+  if(tb)tb.style.display='flex';
+  if(ti)ti.value=note.title;
+  if(ed){ed.value=note.content;ed.disabled=false;ed.focus();}
+  renderNotepadList();
+}
+function updateNotepadTitle(v){
+  const note=notepads.find(n=>n.id===activeNotepadId);if(!note)return;
+  note.title=v;note.updatedAt=Date.now();
+  if(notepadSaveTimer)clearTimeout(notepadSaveTimer);
+  notepadSaveTimer=setTimeout(()=>{save();renderNotepadList();},800);
+}
+function updateNotepadContent(v){
+  const note=notepads.find(n=>n.id===activeNotepadId);if(!note)return;
+  note.content=v;note.updatedAt=Date.now();
+  if(notepadSaveTimer)clearTimeout(notepadSaveTimer);
+  notepadSaveTimer=setTimeout(()=>save(),800);
+}
+function saveNotepadToMemory(){
+  const note=notepads.find(n=>n.id===activeNotepadId);if(!note||!note.content.trim())return;
+  const text=`Note: ${note.title}\n${note.content}`.slice(0,300);
+  addKnowledge(text);
+  const ed=document.getElementById('notepad-editor');
+  if(ed){const old=ed.style.borderColor;ed.style.borderColor=getAgent().color;setTimeout(()=>ed.style.borderColor=old,1000);}
+}
+function renderNotepadList(){
+  const list=document.getElementById('notepad-list');if(!list)return;
+  if(!notepads.length){list.innerHTML='<div style="padding:8px;font-size:10px;color:var(--dim);text-align:center">No notes yet</div>';return;}
+  list.innerHTML=notepads.map(n=>`
+    <div onclick="openNotepad('${n.id}')" style="padding:7px 8px;border-radius:7px;cursor:pointer;border:1px solid ${n.id===activeNotepadId?'var(--ac)33':'transparent'};background:${n.id===activeNotepadId?'var(--ac)08':'transparent'};margin-bottom:2px;transition:all .15s">
+      <div style="font-size:11px;font-weight:700;color:${n.id===activeNotepadId?'var(--ac)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n.title||'Untitled')}</div>
+      <div style="font-size:9px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(n.content.slice(0,30))||'Empty'}</div>
+    </div>`).join('');
+}
+let lastGenImageUrl='';
+let lastGenImagePrompt='';
+
+async function generateImage(){
+  const prompt=document.getElementById('ig-prompt').value.trim();
+  const style=document.getElementById('ig-style').value;
+  const aspect=document.getElementById('ig-aspect').value;
+  if(!prompt){alert('Describe the image first.');return;}
+  if(!apiKey){showApiKeyModal();return;}
+  const status=document.getElementById('ig-status');
+  const result=document.getElementById('ig-result');
+  const btn=document.getElementById('ig-btn');
+  status.textContent='🎨 Generating image...';status.style.color='var(--dim)';
+  result.style.display='none';btn.disabled=true;
+  const fullPrompt=style?`${prompt}, ${style} style`:prompt;
+  // Use Gemini Imagen via the API
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        instances:[{prompt:fullPrompt}],
+        parameters:{sampleCount:1,aspectRatio:aspect,safetyFilterLevel:'block_few',personGeneration:'allow_adult'}
+      })
+    });
+    const d=await r.json();
+    if(d.predictions?.[0]?.bytesBase64Encoded){
+      const b64=d.predictions[0].bytesBase64Encoded;
+      const mimeType=d.predictions[0].mimeType||'image/png';
+      lastGenImageUrl=`data:${mimeType};base64,${b64}`;
+      lastGenImagePrompt=fullPrompt;
+      document.getElementById('ig-img').src=lastGenImageUrl;
+      result.style.display='block';
+      status.textContent='✓ Image generated!';status.style.color='#4ade80';
+    }else if(d.error){
+      // Fallback: use JARVIS to describe the image in extreme detail and show as styled text
+      status.textContent='Imagen not available — using JARVIS Vision Mode...';
+      await generateImageFallback(fullPrompt,aspect);
+    }else{
+      await generateImageFallback(fullPrompt,aspect);
+    }
+  }catch(e){
+    await generateImageFallback(fullPrompt,aspect);
+  }
+  btn.disabled=false;
+}
+
+async function generateImageFallback(prompt,aspect){
+  // Use Gemini to generate an extremely detailed SVG art piece
+  const status=document.getElementById('ig-status');
+  const result=document.getElementById('ig-result');
+  status.textContent='Creating SVG artwork with JARVIS...';
+  const dims=aspect==='16:9'?'width="800" height="450"':aspect==='9:16'?'width="450" height="800"':'width="600" height="600"';
+  const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{role:'user',parts:[{text:`Create a detailed, beautiful SVG illustration for: "${prompt}". Output ONLY raw SVG code starting with <svg ${dims} xmlns="http://www.w3.org/2000/svg">. Make it rich, colorful, with gradients, complex shapes, detailed artwork. No markdown, no explanation, just the SVG.`}]}],generationConfig:{maxOutputTokens:4000,temperature:0.9}})
+  });
+  const d2=await r2.json();
+  const svg=d2.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  if(svg.includes('<svg')){
+    const blob=new Blob([svg],{type:'image/svg+xml'});
+    lastGenImageUrl=URL.createObjectURL(blob);
+    lastGenImagePrompt=prompt;
+    document.getElementById('ig-img').src=lastGenImageUrl;
+    result.style.display='block';
+    status.textContent='✓ SVG artwork ready!';status.style.color='#4ade80';
+  }else{
+    status.textContent='Could not generate image. Try a simpler prompt.';status.style.color='#ff5050';
+  }
+}
+
+function downloadGenImage(){
+  if(!lastGenImageUrl)return;
+  const a=document.createElement('a');
+  a.href=lastGenImageUrl;
+  a.download='jarvis-image-'+Date.now()+(lastGenImageUrl.startsWith('data:image/png')?'.png':'.jpg');
+  a.click();
+}
+
+function sendImageToChat(){
+  if(!lastGenImageUrl)return;
+  document.getElementById('imagegen-modal').style.display='none';
+  switchView('chat');
+  // Add as a message with the image
+  const imgMsg=`[Generated Image: "${lastGenImagePrompt}"]\n<img src="${lastGenImageUrl}" style="max-width:100%;border-radius:8px;margin-top:6px" alt="Generated image"/>`;
+  if(!conversations[activeAgent])conversations[activeAgent]=[];
+  conversations[activeAgent].push({role:'assistant',content:imgMsg,isHtml:true});
+  save();render();
+}
+
 // ── LOGIN STREAK SYSTEM ──
 function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function dateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -1300,7 +1847,7 @@ const DEFAULT_QUICK_COMMANDS=[
 ];
 let customQuickCommands=[];
 
-function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId,customQuickCommands,loginDates};}
+function getDataPayload(){return{agents,conversations,agentKnowledge,agentTempKnowledge,jarvisImports,apiKey,agentVoices,startupCommands,speechFeedback,bootAnimEnabled,calendarNotes,calendarMonth,calendarWeekOffset,orbColor,bgColor,chatSessions,currentSessionId,customQuickCommands,loginDates,userGraphs,graphFolders,notepads};}
 
 function openQcPanel(){
   renderQcGrid();
@@ -1636,6 +2183,7 @@ async function sendMessage(){
       if((conversations[activeAgent]||[]).length>=4)autoNameSession(activeAgent,conversations[activeAgent]);
     }
     checkForSaveableContent(userText,reply);
+    autoLogToGraphs(userText,reply);
     if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>speakAnim(reply),300);return;}
   }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."});}
   voiceMode=false;loading=false;save();render();
@@ -1769,7 +2317,7 @@ function triggerAppOpenStartup(){
 
 // ── AGENT MANAGEMENT ──
 function setActiveAgent(id){activeAgent=id;currentView='chat';if(window.innerWidth<=768)sidebarOpen=false;updSB();render();}
-function switchView(v){if(!['chat','knowledge','calendar'].includes(v))return;currentView=v;render();}
+function switchView(v){if(!['chat','knowledge','calendar','graphs','notepad'].includes(v))return;currentView=v;render();}
 function toggleSidebar(){sidebarOpen=!sidebarOpen;updSB();}
 function updSB(){document.getElementById('sidebar').className=sidebarOpen?'':'closed';}
 function deleteAgent(id){const a=agents.find(x=>x.id===id);if(a?.locked)return;if(!confirm(`Delete "${a.name}"?`))return;agents=agents.filter(x=>x.id!==id);delete conversations[id];if(activeAgent===id)activeAgent=agents[0].id;save();render();}
