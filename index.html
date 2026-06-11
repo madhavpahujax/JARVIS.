@@ -759,10 +759,10 @@ const DEFAULT_AGENTS=[{id:"jarvis-core",name:"J.A.R.V.I.S.",icon:"🧠",color:"#
 const ICONS=["🤖","🎯","🔬","🎮","🏋️","🎵","💡","🌍","📊","🛡️","🚀","🎨","💰","🧪","📱"];
 const COLORS=["#00d4ff","#00ff88","#ff6b35","#a855f7","#f59e0b","#ef4444","#ec4899","#14b8a6"];
 const MODELS=[
-  'gemini-1.5-flash',        // stable, fast, always available on free tier
-  'gemini-1.5-flash-8b',     // smaller/faster fallback, very reliable
-  'gemini-2.0-flash-lite',   // newer lite model
-  'gemini-2.5-flash',        // preview — often busy, last resort
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
 ];
 const VOICE_PRESETS=[{id:'friday',label:'Friday',gender:'female',pitch:1.4,rate:1.05,keywords:['Female','Zira','Hazel','Karen','Samantha','Google UK English Female','Victoria']},{id:'arjun',label:'Arjun',gender:'male',pitch:0.6,rate:0.9,keywords:['Male','David','Daniel','James','Google UK English Male','Alex','Fred']},{id:'nova',label:'Nova',gender:'female',pitch:1.1,rate:1.0,keywords:['Female','Fiona','Moira','Google US English','Samantha','Zira','Karen']},{id:'titan',label:'Titan',gender:'male',pitch:0.85,rate:0.95,keywords:['Male','George','Richard','Google UK English Male','David','Daniel','Thomas']}];
 
@@ -2498,7 +2498,12 @@ async function checkForSaveableContent(userMsg,aiReply){
 
   // 3. CALENDAR — explicit add to calendar
   if(calMatch){
-    const key=detectDate(u,today)||todayISO;
+    // Detect date from message — check yesterday/today explicitly first
+    let key=null;
+    if(/\byesterday\b/i.test(u))key=yesterdayISO;
+    else if(/\btoday\b/i.test(u))key=todayISO;
+    else key=detectDate(u,today);
+    if(!key)key=todayISO;
     const text=userMsg.slice(0,120);
     calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
     save();
@@ -2676,21 +2681,16 @@ function addSaveConfirmToChat(type,text,meta){
   const label=labels[type]||'✓ Saved';
   const removeId='rm_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
   saveMetaMap[removeId]={type,meta,text};
-  const snippet=text.length>60?text.slice(0,57)+'…':text;
-  const escapedSnippet=snippet.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // Append directly to chat DOM without triggering a full render
+  const snippet=(text.length>60?text.slice(0,57)+'…':text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Append directly to chat DOM — do NOT push to conversations array to avoid duplicate on next render()
   const chat=document.getElementById('chat');
   if(!chat)return;
   const div=document.createElement('div');
   div.className='msg a';
-  div.style.animation='fadeUp .25s';
-  div.innerHTML=`<div class="bub" style="font-size:12px">${label}<br><span style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">"${escapedSnippet}"</span><br><button id="${removeId}" onclick="removeSavedEntry('${removeId}')" style="margin-top:6px;padding:3px 10px;border-radius:6px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;cursor:pointer;font-size:10px;font-weight:700">✕ Remove</button></div>`;
+  div.setAttribute('data-save-confirm',removeId); // mark so render() won't duplicate it
+  div.innerHTML=`<div class="bub" style="font-size:12px;background:rgba(0,0,0,.25)">${label}<br><span style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">"${snippet}"</span><br><button id="${removeId}" onclick="removeSavedEntry('${removeId}')" style="margin-top:6px;padding:3px 10px;border-radius:6px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;cursor:pointer;font-size:10px;font-weight:700">✕ Remove</button></div>`;
   chat.appendChild(div);
   chat.scrollTop=chat.scrollHeight;
-  // Also store in conversations for history (but don't trigger render)
-  if(!conversations[activeAgent])conversations[activeAgent]=[];
-  const msgObj={role:'assistant',content:`${label} — "${snippet}"`,isHtml:false,isSaveConfirm:true};
-  conversations[activeAgent].push(msgObj);
 }
 
 function removeSavedEntry(removeId){
