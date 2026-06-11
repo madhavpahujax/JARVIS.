@@ -1107,27 +1107,12 @@ async function smartSpeakText(text,agentId){
   const cleaned=cleanSpeechText(text);
   if(!cleaned||cleaned.length<3){speakAnim(text);return;}
   const wordCount=cleaned.split(/\s+/).filter(w=>w.length>0).length;
-  if(!speechSummarise||wordCount<=100){speakAnim(cleaned);return;}
-  // Over 100 words — summarise
-  if(!apiKey){speakAnim(cleaned);return;}
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:`You are a voice assistant. Summarise the following reply in exactly 1-3 natural spoken sentences, maximum 40 words total. No markdown, no bullet points, no special characters, just plain conversational English:\n\n${cleaned.slice(0,1200)}`}]}],
-        generationConfig:{maxOutputTokens:100,temperature:0.1}
-      })
-    });
-    const d=await r.json();
-    const summary=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
-    if(summary.length>10){
-      speakAnim(summary);
-    }else{
-      speakAnim(cleaned);
-    }
-  }catch(e){
-    speakAnim(cleaned);
+  if(!speechSummarise||wordCount<=100){
+    speakAnim(cleaned);return;
   }
+  // Over 100 words — speak first 80 words + ellipsis (no extra API call)
+  const shortened=cleaned.split(/\s+/).slice(0,80).join(' ')+'...';
+  speakAnim(shortened);
 }
 
 function toggleSpeechFeedback(){if(isSpeaking){stopSpeaking();speechFeedback=false;}else{speechFeedback=!speechFeedback;}save();render();}
@@ -2444,18 +2429,14 @@ async function sendMessage(){
     conversations[activeAgent].push({role:'assistant',content:reply});
     if(!tempMode){
       archiveCurrentSession(activeAgent);
-      if((conversations[activeAgent]||[]).length>=4)autoNameSession(activeAgent,conversations[activeAgent]);
     }
     // Run speech and render first, then do background saves after
     loading=false;voiceMode=false;save();render();
     if(speechFeedback&&reply&&!reply.startsWith('Error:'))setTimeout(()=>smartSpeakText(reply,activeAgent),300);
     else cvmScheduleRestart(800); // if speech off, restart mic directly
     // Background saves — fire after UI is settled, never block the response
-    const capturedUser=userText,capturedReply=reply;
-    setTimeout(()=>{
-      checkForSaveableContent(capturedUser,capturedReply);
-      autoLogToGraphs(capturedUser,capturedReply);
-    },800);
+    const capturedUser=userText;
+    setTimeout(()=>checkForSaveableContent(capturedUser,reply),600);
     return;
   }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."});}
   voiceMode=false;loading=false;save();render();
@@ -2473,59 +2454,120 @@ function dismissSmartSave(){
 // ── INTELLIGENT SAVE SYSTEM ──
 // Uses Gemini to understand intent, then acts directly or asks only for what's missing
 async function checkForSaveableContent(userMsg,aiReply){
-  if(!apiKey)return;
-  const u=userMsg.toLowerCase();
+  if(!userMsg)return;
+  const u=userMsg.toLowerCase().trim();
 
-  // Quick keyword pre-filter — only call Gemini if something saveable likely mentioned
-  const saveKeywords=/\b(save|remember|note|log|add|store|keep|record|calendar|memory|graph|remind|schedule|track|put|write)\b/i;
-  const personalKeywords=/\b(my|i am|i'm|i have|i go|i play|i study|i live|i work|i attend|i did|i scored|i finished|i completed|i started|i went|today|yesterday|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|every time|on login|on startup|remind me daily)\b/i;
-  if(!saveKeywords.test(u)&&!personalKeywords.test(u))return;
+  // ── Pure JS detection — zero extra API calls ──
 
+  // 1. EXPLICIT SAVE COMMANDS — user directly says where to save
+  const memMatch=/\b(save|remember|store|note|keep)\b.*\b(memory|mind|brain)\b|\b(memory|mind)\b.*\b(save|remember|store)\b/i.test(u);
+  const calMatch=/\b(add|log|save|put|note)\b.*\b(calendar|schedule|agenda)\b|\b(calendar|schedule)\b.*\b(add|log)\b/i.test(u);
+  const cmdMatch=/\b(every time|on startup|on login|when i open|always|each time|remind me daily|run on start)\b/i.test(u);
+
+  // 2. DATE DETECTION for calendar
   const today=new Date();
-  const todayISO=today.toISOString().slice(0,10);
-  const yesterday=new Date(today);yesterday.setDate(today.getDate()-1);
-  const yesterdayISO=yesterday.toISOString().slice(0,10);
-  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const todayISO=fmt(today);
+  const yesterdayDate=new Date(today);yesterdayDate.setDate(today.getDate()-1);
+  const yesterdayISO=fmt(yesterdayDate);
+  const days=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
-  const graphList=userGraphs.length?userGraphs.map((g,i)=>`[${i}] ${g.name} — tracks: ${g.track||g.ylabel}`).join('\n'):'None';
+  // 3. CALENDAR — explicit add to calendar
+  if(calMatch){
+    const key=detectDate(u,today)||todayISO;
+    const text=userMsg.slice(0,120);
+    calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
+    save();
+    addSaveConfirmToChat('calendar',text,{key});
+    return;
+  }
 
-  const prompt=`JARVIS save assistant. User message: "${userMsg}"
+  // 4. MEMORY — explicit save to memory
+  if(memMatch){
+    const text=userMsg.slice(0,120);
+    agentKnowledge[activeAgent]=agentKnowledge[activeAgent]||[];
+    agentKnowledge[activeAgent].push(text);
+    save();
+    addSaveConfirmToChat('memory',text,{agentId:activeAgent,index:agentKnowledge[activeAgent].length-1});
+    return;
+  }
 
-Today=${todayISO}(${days[today.getDay()]}) Yesterday=${yesterdayISO}
+  // 5. LOGIN COMMAND — explicit startup command
+  if(cmdMatch){
+    const cmdId='sc-'+Date.now();
+    const text=userMsg.slice(0,120);
+    startupCommands.push({id:cmdId,agentId:activeAgent,text,enabled:true});
+    save();
+    addSaveConfirmToChat('logincmd',text,{cmdId});
+    return;
+  }
 
-Graphs: ${graphList}
+  // 6. YESTERDAY/TODAY + activity keyword → auto-calendar (no API call)
+  const activityWords=/\b(did|went|had|played|studied|trained|worked|practiced|finished|completed|started|attended|scored|ran|exercised|ate|slept|practiced|won|lost)\b/i;
+  if(activityWords.test(u)){
+    let key=null;
+    if(/\byesterday\b/i.test(u))key=yesterdayISO;
+    else if(/\btoday\b/i.test(u))key=todayISO;
+    else{
+      for(let i=0;i<days.length;i++){
+        if(u.includes(days[i])){const d=new Date(today);const diff=(i-today.getDay()+7)%7;d.setDate(d.getDate()-(diff===0?7:diff));key=fmt(d);break;}
+      }
+    }
+    if(key){
+      const text=userMsg.slice(0,120);
+      calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
+      save();
+      addSaveConfirmToChat('calendar',text,{key});
+      return;
+    }
+  }
 
-Return JSON only, no markdown:
-{"action":"save_memory"|"save_calendar"|"save_login_cmd"|"save_graph"|"ask_date"|"show_popup"|"none","text":"concise text to save","date":"YYYY-MM-DD","graphIndex":0,"graphX":"label","graphY":0}
+  // 7. GRAPH — keyword match against graph names/tracks
+  if(userGraphs.length){
+    const numMatch=u.match(/\b(\d+(?:\.\d+)?)\b/);
+    if(numMatch){
+      const val=parseFloat(numMatch[1]);
+      const matched=userGraphs.find(g=>{
+        const track=(g.track||g.name||'').toLowerCase();
+        return track.split(/\s+/).some(w=>w.length>3&&u.includes(w));
+      });
+      if(matched){
+        const ptIndex=matched.points.length;
+        const xLabel=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+        matched.points.push({x:xLabel,y:val,ts:Date.now(),auto:true});
+        save();
+        if(currentView==='graphs')renderGraphsPanel();
+        addSaveConfirmToChat('graph',`${matched.name}: ${xLabel} = ${val}`,{graphId:matched.id,ptIndex});
+        return;
+      }
+    }
+  }
 
-Rules (be decisive, pick the most specific action):
-- save_memory: explicit personal facts/prefs OR user said save/remember/note
-- save_calendar: event/task with clear date (today/yesterday/day name/specific date)
-- ask_date: event/task but no date mentioned
-- save_login_cmd: "every time"/"on startup"/"always run"/"remind me daily"
-- save_graph: numeric data + matching graph + clear x and y value
-- show_popup: user explicitly said "save this" but destination unclear
-- none: regular conversation, questions, no personal data to store
+  // 8. Generic "save this" / "note this" → show popup
+  if(/\b(save this|note this|log this|remember this|store this)\b/i.test(u)){
+    smartSaveData={text:userMsg.slice(0,120),type:'show_popup',date:'',graphId:''};
+    document.getElementById('ss-text').textContent=smartSaveData.text;
+    document.getElementById('smart-save').classList.add('show');
+    if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
+    smartSaveDismissTimer=setTimeout(dismissSmartSave,12000);
+  }
+}
 
-Examples:
-"add football practice to calendar yesterday" → save_calendar date=${yesterdayISO}
-"remember my school is DPS" → save_memory
-"save this to memory" → save_memory
-"log 5 hours of study today" → save_graph (if study graph exists) or save_calendar
-"I scored 3 goals" → save_graph (if goals graph exists) or save_memory
-"remind me to check news on startup" → save_login_cmd`;
-
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:150,temperature:0}})
-    });
-    const d=await r.json();
-    if(d.error){console.warn('Save AI error:',d.error.message);return;}
-    const raw=(d.candidates?.[0]?.content?.parts?.[0]?.text||'{}').replace(/```json?|```/g,'').trim();
-    const result=JSON.parse(raw);
-    if(result.action&&result.action!=='none')await executeSaveAction(result,userMsg);
-  }catch(e){console.warn('checkForSaveableContent error:',e.message);}
+function detectDate(text,today){
+  const t=text.toLowerCase();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if(/\btoday\b/.test(t))return fmt(today);
+  if(/\byesterday\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()-1);return fmt(d);}
+  const days=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  for(let i=0;i<days.length;i++){
+    if(t.includes(days[i])){const d=new Date(today);const diff=(i-today.getDay()+7)%7;d.setDate(d.getDate()-(diff===0?7:diff));return fmt(d);}
+  }
+  const iso=text.match(/\b(\d{4}-\d{2}-\d{2})\b/);if(iso)return iso[1];
+  const months=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  for(let i=0;i<months.length;i++){const re=new RegExp('(\\d{1,2})\\s*(?:st|nd|rd|th)?\\s*'+months[i]);const m=t.match(re);if(m)return`2026-${pad(i+1)}-${pad(parseInt(m[1]))}`;const re2=new RegExp(months[i]+'\\s*(\\d{1,2})');const m2=t.match(re2);if(m2)return`2026-${pad(i+1)}-${pad(parseInt(m2[1])-0)}`;}
+  return null;
 }
 
 async function executeSaveAction(result,originalMsg){
