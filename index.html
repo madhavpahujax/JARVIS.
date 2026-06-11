@@ -970,7 +970,7 @@ function autoNameSession(agentId,msgs){
   // Async: ask Gemini to generate a better title in background
   if(!apiKey||msgs.length<4)return;
   const excerpt=msgs.slice(0,6).map(m=>`${m.role==='user'?'User':'JARVIS'}: ${m.content.slice(0,100)}`).join('\n');
-  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({contents:[{role:'user',parts:[{text:`Give this conversation a short title (max 5 words, no quotes, no punctuation at end):\n\n${excerpt}`}]}],generationConfig:{maxOutputTokens:20,temperature:0.2}})
   }).then(r=>r.json()).then(d=>{
@@ -1536,7 +1536,7 @@ ${userGraphs.map((g,i)=>`${i}: "${g.name}" tracking "${g.track||g.ylabel}" (x=${
 Respond ONLY with JSON array (empty if nothing to log):
 [{"graphIndex":0,"x":"label","y":42}]
 No markdown, no explanation.`;
-  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:200,temperature:0}})
   }).then(r=>r.json()).then(d=>{
@@ -1830,7 +1830,7 @@ async function generateImageFallback(prompt,aspect){
   // Step 1: expand vague prompts
   let expandedPrompt=prompt;
   try{
-    const ex=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    const ex=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts:[{text:`Expand into a vivid 2-sentence visual description for an illustration (colors, shapes, mood, composition): "${prompt}"`}]}],generationConfig:{maxOutputTokens:100,temperature:0.7}})
     });
@@ -1853,7 +1853,7 @@ Requirements:
 - Minimum 20 distinct shape elements`;
 
   try{
-    const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:8192,temperature:0.85}})
     });
@@ -2170,11 +2170,10 @@ async function fetchWebClip(){
   try{
     // Use Gemini with Google Search to fetch and summarise the URL
     const prompt=`Please visit and summarise this URL: ${url}\n\nProvide:\n1. A brief title\n2. Key points (3-5 bullets)\n3. Main takeaway\n\nBe concise. If you cannot access the URL, say so.`;
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:prompt}]}],
-        tools:[{google_search:{}}],
         generationConfig:{maxOutputTokens:600,temperature:0.3}
       })
     });
@@ -2366,7 +2365,7 @@ function stopRec(){isRecording=false;document.getElementById('mic-btn').classLis
 
 // ── AI ──
 async function tryModel(m,sys,c){
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8},tools:[{google_search:{}}]})});
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:c,generationConfig:{maxOutputTokens:2048,temperature:.8}})});
   const d=await r.json();
   if(d.candidates?.[0]?.content?.parts)return{ok:true,reply:d.candidates[0].content.parts.map(p=>p.text||'').join('')};
   if(d.error){
