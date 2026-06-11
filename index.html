@@ -598,11 +598,11 @@ a{color:var(--ac)}
 </div>
 
 <!-- Image Generation Modal -->
-<div class="ov" id="imagegen-modal" style="display:none" onclick="document.getElementById('imagegen-modal').style.display='none'">
+<div class="ov" id="imagegen-modal" style="display:none" onclick="resetImageModal();document.getElementById('imagegen-modal').style.display='none'">
   <div class="md" style="max-width:480px" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
       <h2 style="margin:0">🎨 Image Generation</h2>
-      <button onclick="document.getElementById('imagegen-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
+      <button onclick="resetImageModal();document.getElementById('imagegen-modal').style.display='none'" style="width:28px;height:28px;border-radius:6px;background:var(--input);border:1px solid var(--border);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center">×</button>
     </div>
     <label>DESCRIBE YOUR IMAGE</label>
     <textarea id="ig-prompt" placeholder="A futuristic city at night with neon lights reflecting in rain puddles..." style="height:80px;resize:vertical"></textarea>
@@ -1104,27 +1104,39 @@ function toggleSpeechSummarise(){speechSummarise=!speechSummarise;save();}
 // Smart speech: summarise long replies before speaking
 async function smartSpeakText(text,agentId){
   if(!speechFeedback)return;
+  // Always clean the text before speaking
   const cleaned=cleanSpeechText(text);
-  if(!cleaned)return;
-  // Count words to determine if long
-  const words=cleaned.split(/\s+/).filter(Boolean).length;
-  if(!speechSummarise||words<=60){
-    speakAnim(text);return;
+  if(!cleaned||cleaned.length<3)return;
+  // Count ALL words in cleaned text
+  const wordCount=cleaned.split(/\s+/).filter(w=>w.length>0).length;
+  // If short enough or summarise disabled, speak cleaned version directly
+  if(!speechSummarise||wordCount<=100){
+    speakAnim(cleaned);return;
   }
-  // Long — get spoken summary from Gemini
-  if(!apiKey){speakAnim(text);return;}
+  // Over 100 words — get a ≤40-word summary from Gemini
+  if(!apiKey){speakAnim(cleaned);return;}
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:`Summarise for voice in ONE sentence (15-25 words max, natural speech, no lists, no special characters):\n\n${text.slice(0,600)}`}]}],
-        generationConfig:{maxOutputTokens:60,temperature:0.2}
+        contents:[{role:'user',parts:[{text:`Summarise this in 30-40 words for text-to-speech. Plain natural spoken English only. No lists, no bullet points, no markdown, no special characters:\n\n${cleaned.slice(0,1000)}`}]}],
+        generationConfig:{maxOutputTokens:80,temperature:0.1}
       })
     });
     const d=await r.json();
-    const summary=d.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    speakAnim(summary&&summary.length>8?summary:text);
-  }catch(e){speakAnim(text);}
+    const summary=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    // Verify summary is actually shorter and usable
+    const summaryWords=summary.split(/\s+/).filter(w=>w.length>0).length;
+    if(summary.length>5&&summaryWords<=50){
+      speakAnim(summary);
+    }else{
+      // Fallback: speak first 100 words of cleaned text
+      speakAnim(cleaned.split(/\s+/).slice(0,100).join(' ')+'.');
+    }
+  }catch(e){
+    // On error speak first 100 words
+    speakAnim(cleaned.split(/\s+/).slice(0,100).join(' ')+'.');
+  }
 }
 
 function toggleSpeechFeedback(){if(isSpeaking){stopSpeaking();speechFeedback=false;}else{speechFeedback=!speechFeedback;}save();render();}
@@ -1760,38 +1772,32 @@ async function generateImage(){
   const status=document.getElementById('ig-status');
   const result=document.getElementById('ig-result');
   const btn=document.getElementById('ig-btn');
-  status.textContent='🎨 Generating image...';status.style.color='var(--dim)';
-  result.style.display='none';btn.disabled=true;
+  // Reset previous result
+  resetImageModal();
+  status.textContent='🎨 Generating...';status.style.color='var(--dim)';
+  btn.disabled=true;
   const fullPrompt=style?`${prompt}, ${style} style`:prompt;
-  // Use Gemini Imagen via the API
+  // Try Imagen first
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        instances:[{prompt:fullPrompt}],
-        parameters:{sampleCount:1,aspectRatio:aspect,safetyFilterLevel:'block_few',personGeneration:'allow_adult'}
-      })
+      body:JSON.stringify({instances:[{prompt:fullPrompt}],parameters:{sampleCount:1,aspectRatio:aspect,safetyFilterLevel:'block_few',personGeneration:'allow_adult'}})
     });
     const d=await r.json();
     if(d.predictions?.[0]?.bytesBase64Encoded){
       const b64=d.predictions[0].bytesBase64Encoded;
       const mimeType=d.predictions[0].mimeType||'image/png';
       lastGenImageUrl=`data:${mimeType};base64,${b64}`;
-      lastGenImagePrompt=fullPrompt;
-      lastGenImageSvg='';
-      document.getElementById('ig-img').src=lastGenImageUrl;
+      lastGenImagePrompt=fullPrompt;lastGenImageSvg='';
+      const imgEl=document.getElementById('ig-img');
+      imgEl.style.display='';imgEl.src=lastGenImageUrl;
       result.style.display='block';
       status.textContent='✓ Image generated!';status.style.color='#4ade80';
-    }else if(d.error){
-      // Fallback: use JARVIS to describe the image in extreme detail and show as styled text
-      status.textContent='Imagen not available — using JARVIS Vision Mode...';
-      await generateImageFallback(fullPrompt,aspect);
-    }else{
-      await generateImageFallback(fullPrompt,aspect);
+      btn.disabled=false;return;
     }
-  }catch(e){
-    await generateImageFallback(fullPrompt,aspect);
-  }
+  }catch(e){}
+  // Fallback to SVG
+  await generateImageFallback(fullPrompt,aspect);
   btn.disabled=false;
 }
 
@@ -1799,72 +1805,87 @@ async function generateImageFallback(prompt,aspect){
   const status=document.getElementById('ig-status');
   const result=document.getElementById('ig-result');
   const imgEl=document.getElementById('ig-img');
-  status.textContent='Creating artwork with JARVIS Vision...';status.style.color='var(--dim)';
+  status.textContent='Creating artwork with JARVIS...';status.style.color='var(--dim)';
   const w=aspect==='16:9'?800:aspect==='9:16'?450:600;
   const h=aspect==='16:9'?450:aspect==='9:16'?800:600;
 
-  // First, ask Gemini to expand the prompt into a detailed visual description
+  // Step 1: expand vague prompts
   let expandedPrompt=prompt;
   try{
     const ex=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:`Expand this into a vivid, specific visual description for an SVG illustration (2-3 sentences, describe colors, shapes, atmosphere, composition): "${prompt}"`}]}],generationConfig:{maxOutputTokens:150,temperature:0.8}})
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:`Expand into a vivid 2-sentence visual description for an illustration (colors, shapes, mood, composition): "${prompt}"`}]}],generationConfig:{maxOutputTokens:100,temperature:0.7}})
     });
     const ed=await ex.json();
-    const expanded=ed.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if(expanded&&expanded.length>20)expandedPrompt=expanded;
+    const expanded=(ed.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    if(expanded.length>15)expandedPrompt=expanded;
   }catch(e){}
 
-  // Now generate the SVG
-  const svgPrompt=`Create a beautiful SVG illustration. Description: ${expandedPrompt}
+  // Step 2: generate SVG
+  const svgPrompt=`Create a colorful SVG illustration for: ${expandedPrompt}
 
-REQUIREMENTS:
-- Output ONLY the SVG code, nothing else
-- First line must be: <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-- Last line must be: </svg>
-- Use <defs> with <linearGradient> and <radialGradient> elements for rich colors
-- Fill entire canvas with background first
-- Include sky/background, main subject, foreground elements, lighting effects
-- Use circles, rects, paths, polygons generously
-- Rich colors - no plain white or plain black backgrounds
-- No text elements
-- Make it visually stunning`;
+Output ONLY valid SVG. Start with <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"> and end with </svg>.
+Requirements:
+- Full colored background covering entire canvas
+- Use gradients in <defs> for sky/background
+- Multiple layered shapes: background, midground, foreground
+- Rich vibrant colors throughout
+- No white or near-white backgrounds
+- No text or labels
+- Minimum 20 distinct shape elements`;
 
   try{
     const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:5000,temperature:0.9}})
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:6000,temperature:0.85}})
     });
     const d2=await r2.json();
-    let raw=d2.candidates?.[0]?.content?.parts?.[0]?.text||'';
-    // Clean up any markdown
-    raw=raw.replace(/^```(?:svg|xml)?\s*/i,'').replace(/```\s*$/,'').trim();
-    // Find SVG boundaries
-    const svgStart=raw.indexOf('<svg');
-    const svgEnd=raw.lastIndexOf('</svg>');
-    if(svgStart!==-1&&svgEnd!==-1){
-      const svg=raw.slice(svgStart,svgEnd+6);
-      // Encode as data URI
-      const encoded='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-      lastGenImageUrl=encoded;
+    let raw=(d2.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    // Strip markdown fences
+    raw=raw.replace(/^```(?:svg|xml|html)?\s*/im,'').replace(/\s*```\s*$/,'').trim();
+    const s=raw.indexOf('<svg');
+    const e=raw.lastIndexOf('</svg>');
+    if(s!==-1&&e!==-1){
+      const svg=raw.slice(s,e+6);
       lastGenImageSvg=svg;
       lastGenImagePrompt=prompt;
-      imgEl.onload=()=>{result.style.display='block';status.textContent='✓ Artwork ready!';status.style.color='#4ade80';};
-      imgEl.onerror=()=>{
-        // Base64 fallback
-        try{
-          const b64='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
-          imgEl.src=b64;lastGenImageUrl=b64;
-          result.style.display='block';status.textContent='✓ Artwork ready!';status.style.color='#4ade80';
-        }catch(err){status.textContent='Could not display image. Try a different prompt.';status.style.color='#ff5050';}
-      };
-      imgEl.src=encoded;
+      // Render SVG directly as innerHTML into a wrapper div — most reliable method
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText=`width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border)`;
+      wrapper.innerHTML=svg;
+      // Make the SVG responsive
+      const svgEl=wrapper.querySelector('svg');
+      if(svgEl){
+        svgEl.style.width='100%';
+        svgEl.style.height='auto';
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+        svgEl.setAttribute('viewBox',`0 0 ${w} ${h}`);
+      }
+      // Replace the img element with our wrapper
+      imgEl.style.display='none';
+      const existingWrapper=document.getElementById('ig-svg-wrap');
+      if(existingWrapper)existingWrapper.remove();
+      wrapper.id='ig-svg-wrap';
+      imgEl.parentNode.insertBefore(wrapper,imgEl);
+      // Also create a data URL for download
+      lastGenImageUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      result.style.display='block';
+      status.textContent='✓ Artwork ready!';status.style.color='#4ade80';
     }else{
-      status.textContent='Generation incomplete. Please try again.';status.style.color='#ff5050';
+      status.textContent='Could not extract SVG. Try again with a different prompt.';status.style.color='#ff5050';
     }
   }catch(e){
-    status.textContent='Network error. Check connection.';status.style.color='#ff5050';
+    status.textContent='Error: '+e.message;status.style.color='#ff5050';
   }
+}
+
+function resetImageModal(){
+  const wrap=document.getElementById('ig-svg-wrap');if(wrap)wrap.remove();
+  const imgEl=document.getElementById('ig-img');if(imgEl)imgEl.style.display='';
+  document.getElementById('ig-result').style.display='none';
+  document.getElementById('ig-status').textContent='';
+  lastGenImageUrl='';lastGenImageSvg='';lastGenImagePrompt='';
 }
 
 function downloadGenImage(){
@@ -1877,13 +1898,22 @@ function downloadGenImage(){
 }
 
 function sendImageToChat(){
-  if(!lastGenImageUrl)return;
+  if(!lastGenImageUrl&&!lastGenImageSvg)return;
   document.getElementById('imagegen-modal').style.display='none';
   switchView('chat');
-  // Add as a message with the image
-  const imgMsg=`[Generated Image: "${lastGenImagePrompt}"]\n<img src="${lastGenImageUrl}" style="max-width:100%;border-radius:8px;margin-top:6px" alt="Generated image"/>`;
+  let imgHtml;
+  if(lastGenImageSvg){
+    // Inline SVG in chat
+    const tempDiv=document.createElement('div');
+    tempDiv.innerHTML=lastGenImageSvg;
+    const svgEl=tempDiv.querySelector('svg');
+    if(svgEl){svgEl.style.width='100%';svgEl.style.height='auto';svgEl.setAttribute('viewBox',`0 0 600 600`);}
+    imgHtml=`[Generated: "${lastGenImagePrompt}"]\n`+tempDiv.innerHTML;
+  }else{
+    imgHtml=`[Generated: "${lastGenImagePrompt}"]\n<img src="${lastGenImageUrl}" style="max-width:100%;border-radius:8px;margin-top:6px" alt="Generated image"/>`;
+  }
   if(!conversations[activeAgent])conversations[activeAgent]=[];
-  conversations[activeAgent].push({role:'assistant',content:imgMsg,isHtml:true});
+  conversations[activeAgent].push({role:'assistant',content:imgHtml,isHtml:true});
   save();render();
 }
 
@@ -2366,12 +2396,18 @@ async function sendMessage(){
     conversations[activeAgent].push({role:'assistant',content:reply});
     if(!tempMode){
       archiveCurrentSession(activeAgent);
-      // Auto-name the session after enough messages
       if((conversations[activeAgent]||[]).length>=4)autoNameSession(activeAgent,conversations[activeAgent]);
     }
-    checkForSaveableContent(userText,reply);
-    autoLogToGraphs(userText,reply);
-    if(speechFeedback&&reply&&!reply.startsWith('Error:')){loading=false;voiceMode=false;save();render();setTimeout(()=>smartSpeakText(reply,activeAgent),300);return;}
+    // Run speech and render first, then do background saves after
+    loading=false;voiceMode=false;save();render();
+    if(speechFeedback&&reply&&!reply.startsWith('Error:'))setTimeout(()=>smartSpeakText(reply,activeAgent),300);
+    // Background saves — fire after UI is settled, never block the response
+    const capturedUser=userText,capturedReply=reply;
+    setTimeout(()=>{
+      checkForSaveableContent(capturedUser,capturedReply);
+      autoLogToGraphs(capturedUser,capturedReply);
+    },800);
+    return;
   }catch(e){conversations[activeAgent].push({role:'assistant',content:"Connection disrupted."});}
   voiceMode=false;loading=false;save();render();
 }
@@ -2456,14 +2492,14 @@ async function executeSaveAction(result,originalMsg){
     case 'save_memory':
       agentKnowledge[activeAgent]=agentKnowledge[activeAgent]||[];
       agentKnowledge[activeAgent].push(text);
-      save();render();
+      save();
       addSaveConfirmToChat('memory',text,{agentId:activeAgent,index:agentKnowledge[activeAgent].length-1});
       break;
 
     case 'save_calendar':{
       const key=result.date||new Date().toISOString().slice(0,10);
       calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
-      save();render();
+      save();
       addSaveConfirmToChat('calendar',text,{key});
       break;
     }
@@ -2478,7 +2514,7 @@ async function executeSaveAction(result,originalMsg){
     case 'save_login_cmd':{
       const cmdId='sc-'+Date.now();
       startupCommands.push({id:cmdId,agentId:activeAgent,text,enabled:true});
-      save();render();
+      save();
       addSaveConfirmToChat('logincmd',text,{cmdId});
       break;
     }
