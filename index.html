@@ -1104,38 +1104,29 @@ function toggleSpeechSummarise(){speechSummarise=!speechSummarise;save();}
 // Smart speech: summarise long replies before speaking
 async function smartSpeakText(text,agentId){
   if(!speechFeedback)return;
-  // Always clean the text before speaking
   const cleaned=cleanSpeechText(text);
-  if(!cleaned||cleaned.length<3)return;
-  // Count ALL words in cleaned text
+  if(!cleaned||cleaned.length<3){speakAnim(text);return;}
   const wordCount=cleaned.split(/\s+/).filter(w=>w.length>0).length;
-  // If short enough or summarise disabled, speak cleaned version directly
-  if(!speechSummarise||wordCount<=100){
-    speakAnim(cleaned);return;
-  }
-  // Over 100 words — get a ≤40-word summary from Gemini
+  if(!speechSummarise||wordCount<=100){speakAnim(cleaned);return;}
+  // Over 100 words — summarise
   if(!apiKey){speakAnim(cleaned);return;}
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:`Summarise this in 30-40 words for text-to-speech. Plain natural spoken English only. No lists, no bullet points, no markdown, no special characters:\n\n${cleaned.slice(0,1000)}`}]}],
-        generationConfig:{maxOutputTokens:80,temperature:0.1}
+        contents:[{role:'user',parts:[{text:`You are a voice assistant. Summarise the following reply in exactly 1-3 natural spoken sentences, maximum 40 words total. No markdown, no bullet points, no special characters, just plain conversational English:\n\n${cleaned.slice(0,1200)}`}]}],
+        generationConfig:{maxOutputTokens:100,temperature:0.1}
       })
     });
     const d=await r.json();
     const summary=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
-    // Verify summary is actually shorter and usable
-    const summaryWords=summary.split(/\s+/).filter(w=>w.length>0).length;
-    if(summary.length>5&&summaryWords<=50){
+    if(summary.length>10){
       speakAnim(summary);
     }else{
-      // Fallback: speak first 100 words of cleaned text
-      speakAnim(cleaned.split(/\s+/).slice(0,100).join(' ')+'.');
+      speakAnim(cleaned);
     }
   }catch(e){
-    // On error speak first 100 words
-    speakAnim(cleaned.split(/\s+/).slice(0,100).join(' ')+'.');
+    speakAnim(cleaned);
   }
 }
 
@@ -1191,6 +1182,7 @@ function buildSystemPrompt(agentId){
 function render(){
   const a=getAgent(),msgs=getMessages();
   normalizeStartupCommands();
+  updateVoiceToggleUI(); // always keep toggle in sync with state
   document.documentElement.style.setProperty('--ac',a.color);
   document.getElementById('agent-count').textContent=agents.length;
   document.getElementById('sb-profile-name').textContent='👤 '+getProfileName();
@@ -1837,46 +1829,44 @@ Requirements:
   try{
     const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:6000,temperature:0.85}})
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:8192,temperature:0.85}})
     });
     const d2=await r2.json();
+    if(d2.error){status.textContent='API error: '+d2.error.message;status.style.color='#ff5050';return;}
     let raw=(d2.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
-    // Strip markdown fences
-    raw=raw.replace(/^```(?:svg|xml|html)?\s*/im,'').replace(/\s*```\s*$/,'').trim();
-    const s=raw.indexOf('<svg');
-    const e=raw.lastIndexOf('</svg>');
+    if(!raw){status.textContent='No response. Check API key and try again.';status.style.color='#ff5050';return;}
+    // Strip ALL markdown fences (any variant)
+    raw=raw.replace(/^```\w*\s*/m,'').replace(/```\s*$/,'').trim();
+    let s=raw.indexOf('<svg');
+    let e=raw.lastIndexOf('</svg>');
+    // Handle truncated SVG (hit token limit before closing tag)
+    if(s!==-1&&e===-1){e=raw.length;raw=raw+'</svg>';}
     if(s!==-1&&e!==-1){
       const svg=raw.slice(s,e+6);
       lastGenImageSvg=svg;
       lastGenImagePrompt=prompt;
-      // Render SVG directly as innerHTML into a wrapper div — most reliable method
       const wrapper=document.createElement('div');
-      wrapper.style.cssText=`width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border)`;
+      wrapper.style.cssText='width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border)';
       wrapper.innerHTML=svg;
-      // Make the SVG responsive
       const svgEl=wrapper.querySelector('svg');
       if(svgEl){
-        svgEl.style.width='100%';
-        svgEl.style.height='auto';
-        svgEl.removeAttribute('width');
-        svgEl.removeAttribute('height');
+        svgEl.style.width='100%';svgEl.style.height='auto';
+        svgEl.removeAttribute('width');svgEl.removeAttribute('height');
         svgEl.setAttribute('viewBox',`0 0 ${w} ${h}`);
       }
-      // Replace the img element with our wrapper
       imgEl.style.display='none';
       const existingWrapper=document.getElementById('ig-svg-wrap');
       if(existingWrapper)existingWrapper.remove();
       wrapper.id='ig-svg-wrap';
       imgEl.parentNode.insertBefore(wrapper,imgEl);
-      // Also create a data URL for download
       lastGenImageUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
       result.style.display='block';
       status.textContent='✓ Artwork ready!';status.style.color='#4ade80';
     }else{
-      status.textContent='Could not extract SVG. Try again with a different prompt.';status.style.color='#ff5050';
+      status.textContent='AI returned unexpected format. Please try again.';status.style.color='#ff5050';
     }
   }catch(e){
-    status.textContent='Error: '+e.message;status.style.color='#ff5050';
+    status.textContent='Network error: '+(e.message||'unknown');status.style.color='#ff5050';
   }
 }
 
@@ -2198,7 +2188,8 @@ function speakAnim(text){
   u.rate=preset.rate;u.pitch=preset.pitch;
   const lv=voices.filter(v=>v.lang.startsWith(u.lang.split('-')[0]));
   if(lv.length){const g=preset.gender==='female'?lv.find(v=>v.name.toLowerCase().includes('female')):lv.find(v=>v.name.toLowerCase().includes('male'));u.voice=g||lv[0];}else{const bv=findBestVoice(preset);if(bv)u.voice=bv;}
-  u.onend=()=>{isSpeaking=false;updateOrb();render();if(continuousVoiceMode&&!isRecording&&!loading)setTimeout(()=>{if(continuousVoiceMode&&!isRecording&&!loading)startRec();},500);};u.onerror=()=>{isSpeaking=false;updateOrb();render();};
+  u.onend=()=>{isSpeaking=false;updateOrb();render();cvmScheduleRestart(500);};
+  u.onerror=()=>{isSpeaking=false;updateOrb();render();cvmScheduleRestart(500);};
   speechSynthesis.speak(u);
 }
 function speakAnimAsync(text,forAgentId){
@@ -2226,18 +2217,37 @@ speechSynthesis.getVoices();if(speechSynthesis.onvoiceschanged!==undefined)speec
 
 // ── VOICE INPUT ──
 let continuousVoiceMode=false;
+let cvmRestartTimer=null;
 
 function toggleContinuousVoice(){
   continuousVoiceMode=!continuousVoiceMode;
-  const track=document.getElementById('voice-mode-track');
-  if(track)track.className='voice-toggle-track'+(continuousVoiceMode?' on':'');
+  updateVoiceToggleUI();
   if(continuousVoiceMode){
-    // Start listening immediately
-    if(!isSpeaking&&!isRecording)startRec();
+    cvmStart();
   }else{
-    // Stop listening
-    if(isRecording&&recognition)recognition.stop();
+    cvmStop();
   }
+}
+
+function cvmStart(){
+  if(!continuousVoiceMode)return;
+  if(isSpeaking||loading||isRecording)return; // will restart after speech/loading ends
+  if(cvmRestartTimer){clearTimeout(cvmRestartTimer);cvmRestartTimer=null;}
+  startRec();
+}
+
+function cvmStop(){
+  if(cvmRestartTimer){clearTimeout(cvmRestartTimer);cvmRestartTimer=null;}
+  if(isRecording&&recognition){try{recognition.stop();}catch(e){}}
+}
+
+function cvmScheduleRestart(delay){
+  if(!continuousVoiceMode)return;
+  if(cvmRestartTimer)clearTimeout(cvmRestartTimer);
+  cvmRestartTimer=setTimeout(()=>{
+    cvmRestartTimer=null;
+    if(continuousVoiceMode&&!isSpeaking&&!loading&&!isRecording)startRec();
+  },delay||700);
 }
 
 function updateVoiceToggleUI(){
@@ -2314,14 +2324,16 @@ function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecog
   const t=document.getElementById('msg-input').value.trim();
   if(isRecording&&t){
     voiceMode=true;stopRec();sendMessage();
+    // Don't restart yet — wait for JARVIS to finish speaking
   }else{
     stopRec();
-    // In continuous mode, restart listening after a short pause
-    if(continuousVoiceMode&&!isSpeaking&&!loading){
-      setTimeout(()=>{if(continuousVoiceMode&&!isSpeaking&&!loading)startRec();},600);
-    }
+    cvmScheduleRestart(600);
   }
-};recognition.onerror=e=>{if(e.error==='not-allowed')alert('Allow microphone access.');stopRec();if(continuousVoiceMode){setTimeout(()=>{if(continuousVoiceMode&&!isRecording)startRec();},1000);}};return true;}
+};recognition.onerror=e=>{
+  if(e.error==='not-allowed'){alert('Allow microphone access.');continuousVoiceMode=false;updateVoiceToggleUI();return;}
+  if(e.error==='aborted'||e.error==='no-speech'){stopRec();cvmScheduleRestart(500);return;}
+  stopRec();cvmScheduleRestart(1000);
+};return true;}
 function toggleVoice(){if(isCooldownActive())return;if(isSpeaking){stopSpeaking();return;}if(isRecording){recognition.stop();return;}startRec();}
 function startRec(){if(isCooldownActive())return;if(!recognition&&!initVoice())return;document.getElementById('msg-input').value='';isRecording=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='🔴';document.getElementById('msg-input').placeholder='Listening…';updateOrb();try{recognition.start();}catch(e){recognition.stop();setTimeout(()=>{try{recognition.start();}catch(e2){}},200);}}
 function stopRec(){isRecording=false;document.getElementById('mic-btn').classList.remove('rec');document.getElementById('mic-btn').textContent='🎤';document.getElementById('msg-input').placeholder=`Ask ${getAgent().name} anything...`;updateOrb();}
@@ -2401,6 +2413,7 @@ async function sendMessage(){
     // Run speech and render first, then do background saves after
     loading=false;voiceMode=false;save();render();
     if(speechFeedback&&reply&&!reply.startsWith('Error:'))setTimeout(()=>smartSpeakText(reply,activeAgent),300);
+    else cvmScheduleRestart(800); // if speech off, restart mic directly
     // Background saves — fire after UI is settled, never block the response
     const capturedUser=userText,capturedReply=reply;
     setTimeout(()=>{
@@ -2566,13 +2579,22 @@ function addSaveConfirmToChat(type,text,meta){
   };
   const label=labels[type]||'✓ Saved';
   const removeId='rm_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-  // Store meta in map - safe, no HTML encoding issues
   saveMetaMap[removeId]={type,meta,text};
   const snippet=text.length>60?text.slice(0,57)+'…':text;
-  const msg=`${label}<br><span style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">"${snippet.replace(/</g,'&lt;').replace(/>/g,'&gt;')}"</span><br><button id="${removeId}" onclick="removeSavedEntry('${removeId}')" style="margin-top:6px;padding:3px 10px;border-radius:6px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;cursor:pointer;font-size:10px;font-weight:700">✕ Remove</button>`;
+  const escapedSnippet=snippet.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Append directly to chat DOM without triggering a full render
+  const chat=document.getElementById('chat');
+  if(!chat)return;
+  const div=document.createElement('div');
+  div.className='msg a';
+  div.style.animation='fadeUp .25s';
+  div.innerHTML=`<div class="bub" style="font-size:12px">${label}<br><span style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">"${escapedSnippet}"</span><br><button id="${removeId}" onclick="removeSavedEntry('${removeId}')" style="margin-top:6px;padding:3px 10px;border-radius:6px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;cursor:pointer;font-size:10px;font-weight:700">✕ Remove</button></div>`;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+  // Also store in conversations for history (but don't trigger render)
   if(!conversations[activeAgent])conversations[activeAgent]=[];
-  conversations[activeAgent].push({role:'assistant',content:msg,isHtml:true,isSaveConfirm:true});
-  save();render();
+  const msgObj={role:'assistant',content:`${label} — "${snippet}"`,isHtml:false,isSaveConfirm:true};
+  conversations[activeAgent].push(msgObj);
 }
 
 function removeSavedEntry(removeId){
