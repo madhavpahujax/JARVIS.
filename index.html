@@ -1101,24 +1101,29 @@ function toggleTempMode(){
 
 function toggleSpeechSummarise(){speechSummarise=!speechSummarise;save();}
 
-// Smart speech: if reply is long and summarise is on, ask Gemini for a 1-sentence summary first
+// Smart speech: summarise long replies before speaking
 async function smartSpeakText(text,agentId){
   if(!speechFeedback)return;
-  const paragraphs=text.split(/\n{2,}/).filter(p=>p.trim());
-  if(!speechSummarise||paragraphs.length<=1){
-    // Short reply or summarise off — speak as-is
+  const cleaned=cleanSpeechText(text);
+  if(!cleaned)return;
+  // Count words to determine if long
+  const words=cleaned.split(/\s+/).filter(Boolean).length;
+  if(!speechSummarise||words<=60){
     speakAnim(text);return;
   }
-  // Long reply — speak a summary
+  // Long — get spoken summary from Gemini
   if(!apiKey){speakAnim(text);return;}
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:`Summarise this in ONE short spoken sentence (max 20 words, no lists, no markdown): ${text.slice(0,800)}`}]}],generationConfig:{maxOutputTokens:50,temperature:0.3}})
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:`Summarise for voice in ONE sentence (15-25 words max, natural speech, no lists, no special characters):\n\n${text.slice(0,600)}`}]}],
+        generationConfig:{maxOutputTokens:60,temperature:0.2}
+      })
     });
     const d=await r.json();
     const summary=d.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    speakAnim(summary&&summary.length>5?summary:text);
+    speakAnim(summary&&summary.length>8?summary:text);
   }catch(e){speakAnim(text);}
 }
 
@@ -1574,11 +1579,13 @@ function confirmGraphLog(){
   const x=document.getElementById('graph-picker-x').value.trim();
   const y=parseFloat(document.getElementById('graph-picker-y').value);
   if(!x||isNaN(y)){alert('Enter both a label and a numeric value.');return;}
+  const ptIndex=g.points.length;
   g.points.push({x,y,ts:Date.now()});
   save();
   document.getElementById('graph-picker-modal').style.display='none';
   dismissSmartSave();
   if(currentView==='graphs')renderGraphsPanel();
+  addSaveConfirmToChat('graph',`${g.name}: ${x} = ${y}`,{graphId:g.id,ptIndex});
 }
 function openNewFolderModal(){
   document.getElementById('nf-name').value='';
@@ -1792,39 +1799,71 @@ async function generateImageFallback(prompt,aspect){
   const status=document.getElementById('ig-status');
   const result=document.getElementById('ig-result');
   const imgEl=document.getElementById('ig-img');
-  status.textContent='Creating SVG artwork with JARVIS...';status.style.color='var(--dim)';
+  status.textContent='Creating artwork with JARVIS Vision...';status.style.color='var(--dim)';
   const w=aspect==='16:9'?800:aspect==='9:16'?450:600;
   const h=aspect==='16:9'?450:aspect==='9:16'?800:600;
-  const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      contents:[{role:'user',parts:[{text:`Create a beautiful, detailed SVG illustration for: "${prompt}"\n\nRules:\n- Output ONLY the raw SVG, nothing else\n- Start with: <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">\n- End with: </svg>\n- Use rich colors, gradients, shapes\n- Fill the entire canvas\n- NO markdown, NO backticks, NO explanation`}]}],
-      generationConfig:{maxOutputTokens:4000,temperature:0.8}
-    })
-  });
-  const d2=await r2.json();
-  let raw=d2.candidates?.[0]?.content?.parts?.[0]?.text||'';
-  // Strip any markdown wrapping
-  raw=raw.replace(/^```svg\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
-  const svgStart=raw.indexOf('<svg');
-  const svgEnd=raw.lastIndexOf('</svg>');
-  if(svgStart!==-1&&svgEnd!==-1){
-    const svg=raw.slice(svgStart,svgEnd+6);
-    // Use inline data URI to avoid blob URL issues
-    const encoded='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-    lastGenImageUrl=encoded;
-    lastGenImageSvg=svg;
-    lastGenImagePrompt=prompt;
-    imgEl.src=encoded;
-    imgEl.onload=()=>{result.style.display='block';status.textContent='✓ Image ready!';status.style.color='#4ade80';};
-    imgEl.onerror=()=>{
-      // Try base64 encoding instead
-      const b64='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
-      imgEl.src=b64;lastGenImageUrl=b64;
-      result.style.display='block';status.textContent='✓ Image ready!';status.style.color='#4ade80';
-    };
-  }else{
-    status.textContent='Could not generate. Try a more specific prompt.';status.style.color='#ff5050';
+
+  // First, ask Gemini to expand the prompt into a detailed visual description
+  let expandedPrompt=prompt;
+  try{
+    const ex=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:`Expand this into a vivid, specific visual description for an SVG illustration (2-3 sentences, describe colors, shapes, atmosphere, composition): "${prompt}"`}]}],generationConfig:{maxOutputTokens:150,temperature:0.8}})
+    });
+    const ed=await ex.json();
+    const expanded=ed.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if(expanded&&expanded.length>20)expandedPrompt=expanded;
+  }catch(e){}
+
+  // Now generate the SVG
+  const svgPrompt=`Create a beautiful SVG illustration. Description: ${expandedPrompt}
+
+REQUIREMENTS:
+- Output ONLY the SVG code, nothing else
+- First line must be: <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+- Last line must be: </svg>
+- Use <defs> with <linearGradient> and <radialGradient> elements for rich colors
+- Fill entire canvas with background first
+- Include sky/background, main subject, foreground elements, lighting effects
+- Use circles, rects, paths, polygons generously
+- Rich colors - no plain white or plain black backgrounds
+- No text elements
+- Make it visually stunning`;
+
+  try{
+    const r2=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:svgPrompt}]}],generationConfig:{maxOutputTokens:5000,temperature:0.9}})
+    });
+    const d2=await r2.json();
+    let raw=d2.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    // Clean up any markdown
+    raw=raw.replace(/^```(?:svg|xml)?\s*/i,'').replace(/```\s*$/,'').trim();
+    // Find SVG boundaries
+    const svgStart=raw.indexOf('<svg');
+    const svgEnd=raw.lastIndexOf('</svg>');
+    if(svgStart!==-1&&svgEnd!==-1){
+      const svg=raw.slice(svgStart,svgEnd+6);
+      // Encode as data URI
+      const encoded='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+      lastGenImageUrl=encoded;
+      lastGenImageSvg=svg;
+      lastGenImagePrompt=prompt;
+      imgEl.onload=()=>{result.style.display='block';status.textContent='✓ Artwork ready!';status.style.color='#4ade80';};
+      imgEl.onerror=()=>{
+        // Base64 fallback
+        try{
+          const b64='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
+          imgEl.src=b64;lastGenImageUrl=b64;
+          result.style.display='block';status.textContent='✓ Artwork ready!';status.style.color='#4ade80';
+        }catch(err){status.textContent='Could not display image. Try a different prompt.';status.style.color='#ff5050';}
+      };
+      imgEl.src=encoded;
+    }else{
+      status.textContent='Generation incomplete. Please try again.';status.style.color='#ff5050';
+    }
+  }catch(e){
+    status.textContent='Network error. Check connection.';status.style.color='#ff5050';
   }
 }
 
@@ -2026,7 +2065,7 @@ function deleteQuickCommand(id,e){
 
 // ── LONG PRESS ──
 let longPressTimer=null,longPressX=0,longPressY=0;
-const LONG_PRESS_MS=1400;
+const LONG_PRESS_MS=1000;
 
 function initLongPress(){
   const mc=document.getElementById('main-content');
@@ -2277,6 +2316,19 @@ async function sendMessage(){
   if(!apiKey){showApiKeyModal();return;}
   if(currentView!=='chat')switchView('chat');
   if(!conversations[activeAgent])conversations[activeAgent]=[];
+
+  // Check if there's a pending calendar save waiting for a date from user
+  if(pendingCalendarSave&&text){
+    const dateGuess=extractDateFromText(text);
+    if(dateGuess){
+      calendarNotes[dateGuess]=(calendarNotes[dateGuess]?calendarNotes[dateGuess]+'\n':'')+pendingCalendarSave;
+      pendingCalendarSave='';
+      save();render();
+      showSaveToast(`📅 Saved to Calendar (${dateGuess})`);
+    }else{
+      pendingCalendarSave=''; // give up if still no date
+    }
+  }
   const userText=text||(attachedMedia?`[Attached: ${attachedMedia.name}]`:'');
   const displayText=attachedMedia?`${text?text+'\n':''}📎 ${attachedMedia.name}`:text;
   conversations[activeAgent].push({role:'user',content:displayText});
@@ -2325,7 +2377,7 @@ async function sendMessage(){
 }
 document.getElementById('msg-input').addEventListener('input',()=>{const a=getAgent(),sb=document.getElementById('send-btn'),has=document.getElementById('msg-input').value.trim();sb.style.background=has?`${a.color}18`:'';sb.style.borderColor=has?`${a.color}44`:'';sb.style.color=has?a.color:'';});
 // ── SMART SAVE ──
-let smartSaveData={text:'',type:'',date:''};
+let smartSaveData={text:'',type:'',date:'',graphId:''};
 let smartSaveDismissTimer=null;
 
 function dismissSmartSave(){
@@ -2333,84 +2385,259 @@ function dismissSmartSave(){
   if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
 }
 
-function checkForSaveableContent(userMsg,aiReply){
-  const u=userMsg.toLowerCase();
-  // Check if user explicitly asked to save
-  const explicitSave=/\b(save|remember|store|note|keep|log|add to|put in)\b/i.test(u);
-  // Check for personal facts in user message
-  const personalFacts=/\b(my|i am|i'm|i have|i go|i play|i like|i love|i study|i live|i work|i attend|i hate|i want|i need|my name|my age|my school|my team|my class|my birthday|my phone|my email)\b/i.test(u);
-  // Check for dates/events in user message
-  const hasDate=/\b(\d{1,2}(st|nd|rd|th)?[\s\-\/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})|\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week|on the \d))\b/i.test(u);
-  // Check if user asked to run something on startup
-  const loginCmdPattern=/\b(every time|on start|on login|when i open|remind me|always|each time|daily)\b/i.test(u);
+// ── INTELLIGENT SAVE SYSTEM ──
+// Uses Gemini to understand intent, then acts directly or asks only for what's missing
+async function checkForSaveableContent(userMsg,aiReply){
+  if(!apiKey)return;
+  const today=new Date();
+  const todayISO=today.toISOString().slice(0,10);
+  const yesterday=new Date(today);yesterday.setDate(today.getDate()-1);
+  const yesterdayISO=yesterday.toISOString().slice(0,10);
+  const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const todayName=dayNames[today.getDay()];
+  const yesterdayName=dayNames[yesterday.getDay()];
 
-  if(!explicitSave&&!personalFacts&&!hasDate&&!loginCmdPattern)return;
+  const graphList=userGraphs.map((g,i)=>`${i}: "${g.name}" (tracks: ${g.track||g.ylabel})`).join('\n');
 
-  // Extract what to save — prefer a short version of the user message
-  let textToSave=userMsg.length<120?userMsg:userMsg.slice(0,117)+'...';
+  const prompt=`You are JARVIS's intelligent save assistant. Analyse this conversation and decide what to do.
 
-  // Figure out the best default suggestion
-  let suggestedType='memory';
-  if(loginCmdPattern)suggestedType='command';
-  else if(hasDate)suggestedType='calendar';
-  else if(personalFacts||explicitSave)suggestedType='memory';
+Today: ${todayISO} (${todayName})
+Yesterday: ${yesterdayISO} (${yesterdayName})
 
-  // Extract a date if present for calendar
-  let dateStr='';
-  const dateMatch=userMsg.match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}[\s\-\/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s\-\/]?\d{0,4})\b/i);
-  if(dateMatch)dateStr=dateMatch[0];
+User said: "${userMsg}"
+JARVIS replied: "${aiReply.slice(0,300)}"
 
-  smartSaveData={text:textToSave,type:suggestedType,date:dateStr};
+Available graphs:
+${graphList||'None'}
 
-  // Show the card
-  document.getElementById('ss-text').textContent=textToSave;
+Respond ONLY with JSON (no markdown):
+{
+  "action": "none"|"save_memory"|"save_calendar"|"save_login_cmd"|"save_graph"|"ask_date"|"ask_graph"|"show_popup",
+  "text": "the exact info to save (concise, max 100 chars)",
+  "date": "YYYY-MM-DD if saving to calendar",
+  "graphIndex": 0,
+  "graphX": "x axis label",
+  "graphY": 0,
+  "askQuestion": "question to ask user if info is missing",
+  "reason": "why"
+}
 
-  // Highlight suggested button
-  ['ss-mem','ss-tmp','ss-cal','ss-cmd'].forEach(id=>{
-    document.getElementById(id).style.opacity='1';
-    document.getElementById(id).style.transform='';
-  });
-  const suggestMap={memory:'ss-mem',temp:'ss-tmp',calendar:'ss-cal',command:'ss-cmd'};
-  const sugBtn=document.getElementById(suggestMap[suggestedType]);
-  if(sugBtn){sugBtn.style.opacity='1';sugBtn.style.transform='scale(1.05)';}
+Rules:
+- "none" if nothing personal/useful to save and user didn't ask to save
+- "save_memory" if user mentioned personal facts, preferences, or explicitly said remember/save this, and destination is clear
+- "save_calendar" if user mentioned an event/task AND a specific date is clear (today, yesterday, or explicit date)
+- "ask_date" if user wants to save to calendar but date is unclear - set askQuestion to "Which date should I log this for, Sir?"
+- "save_login_cmd" if user said run this on startup / every time / remind me daily etc AND text is clear
+- "save_graph" if user mentioned data that matches a graph AND both x and y values are clear
+- "ask_graph" if user mentioned data that could go in a graph but graph/values are unclear - show graph picker popup
+- "show_popup" only if it's genuinely ambiguous where to save (memory vs calendar etc)
+- If user explicitly mentions the destination (calendar, memory, graph, etc.) go directly there without popup
+- Be smart: "I studied 3 hours today" → save_graph (study hours graph if exists) AND save_calendar for today
+- "I did football practice yesterday" → save_calendar for ${yesterdayISO}
+- Never ask unnecessary questions`;
 
-  document.getElementById('smart-save').classList.add('show');
-  // Auto-dismiss after 12 seconds
-  if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
-  smartSaveDismissTimer=setTimeout(dismissSmartSave,12000);
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:300,temperature:0}})
+    });
+    const d=await r.json();
+    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+    const result=JSON.parse(raw.replace(/```json?|```/g,'').trim());
+    await executeSaveAction(result,userMsg);
+  }catch(e){/* silent — save suggestion is optional */}
+}
+
+async function executeSaveAction(result,originalMsg){
+  const text=result.text||originalMsg.slice(0,100);
+  smartSaveData={text,type:result.action,date:result.date||'',graphId:''};
+
+  switch(result.action){
+    case 'save_memory':
+      agentKnowledge[activeAgent]=agentKnowledge[activeAgent]||[];
+      agentKnowledge[activeAgent].push(text);
+      save();render();
+      addSaveConfirmToChat('memory',text,{agentId:activeAgent,index:agentKnowledge[activeAgent].length-1});
+      break;
+
+    case 'save_calendar':{
+      const key=result.date||new Date().toISOString().slice(0,10);
+      calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
+      save();render();
+      addSaveConfirmToChat('calendar',text,{key});
+      break;
+    }
+
+    case 'ask_date':
+      if(!conversations[activeAgent])conversations[activeAgent]=[];
+      conversations[activeAgent].push({role:'assistant',content:result.askQuestion||'Which date should I log this for, Sir?'});
+      pendingCalendarSave=text;
+      save();render();
+      break;
+
+    case 'save_login_cmd':{
+      const cmdId='sc-'+Date.now();
+      startupCommands.push({id:cmdId,agentId:activeAgent,text,enabled:true});
+      save();render();
+      addSaveConfirmToChat('logincmd',text,{cmdId});
+      break;
+    }
+
+    case 'save_graph':{
+      const g=userGraphs[result.graphIndex];
+      if(g&&result.graphX!==undefined&&result.graphY!==undefined){
+        const ptIndex=g.points.length;
+        g.points.push({x:result.graphX,y:parseFloat(result.graphY),ts:Date.now(),auto:true});
+        save();
+        if(currentView==='graphs')renderGraphsPanel();
+        addSaveConfirmToChat('graph',text,{graphId:g.id,ptIndex});
+      }else{
+        openGraphPickerFromSave();
+      }
+      break;
+    }
+
+    case 'ask_graph':
+      openGraphPickerFromSave();
+      break;
+
+    case 'show_popup':
+      document.getElementById('ss-text').textContent=text;
+      ['ss-mem','ss-tmp','ss-cal','ss-cmd'].forEach(id=>{
+        const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.transform='';}
+      });
+      document.getElementById('smart-save').classList.add('show');
+      if(smartSaveDismissTimer)clearTimeout(smartSaveDismissTimer);
+      smartSaveDismissTimer=setTimeout(dismissSmartSave,12000);
+      break;
+
+    case 'none':
+    default:
+      break;
+  }
+}
+
+// Store save metadata safely in a Map instead of passing JSON through HTML attrs
+const saveMetaMap={};
+
+function addSaveConfirmToChat(type,text,meta){
+  const labels={
+    memory:`🧠 Logged to <b>Memory</b>`,
+    memory_temp:`⚡ Logged to <b>Temp Memory</b>`,
+    calendar:`📅 Logged to <b>Calendar</b> (${meta.key})`,
+    logincmd:`⚡ Added as <b>Login Command</b>`,
+    graph:`📊 Logged to <b>${userGraphs.find(g=>g.id===meta.graphId)?.name||'Graph'}</b>`
+  };
+  const label=labels[type]||'✓ Saved';
+  const removeId='rm_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  // Store meta in map - safe, no HTML encoding issues
+  saveMetaMap[removeId]={type,meta,text};
+  const snippet=text.length>60?text.slice(0,57)+'…':text;
+  const msg=`${label}<br><span style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace">"${snippet.replace(/</g,'&lt;').replace(/>/g,'&gt;')}"</span><br><button id="${removeId}" onclick="removeSavedEntry('${removeId}')" style="margin-top:6px;padding:3px 10px;border-radius:6px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;cursor:pointer;font-size:10px;font-weight:700">✕ Remove</button>`;
+  if(!conversations[activeAgent])conversations[activeAgent]=[];
+  conversations[activeAgent].push({role:'assistant',content:msg,isHtml:true,isSaveConfirm:true});
+  save();render();
+}
+
+function removeSavedEntry(removeId){
+  const entry=saveMetaMap[removeId];
+  if(!entry){showSaveToast('Entry not found');return;}
+  const {type,meta}=entry;
+  let removed=false;
+  if(type==='calendar'){
+    const key=meta.key;
+    if(calendarNotes[key]!==undefined){
+      const lines=calendarNotes[key].split('\n').filter(Boolean);
+      // Remove last occurrence matching the saved text
+      const idx=lines.map(l=>l.trim()).lastIndexOf(entry.text.trim());
+      if(idx>=0)lines.splice(idx,1);
+      calendarNotes[key]=lines.join('\n');
+      if(!calendarNotes[key])delete calendarNotes[key];
+      removed=true;
+    }
+  }else if(type==='logincmd'){
+    const i=startupCommands.findIndex(c=>c.id===meta.cmdId);
+    if(i>=0){startupCommands.splice(i,1);removed=true;}
+  }else if(type==='graph'){
+    const g=userGraphs.find(x=>x.id===meta.graphId);
+    if(g&&g.points[meta.ptIndex]!==undefined){g.points.splice(meta.ptIndex,1);removed=true;}
+  }else if(type==='memory_temp'){
+    const ag=agentTempKnowledge[meta.agentId];
+    if(ag&&ag[meta.index]!==undefined){ag.splice(meta.index,1);removed=true;}
+  }
+  if(removed){
+    save();
+    if(currentView==='graphs')renderGraphsPanel();
+    if(currentView==='calendar')renderCalendar();
+    const btn=document.getElementById(removeId);
+    if(btn){btn.textContent='✓ Removed';btn.disabled=true;btn.style.opacity='.5';btn.style.cursor='default';}
+    showSaveToast('✓ Entry removed');
+    delete saveMetaMap[removeId];
+  }else{
+    showSaveToast('Could not find entry to remove');
+  }
+}
+
+let pendingCalendarSave='';
+
+function extractDateFromText(text){
+  const t=text.toLowerCase();
+  const today=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if(/\btoday\b/.test(t))return fmt(today);
+  if(/\byesterday\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()-1);return fmt(d);}
+  const days=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  for(let i=0;i<days.length;i++){
+    if(t.includes(days[i])){const d=new Date(today);const diff=(i-today.getDay()+7)%7;d.setDate(d.getDate()-(diff===0?0:7-diff));return fmt(d);}
+  }
+  // ISO format
+  const iso=text.match(/\b(\d{4}-\d{2}-\d{2})\b/);if(iso)return iso[1];
+  // DD/MM or MM/DD
+  const slash=text.match(/\b(\d{1,2})[\/\-](\d{1,2})\b/);
+  if(slash)return `2026-${pad(slash[2])}-${pad(slash[1])}`;
+  // Month name
+  const months=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  for(let i=0;i<months.length;i++){
+    const re=new RegExp('(\\d{1,2})\\s*'+months[i]);
+    const m=t.match(re);
+    if(m)return `2026-${pad(i+1)}-${pad(parseInt(m[1]))}`;
+  }
+  return null;
+}
+
+function showSaveToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--ac)44;color:var(--ac);font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.1em;padding:8px 18px;border-radius:8px;z-index:600;animation:fadeUp .2s;white-space:nowrap';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
 }
 
 function smartSaveTo(type){
   const text=smartSaveData.text;
   if(!text){dismissSmartSave();return;}
   if(type==='memory'){
-    if(!agentKnowledge[activeAgent])agentKnowledge[activeAgent]=[];
+    agentKnowledge[activeAgent]=agentKnowledge[activeAgent]||[];
     agentKnowledge[activeAgent].push(text);
     save();render();
+    addSaveConfirmToChat('memory',text,{agentId:activeAgent,index:(agentKnowledge[activeAgent]?.length||1)-1});
   }else if(type==='temp'){
-    if(!agentTempKnowledge[activeAgent])agentTempKnowledge[activeAgent]=[];
+    agentTempKnowledge[activeAgent]=agentTempKnowledge[activeAgent]||[];
+    const idx=agentTempKnowledge[activeAgent].length;
     agentTempKnowledge[activeAgent].push({text,created:Date.now()});
     save();render();
-  }else if(type==='calendar'){
-    // Try to use extracted date or today
-    let key=smartSaveData.date||new Date().toISOString().slice(0,10);
-    // Normalise to YYYY-MM-DD if possible
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(key)){
-      // Default to today
-      key=new Date().toISOString().slice(0,10);
-    }
+    addSaveConfirmToChat('memory_temp',text,{agentId:activeAgent,index:idx});  }else if(type==='calendar'){
+    const key=smartSaveData.date&&/^\d{4}-\d{2}-\d{2}$/.test(smartSaveData.date)?smartSaveData.date:new Date().toISOString().slice(0,10);
     calendarNotes[key]=(calendarNotes[key]?calendarNotes[key]+'\n':'')+text;
     save();render();
+    addSaveConfirmToChat('calendar',text,{key});
   }else if(type==='command'){
-    startupCommands.push({id:'sc-'+Date.now(),agentId:activeAgent,text,enabled:true});
+    const cmdId='sc-'+Date.now();
+    startupCommands.push({id:cmdId,agentId:activeAgent,text,enabled:true});
     save();render();
+    addSaveConfirmToChat('logincmd',text,{cmdId});
   }
   dismissSmartSave();
-  // Brief confirmation in chat
-  const confirm=document.createElement('div');
-  confirm.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ac)18;border:1px solid var(--ac)44;color:var(--ac);font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.1em;padding:8px 18px;border-radius:8px;z-index:600;animation:fadeUp .2s';
-  confirm.textContent='✓ SAVED';document.body.appendChild(confirm);
-  setTimeout(()=>confirm.remove(),1800);
 }
 
 // ── STARTUP COMMANDS ──
