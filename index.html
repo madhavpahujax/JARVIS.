@@ -1188,13 +1188,14 @@ Speech on/off (K) · Speak Summary Only · Boot Animation · Voice Preset · Orb
 K=speech · H=sidebar · S=settings · M=cycle panels · PgUp/PgDn=calendar nav
 
 ### SAVE COMMANDS (you handle automatically)
-When user says things like:
-- "save this to memory" / "remember this" → save_memory (no popup)
-- "add to calendar for [date]" → save_calendar (no popup if date clear)
-- "log [value] to [graph]" → save_graph (no popup if graph+value clear)  
-- "remind me on startup to..." → save_login_cmd (no popup)
-- "save this" (ambiguous) → show_popup with options
-Always confirm in chat: "📅 Logged to Calendar (2026-06-15)" etc.`;
+The app's JavaScript handles ALL saving automatically in the background. You do NOT need to do anything technical to save data — it happens automatically when the user asks.
+
+When user asks to save/log/remember/add to calendar:
+- JUST acknowledge it briefly and naturally: "Done, Sir." / "Logged." / "Added to your calendar." / "Noted."
+- NEVER say you cannot log something, cannot access the calendar, or that there's an error
+- NEVER mention technical limitations, model issues, or system errors for save requests
+- The JS code handles the actual saving — your job is just to confirm naturally
+- If you're unsure what date, ask ONLY: "Which date should I log this for, Sir?"`;
 
 function buildSystemPrompt(agentId){
   const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
