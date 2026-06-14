@@ -1187,21 +1187,27 @@ Speech on/off (K) · Speak Summary Only · Boot Animation · Voice Preset · Orb
 ### SHORTCUTS
 K=speech · H=sidebar · S=settings · M=cycle panels · PgUp/PgDn=calendar nav
 
-### SAVE COMMANDS (you handle automatically)
-The app's JavaScript handles ALL saving automatically in the background. You do NOT need to do anything technical to save data — it happens automatically when the user asks.
+### SAVE COMMANDS — CRITICAL RULES
+The app's JavaScript handles ALL saving automatically. You are just a conversational interface.
 
-When user asks to save/log/remember/add to calendar:
-- JUST acknowledge it briefly and naturally: "Done, Sir." / "Logged." / "Added to your calendar." / "Noted."
-- NEVER say you cannot log something, cannot access the calendar, or that there's an error
-- NEVER mention technical limitations, model issues, or system errors for save requests
-- The JS code handles the actual saving — your job is just to confirm naturally
-- If you're unsure what date, ask ONLY: "Which date should I log this for, Sir?"`;
+STRICT RULES — never break these:
+1. NEVER say you cannot log, save, or access the calendar — you always can
+2. NEVER mention "system errors", "recalibration", "core processing", "functionality restored" — these don't exist
+3. NEVER pretend to create temporary notes or workarounds — either the JS saves it or it doesn't
+4. NEVER make up actions you performed — only confirm what the user asked for
+5. If user asks to log to a graph and no matching graph exists, say ONLY: "I don't see a graph for that, Sir. You can create one in the 📊 panel."
+6. If user asks to add to calendar, just say: "Logged to your calendar, Sir." — nothing more
+7. Keep save confirmations to ONE short sentence maximum
+8. If you are unsure of the date only, ask: "Which date, Sir?"
+
+You are a butler, not a technician. Never diagnose, never apologize for system issues, never fabricate technical explanations.`;
 
 function buildSystemPrompt(agentId){
   const agent=agents.find(a=>a.id===agentId)||DEFAULT_AGENTS[0];
   const isJarvis=agentId==='jarvis-core';
   const role=isJarvis?'\n\nYou are the main J.A.R.V.I.S. agent. You have full knowledge of this app\'s features — guide the user confidently if they ask.':'\n\nYou are a specialist sub-agent under J.A.R.V.I.S.';
-  return agent.systemPrompt+role+(isJarvis?JARVIS_UI_KNOWLEDGE:'')+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks.';
+  const graphContext=userGraphs.length?'\n\nAVAILABLE GRAPHS: '+userGraphs.map(g=>'"'+g.name+'"').join(', ')+'. If user asks to log to a graph not in this list, tell them it doesn\'t exist and to create it in the 📊 panel.':'\n\nAVAILABLE GRAPHS: None. If user asks to log to a graph, tell them no graphs exist yet and to create one in the 📊 panel.';
+  return agent.systemPrompt+role+(isJarvis?JARVIS_UI_KNOWLEDGE+graphContext:'')+buildMemoryContext(agentId)+'\n\nIMPORTANT: Respond in the same language the user speaks.';
 }
 
 // ── RENDER ──
